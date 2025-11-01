@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DTC.SM83", "DTC.SM83\DTC.SM83.csproj", "{28256602-4540-4071-A6B1-8E7CC65BC002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{689DC2A9-A8D7-40B9-92EE-C1C9C52041B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DTC.Core", "DTC.Core\DTC.Core\DTC.Core.csproj", "{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{28256602-4540-4071-A6B1-8E7CC65BC002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28256602-4540-4071-A6B1-8E7CC65BC002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28256602-4540-4071-A6B1-8E7CC65BC002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28256602-4540-4071-A6B1-8E7CC65BC002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{689DC2A9-A8D7-40B9-92EE-C1C9C52041B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{689DC2A9-A8D7-40B9-92EE-C1C9C52041B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{689DC2A9-A8D7-40B9-92EE-C1C9C52041B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{689DC2A9-A8D7-40B9-92EE-C1C9C52041B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

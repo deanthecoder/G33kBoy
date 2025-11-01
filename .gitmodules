@@ -1,0 +1,6 @@
+[submodule "external/GameboyCPUTests"]
+	path = external/GameboyCPUTests
+	url = https://github.com/adtennant/GameboyCPUTests.git
+[submodule "DTC.Core"]
+	path = DTC.Core
+	url = https://github.com/deanthecoder/DTC.Core.git
