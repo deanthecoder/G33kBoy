@@ -21,20 +21,20 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 > **Agent note:** Match the project’s English style for identifiers, comments, and documentation.
 > **Agent note:** Use the dominant language(s) and idioms when proposing code.
 
-* Files      : 578
+* Files      : 581
 * Languages  : C# (100%)
 * English    : American English
 ## Largest Source Files (8)
 > **Agent note:** Avoid ingesting very large files wholesale; focus on public types, key methods, and file headers to preserve tokens.
 
+* 132.54 KB    : `DTC.SM83/Instructions.cs`
 * 17.38 KB     : `DTC.Core/DTC.Core/UI/ShaderControl.cs`
 * 15.63 KB     : `DTC.Core/DTC.Core/Extensions/FastLinq.cs`
 * 14.68 KB     : `DTC.Core/DTC.Core/Markdown/ConsoleRenderer.cs`
 * 10.81 KB     : `DTC.Core/DTC.Core/Extensions/DirectoryInfoExtensions.cs`
+* 6.96 KB      : `UnitTests/CpuTests.cs`
 * 6.81 KB      : `DTC.Core/DTC.Core/Extensions/FileInfoExtensions.cs`
 * 6.50 KB      : `DTC.Core/DTC.Core/Markdown/ConsoleFormatter.cs`
-* 6.41 KB      : `DTC.Core/DTC.Core/AI/NeuralNetwork.cs`
-* 6.35 KB      : `DTC.Core/DTC.Core/ImageProcessing/FaceFinder.cs`
 ## NuGet (14)
 > **Agent note:** Prefer solutions using the listed packages and frameworks; avoid introducing new technologies without justification.
 

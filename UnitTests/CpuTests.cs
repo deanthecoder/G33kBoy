@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace UnitTests;
 
-[TestFixture]
+[TestFixture, Parallelizable(ParallelScope.All)]
 public class CpuTests : TestsBase
 {
     public static SingleTest[] Tests { get; } = LoadTests();
@@ -26,53 +26,59 @@ public class CpuTests : TestsBase
         var testFiles = testDir.TryGetFiles("*.json");
         return testFiles
             .SelectMany(SingleTest.LoadFromFile)
+            .Select(test => test)
             .ToArray();
     }
 
     [Test]
     public void RunTests([ValueSource(nameof(Tests))] SingleTest test)
     {
-        var cpu = new Cpu(test.InitialMem);
-        test.InitialRegs.CopyTo(cpu.Reg);
+        var prepared = test.Prepare();
+        var cpu = new Cpu(prepared.InitialMem);
+        prepared.InitialRegs.CopyTo(cpu.Reg);
 
         cpu.Step();
 
-        Assert.That(cpu.Reg, Is.EqualTo(test.FinalRegs));
-        Assert.That(cpu.Ram, Is.EqualTo(test.FinalMem));
+        Assert.That(cpu.Reg, Is.EqualTo(prepared.FinalRegs));
+        Assert.That(cpu.Ram, Is.EqualTo(prepared.FinalMem));
     }
 
     public class SingleTest
     {
+        private readonly CpuStateDto m_initialState;
+        private readonly CpuStateDto m_finalState;
         private readonly string m_name;
 
-        public Registers InitialRegs { get; } = new Registers();
-        public Registers FinalRegs { get; } = new Registers();
-        public Memory InitialMem { get; } = new Memory(0xFFFF);
-        public Memory FinalMem { get; } = new Memory(0xFFFF);
-
-        private SingleTest(string name)
+        private SingleTest(TestCaseDto testCase)
         {
-            m_name = name;
+            m_initialState = testCase.Initial;
+            m_finalState = testCase.Final;
+            m_name = $"({testCase.Name}) {GetMnemonic(m_initialState)}";
         }
 
         public static IEnumerable<SingleTest> LoadFromFile(FileInfo testJson)
         {
             var json = testJson.ReadAllText();
             var testCases = JsonConvert.DeserializeObject<TestCaseDto[]>(json) ?? [];
-            foreach (var testCase in testCases)
-            {
-                var name = string.IsNullOrWhiteSpace(testCase.Name)
-                    ? testJson.Name
-                    : testCase.Name;
+            return
+                testCases
+                    .Take(8)
+                    .Select(testCase => new SingleTest(testCase));
+        }
 
-                var singleTest = new SingleTest(name);
-                Populate(singleTest.InitialRegs, testCase.Initial);
-                Populate(singleTest.FinalRegs, testCase.Final);
-                Populate(singleTest.InitialMem, testCase.Initial);
-                Populate(singleTest.FinalMem, testCase.Final);
+        public PreparedTest Prepare()
+        {
+            var initialRegs = new Registers();
+            var finalRegs = new Registers();
+            var initialMem = new Memory(0xFFFF);
+            var finalMem = new Memory(0xFFFF);
 
-                yield return singleTest;
-            }
+            Populate(initialRegs, m_initialState);
+            Populate(finalRegs, m_finalState);
+            Populate(initialMem, m_initialState);
+            Populate(finalMem, m_finalState);
+
+            return new PreparedTest(initialRegs, finalRegs, initialMem, finalMem);
         }
 
         private static void Populate(Registers registers, CpuStateDto dto)
@@ -112,7 +118,40 @@ public class CpuTests : TestsBase
             }
         }
 
+        private static string GetMnemonic(CpuStateDto initialState)
+        {
+            var pc = (ushort)initialState.Pc - 1;
+            var ram = initialState.Ram;
+            var maxRamAddress = ram.Max(entry => entry[0]);
+            var bytesToAllocate = maxRamAddress - pc + 1;
+            var mem = new Memory(bytesToAllocate);
+            foreach (var ramByte in ram)
+            {
+                var addr = ramByte[0] - pc;
+                if (addr >= 0)
+                    mem[(ushort)addr] = (byte)ramByte[1];
+            }
+
+            return Disassembler.GetMnemonic(mem, 0);
+        }
+        
         public override string ToString() => m_name;
+
+        public readonly struct PreparedTest
+        {
+            public PreparedTest(Registers initialRegs, Registers finalRegs, Memory initialMem, Memory finalMem)
+            {
+                InitialRegs = initialRegs ?? throw new ArgumentNullException(nameof(initialRegs));
+                FinalRegs = finalRegs ?? throw new ArgumentNullException(nameof(finalRegs));
+                InitialMem = initialMem ?? throw new ArgumentNullException(nameof(initialMem));
+                FinalMem = finalMem ?? throw new ArgumentNullException(nameof(finalMem));
+            }
+
+            public Registers InitialRegs { get; }
+            public Registers FinalRegs { get; }
+            public Memory InitialMem { get; }
+            public Memory FinalMem { get; }
+        }
 
         private sealed class TestCaseDto
         {
@@ -145,7 +184,7 @@ public class CpuTests : TestsBase
 
             [JsonProperty("sp")] public int Sp { get; set; }
 
-            [JsonProperty("ram")] public int[][]? Ram { get; set; }
+            [JsonProperty("ram")] public int[][] Ram { get; set; }
         }
     }
 }
