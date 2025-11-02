@@ -38,7 +38,7 @@ public class CpuTests : TestsBase
         prepared.InitialRegs.CopyTo(cpu.Reg);
         cpu.Reg.PC--;
         cpu.Ram.Clock.Reset();
-        cpu.Fetch();
+        cpu.Fetch8();
         
         cpu.Step();
 

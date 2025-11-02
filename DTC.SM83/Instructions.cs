@@ -24,8 +24,8 @@ public static class Instructions
         new Instruction(
             "LD BC,nn", // 0x01 nn nn
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Fetch8();
+                cpu.Reg.B = cpu.Fetch8();
                 return 12;
             }
         ),
@@ -70,7 +70,7 @@ public static class Instructions
         new Instruction(
             "LD B,nn", // 0x06 nn
             static cpu => {
-                cpu.Reg.B = cpu.Fetch();
+                cpu.Reg.B = cpu.Fetch8();
                 return 8;
             }
         ),
@@ -146,7 +146,7 @@ public static class Instructions
         new Instruction(
             "LD C,nn", // 0x0E nn
             static cpu => {
-                cpu.Reg.C = cpu.Fetch();
+                cpu.Reg.C = cpu.Fetch8();
                 return 8;
             }
         ),
@@ -173,8 +173,8 @@ public static class Instructions
         new Instruction(
             "LD DE,nn", // 0x11 nn nn
             static cpu => {
-                // todo
-
+                cpu.Reg.E = cpu.Fetch8();
+                cpu.Reg.D = cpu.Fetch8();
                 return 12;
             }
         ),
@@ -219,7 +219,7 @@ public static class Instructions
         new Instruction(
             "LD D,nn", // 0x16 nn
             static cpu => {
-                cpu.Reg.D = cpu.Fetch();
+                cpu.Reg.D = cpu.Fetch8();
                 return 8;
             }
         ),
@@ -295,7 +295,7 @@ public static class Instructions
         new Instruction(
             "LD E,nn", // 0x1E nn
             static cpu => {
-                cpu.Reg.E = cpu.Fetch();
+                cpu.Reg.E = cpu.Fetch8();
                 return 8;
             }
         ),
@@ -322,8 +322,8 @@ public static class Instructions
         new Instruction(
             "LD HL,nn", // 0x21 nn nn
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Fetch8();
+                cpu.Reg.H = cpu.Fetch8();
                 return 12;
             }
         ),
@@ -368,7 +368,7 @@ public static class Instructions
         new Instruction(
             "LD H,nn", // 0x26 nn
             static cpu => {
-                cpu.Reg.H = cpu.Fetch();
+                cpu.Reg.H = cpu.Fetch8();
                 return 8;
             }
         ),
@@ -443,7 +443,7 @@ public static class Instructions
         new Instruction(
             "LD L,nn", // 0x2E nn
             static cpu => {
-                cpu.Reg.L = cpu.Fetch();
+                cpu.Reg.L = cpu.Fetch8();
                 return 8;
             }
         ),
@@ -468,8 +468,7 @@ public static class Instructions
         new Instruction(
             "LD SP,nn", // 0x31 nn nn
             static cpu => {
-                // todo
-
+                cpu.Reg.SP = cpu.Fetch16();
                 return 12;
             }
         ),
@@ -590,7 +589,7 @@ public static class Instructions
         new Instruction(
             "LD A,nn", // 0x3E nn
             static cpu => {
-                cpu.Reg.A = cpu.Fetch();
+                cpu.Reg.A = cpu.Fetch8();
                 return 8;
             }
         ),

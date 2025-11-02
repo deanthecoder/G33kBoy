@@ -31,19 +31,25 @@ public class Cpu
 
         // Pre-load first opcode.
         m_fetchStartTime = Ram.Clock.Ticks;
-        Fetch();
+        Fetch8();
     }
 
     /// <summary>
-    /// Fetch value at PC, and advance PC.
+    /// Fetch byte at PC, and advance PC.
     /// </summary>
-    public byte Fetch() =>
+    public byte Fetch8() =>
         m_fetchedOpcode = Ram.Read8(Reg.PC++);
+
+    /// <summary>
+    /// Fetch word at PC, and advance PC (x2).
+    /// </summary>
+    public ushort Fetch16() =>
+        (ushort)(Fetch8() | (Fetch8() << 8));
 
     public void Step()
     {
         // Decode instruction.
-        var instruction = m_fetchedOpcode == 0xCB ? Instructions.CbPrefixed[Fetch()] : Instructions.Unprefixed[m_fetchedOpcode];
+        var instruction = m_fetchedOpcode == 0xCB ? Instructions.CbPrefixed[Fetch8()] : Instructions.Unprefixed[m_fetchedOpcode];
         if (instruction == null)
             throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
         
@@ -59,6 +65,6 @@ public class Cpu
 
         // Fetch opcode.
         m_fetchStartTime = Ram.Clock.Ticks;
-        Fetch();
+        Fetch8();
     }
 }
