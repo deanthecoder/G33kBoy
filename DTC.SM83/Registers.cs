@@ -23,8 +23,26 @@ public class Registers
     public byte H { get; set; }
     public byte L { get; set; }
 
-    public ushort BC => (ushort)((B << 8) | C);
-    public ushort DE => (ushort)((D << 8) | E);
+    public ushort BC
+    {
+        get => (ushort)((B << 8) | C);
+        set
+        {
+            B = (byte)(value >> 8);
+            C = (byte)(value & 0xFF);
+        }
+    }
+    
+    public ushort DE
+    {
+        get => (ushort)((D << 8) | E);
+        set
+        {
+            D = (byte)(value >> 8);
+            E = (byte)(value & 0xFF);
+        }
+    }
+
     public ushort HL
     {
         get => (ushort)((H << 8) | L);
@@ -121,4 +139,22 @@ public class Registers
     
     public override string ToString() =>
         $"A:{A:X2} F:{F:X2} B:{B:X2} C:{C:X2} D:{D:X2} E:{E:X2} H:{H:X2} L:{L:X2} SP:{SP:X4} PC:{PC:X4}";
+    
+    /// <summary>
+    /// Call after a math operation.
+    /// </summary>
+    public void SetZfFrom(byte value) =>
+        Zf = value == 0;
+    
+    /// <summary>
+    /// Call before an add/inc math operation.
+    /// </summary>
+    public void SetHfForInc(byte value, int inc) =>
+        Hf = (value & 0x0F) + (inc & 0x0F) > 0x0F;
+    
+    /// <summary>
+    /// Call before a sub/dec math operation.
+    /// </summary>
+    public void SetHfForDec(byte value, int dec) =>
+        Hf = (value & 0x0F) < (dec & 0x0F);
 }

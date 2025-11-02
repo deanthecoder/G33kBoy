@@ -39,30 +39,28 @@ public static class Instructions
         new Instruction(
             "INC BC", // 0x03
             static cpu => {
-                // todo
-
+                cpu.Reg.BC++;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC B", // 0x04
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.B, 1);
+                cpu.Reg.B++;
+                cpu.Reg.SetZfFrom(cpu.Reg.B);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "DEC B", // 0x05
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.B, 1);
+                cpu.Reg.B--;
+                cpu.Reg.SetZfFrom(cpu.Reg.B);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
@@ -115,30 +113,28 @@ public static class Instructions
         new Instruction(
             "DEC BC", // 0x0B
             static cpu => {
-                // todo
-
+                cpu.Reg.BC--;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC C", // 0x0C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.C, 1);
+                cpu.Reg.C++;
+                cpu.Reg.SetZfFrom(cpu.Reg.C);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "DEC C", // 0x0D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.C, 1);
+                cpu.Reg.C--;
+                cpu.Reg.SetZfFrom(cpu.Reg.C);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
@@ -187,30 +183,28 @@ public static class Instructions
         new Instruction(
             "INC DE", // 0x13
             static cpu => {
-                // todo
-
+                cpu.Reg.DE++;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC D", // 0x14
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.D, 1);
+                cpu.Reg.D++;
+                cpu.Reg.SetZfFrom(cpu.Reg.D);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "DEC D", // 0x15
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.D, 1);
+                cpu.Reg.D--;
+                cpu.Reg.SetZfFrom(cpu.Reg.D);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
@@ -263,30 +257,28 @@ public static class Instructions
         new Instruction(
             "DEC DE", // 0x1B
             static cpu => {
-                // todo
-
+                cpu.Reg.DE--;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC E", // 0x1C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.E, 1);
+                cpu.Reg.E++;
+                cpu.Reg.SetZfFrom(cpu.Reg.E);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "DEC E", // 0x1D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.E, 1);
+                cpu.Reg.E--;
+                cpu.Reg.SetZfFrom(cpu.Reg.E);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
@@ -336,30 +328,28 @@ public static class Instructions
         new Instruction(
             "INC HL", // 0x23
             static cpu => {
-                // todo
-
+                cpu.Reg.HL++;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC H", // 0x24
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.H, 1);
+                cpu.Reg.H++;
+                cpu.Reg.SetZfFrom(cpu.Reg.H);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "DEC H", // 0x25
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.H, 1);
+                cpu.Reg.H--;
+                cpu.Reg.SetZfFrom(cpu.Reg.H);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
@@ -411,30 +401,28 @@ public static class Instructions
         new Instruction(
             "DEC HL", // 0x2B
             static cpu => {
-                // todo
-
+                cpu.Reg.HL--;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC L", // 0x2C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.L, 1);
+                cpu.Reg.L++;
+                cpu.Reg.SetZfFrom(cpu.Reg.L);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "DEC L", // 0x2D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.L, 1);
+                cpu.Reg.L--;
+                cpu.Reg.SetZfFrom(cpu.Reg.L);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
@@ -481,30 +469,30 @@ public static class Instructions
         new Instruction(
             "INC SP", // 0x33
             static cpu => {
-                // todo
-
+                cpu.Reg.SP++;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC (HL)", // 0x34
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.SetHfForInc(value, 1);
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(value + 1));
+                cpu.Reg.SetZfFrom(value);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 12;
             }
         ),
         new Instruction(
             "DEC (HL)", // 0x35
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.SetHfForDec(value, 1);
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(value - 1));
+                cpu.Reg.SetZfFrom(value);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 12;
             }
         ),
@@ -557,30 +545,28 @@ public static class Instructions
         new Instruction(
             "DEC SP", // 0x3B
             static cpu => {
-                // todo
-
+                cpu.Reg.SP--;
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
         new Instruction(
             "INC A", // 0x3C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.A, 1);
+                cpu.Reg.A++;
+                cpu.Reg.SetZfFrom(cpu.Reg.A);
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "DEC A", // 0x3D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.A, 1);
+                cpu.Reg.A--;
+                cpu.Reg.SetZfFrom(cpu.Reg.A);
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
                 return 4;
             }
         ),

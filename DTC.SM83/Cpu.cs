@@ -67,4 +67,7 @@ public class Cpu
         m_fetchStartTime = Ram.Clock.Ticks;
         Fetch8();
     }
+    
+    public void InternalWaitT() =>
+        Ram.Clock.AdvanceT(4);
 }
