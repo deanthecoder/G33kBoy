@@ -17,10 +17,7 @@ public static class Instructions
     [
         new Instruction(
             "NOP", // 0x00
-            static cpu => {
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD BC,nn", // 0x01 nn nn
             static cpu => {
@@ -30,7 +27,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD BC,A", // 0x02
+            "LD (BC),A", // 0x02
             static cpu => {
                 // todo
 
@@ -88,7 +85,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD a16,SP", // 0x08 nn nn
+            "LD (a16),SP", // 0x08 nn nn
             static cpu => {
                 // todo
 
@@ -107,7 +104,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,BC", // 0x0A
+            "LD A,(BC)", // 0x0A
             static cpu => {
                 // todo
 
@@ -181,7 +178,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD DE,A", // 0x12
+            "LD (DE),A", // 0x12
             static cpu => {
                 // todo
 
@@ -258,7 +255,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,DE", // 0x1A
+            "LD A,(DE)", // 0x1A
             static cpu => {
                 // todo
 
@@ -332,7 +329,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,A", // 0x22
+            "LD (HL),A", // 0x22
             static cpu => {
                 // todo
 
@@ -408,7 +405,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,HL", // 0x2A
+            "LD A,(HL)", // 0x2A
             static cpu => {
                 // todo
 
@@ -480,7 +477,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,A", // 0x32
+            "LD (HL),A", // 0x32
             static cpu => {
                 // todo
 
@@ -496,7 +493,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "INC HL", // 0x34
+            "INC (HL)", // 0x34
             static cpu => {
                 // todo
 
@@ -507,7 +504,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "DEC HL", // 0x35
+            "DEC (HL)", // 0x35
             static cpu => {
                 // todo
 
@@ -518,7 +515,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,nn", // 0x36 nn
+            "LD (HL),nn", // 0x36 nn
             static cpu => {
                 // todo
 
@@ -556,7 +553,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,HL", // 0x3A
+            "LD A,(HL)", // 0x3A
             static cpu => {
                 // todo
 
@@ -661,7 +658,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD B,HL", // 0x46
+            "LD B,(HL)", // 0x46
             static cpu => {
                 // todo
 
@@ -725,7 +722,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD C,HL", // 0x4E
+            "LD C,(HL)", // 0x4E
             static cpu => {
                 // todo
 
@@ -789,7 +786,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD D,HL", // 0x56
+            "LD D,(HL)", // 0x56
             static cpu => {
                 // todo
 
@@ -853,7 +850,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD E,HL", // 0x5E
+            "LD E,(HL)", // 0x5E
             static cpu => {
                 // todo
 
@@ -917,7 +914,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD H,HL", // 0x66
+            "LD H,(HL)", // 0x66
             static cpu => {
                 // todo
 
@@ -981,7 +978,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD L,HL", // 0x6E
+            "LD L,(HL)", // 0x6E
             static cpu => {
                 // todo
 
@@ -997,7 +994,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,B", // 0x70
+            "LD (HL),B", // 0x70
             static cpu => {
                 // todo
 
@@ -1005,7 +1002,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,C", // 0x71
+            "LD (HL),C", // 0x71
             static cpu => {
                 // todo
 
@@ -1013,7 +1010,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,D", // 0x72
+            "LD (HL),D", // 0x72
             static cpu => {
                 // todo
 
@@ -1021,7 +1018,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,E", // 0x73
+            "LD (HL),E", // 0x73
             static cpu => {
                 // todo
 
@@ -1029,7 +1026,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,H", // 0x74
+            "LD (HL),H", // 0x74
             static cpu => {
                 // todo
 
@@ -1037,7 +1034,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,L", // 0x75
+            "LD (HL),L", // 0x75
             static cpu => {
                 // todo
 
@@ -1053,7 +1050,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD HL,A", // 0x77
+            "LD (HL),A", // 0x77
             static cpu => {
                 // todo
 
@@ -1109,7 +1106,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,HL", // 0x7E
+            "LD A,(HL)", // 0x7E
             static cpu => {
                 // todo
 
@@ -1197,7 +1194,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "ADD A,HL", // 0x86
+            "ADD A,(HL)", // 0x86
             static cpu => {
                 // todo
 
@@ -1293,7 +1290,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "ADC A,HL", // 0x8E
+            "ADC A,(HL)", // 0x8E
             static cpu => {
                 // todo
 
@@ -1389,7 +1386,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SUB A,HL", // 0x96
+            "SUB A,(HL)", // 0x96
             static cpu => {
                 // todo
 
@@ -1485,7 +1482,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SBC A,HL", // 0x9E
+            "SBC A,(HL)", // 0x9E
             static cpu => {
                 // todo
 
@@ -1580,7 +1577,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "AND A,HL", // 0xA6
+            "AND A,(HL)", // 0xA6
             static cpu => {
                 // todo
 
@@ -1676,7 +1673,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "XOR A,HL", // 0xAE
+            "XOR A,(HL)", // 0xAE
             static cpu => {
                 // todo
 
@@ -1772,7 +1769,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "OR A,HL", // 0xB6
+            "OR A,(HL)", // 0xB6
             static cpu => {
                 // todo
 
@@ -1868,7 +1865,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "CP A,HL", // 0xBE
+            "CP A,(HL)", // 0xBE
             static cpu => {
                 // todo
 
@@ -2143,7 +2140,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LDH a8,A", // 0xE0 nn
+            "LDH (a8),A", // 0xE0 nn
             static cpu => {
                 // todo
 
@@ -2159,7 +2156,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LDH C,A", // 0xE2
+            "LDH (C),A", // 0xE2
             static cpu => {
                 // todo
 
@@ -2217,7 +2214,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD a16,A", // 0xEA nn nn
+            "LD (a16),A", // 0xEA nn nn
             static cpu => {
                 // todo
 
@@ -2248,7 +2245,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LDH A,a8", // 0xF0 nn
+            "LDH A,(a8)", // 0xF0 nn
             static cpu => {
                 // todo
 
@@ -2268,7 +2265,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LDH A,C", // 0xF2
+            "LDH A,(C)", // 0xF2
             static cpu => {
                 // todo
 
@@ -2333,7 +2330,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,a16", // 0xFA nn nn
+            "LD A,(a16)", // 0xFA nn nn
             static cpu => {
                 // todo
 
@@ -2447,7 +2444,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RLC HL", // 0x06
+            "RLC (HL)", // 0x06
             static cpu => {
                 // todo
 
@@ -2543,7 +2540,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RRC HL", // 0x0E
+            "RRC (HL)", // 0x0E
             static cpu => {
                 // todo
 
@@ -2639,7 +2636,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RL HL", // 0x16
+            "RL (HL)", // 0x16
             static cpu => {
                 // todo
 
@@ -2735,7 +2732,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RR HL", // 0x1E
+            "RR (HL)", // 0x1E
             static cpu => {
                 // todo
 
@@ -2831,7 +2828,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SLA HL", // 0x26
+            "SLA (HL)", // 0x26
             static cpu => {
                 // todo
 
@@ -2927,7 +2924,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SRA HL", // 0x2E
+            "SRA (HL)", // 0x2E
             static cpu => {
                 // todo
 
@@ -3023,7 +3020,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SWAP HL", // 0x36
+            "SWAP (HL)", // 0x36
             static cpu => {
                 // todo
 
@@ -3119,7 +3116,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SRL HL", // 0x3E
+            "SRL (HL)", // 0x3E
             static cpu => {
                 // todo
 
@@ -3209,7 +3206,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 0,HL", // 0x46
+            "BIT 0,(HL)", // 0x46
             static cpu => {
                 // todo
 
@@ -3297,7 +3294,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 1,HL", // 0x4E
+            "BIT 1,(HL)", // 0x4E
             static cpu => {
                 // todo
 
@@ -3385,7 +3382,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 2,HL", // 0x56
+            "BIT 2,(HL)", // 0x56
             static cpu => {
                 // todo
 
@@ -3473,7 +3470,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 3,HL", // 0x5E
+            "BIT 3,(HL)", // 0x5E
             static cpu => {
                 // todo
 
@@ -3561,7 +3558,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 4,HL", // 0x66
+            "BIT 4,(HL)", // 0x66
             static cpu => {
                 // todo
 
@@ -3649,7 +3646,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 5,HL", // 0x6E
+            "BIT 5,(HL)", // 0x6E
             static cpu => {
                 // todo
 
@@ -3737,7 +3734,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 6,HL", // 0x76
+            "BIT 6,(HL)", // 0x76
             static cpu => {
                 // todo
 
@@ -3825,7 +3822,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "BIT 7,HL", // 0x7E
+            "BIT 7,(HL)", // 0x7E
             static cpu => {
                 // todo
 
@@ -3895,7 +3892,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 0,HL", // 0x86
+            "RES 0,(HL)", // 0x86
             static cpu => {
                 // todo
 
@@ -3959,7 +3956,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 1,HL", // 0x8E
+            "RES 1,(HL)", // 0x8E
             static cpu => {
                 // todo
 
@@ -4023,7 +4020,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 2,HL", // 0x96
+            "RES 2,(HL)", // 0x96
             static cpu => {
                 // todo
 
@@ -4087,7 +4084,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 3,HL", // 0x9E
+            "RES 3,(HL)", // 0x9E
             static cpu => {
                 // todo
 
@@ -4151,7 +4148,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 4,HL", // 0xA6
+            "RES 4,(HL)", // 0xA6
             static cpu => {
                 // todo
 
@@ -4215,7 +4212,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 5,HL", // 0xAE
+            "RES 5,(HL)", // 0xAE
             static cpu => {
                 // todo
 
@@ -4279,7 +4276,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 6,HL", // 0xB6
+            "RES 6,(HL)", // 0xB6
             static cpu => {
                 // todo
 
@@ -4343,7 +4340,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "RES 7,HL", // 0xBE
+            "RES 7,(HL)", // 0xBE
             static cpu => {
                 // todo
 
@@ -4407,7 +4404,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 0,HL", // 0xC6
+            "SET 0,(HL)", // 0xC6
             static cpu => {
                 // todo
 
@@ -4471,7 +4468,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 1,HL", // 0xCE
+            "SET 1,(HL)", // 0xCE
             static cpu => {
                 // todo
 
@@ -4535,7 +4532,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 2,HL", // 0xD6
+            "SET 2,(HL)", // 0xD6
             static cpu => {
                 // todo
 
@@ -4599,7 +4596,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 3,HL", // 0xDE
+            "SET 3,(HL)", // 0xDE
             static cpu => {
                 // todo
 
@@ -4663,7 +4660,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 4,HL", // 0xE6
+            "SET 4,(HL)", // 0xE6
             static cpu => {
                 // todo
 
@@ -4727,7 +4724,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 5,HL", // 0xEE
+            "SET 5,(HL)", // 0xEE
             static cpu => {
                 // todo
 
@@ -4791,7 +4788,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 6,HL", // 0xF6
+            "SET 6,(HL)", // 0xF6
             static cpu => {
                 // todo
 
@@ -4855,7 +4852,7 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "SET 7,HL", // 0xFE
+            "SET 7,(HL)", // 0xFE
             static cpu => {
                 // todo
 
