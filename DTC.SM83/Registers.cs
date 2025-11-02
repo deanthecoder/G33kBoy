@@ -10,6 +10,8 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 // ReSharper disable NonReadonlyMemberInGetHashCode
+using System.Text.Json;
+
 namespace DTC.SM83;
 
 public class Registers
@@ -151,7 +153,13 @@ public class Registers
     /// </summary>
     public void SetHfForInc(byte value, int inc) =>
         Hf = (value & 0x0F) + (inc & 0x0F) > 0x0F;
-    
+
+    /// <summary>
+    /// Call before an add/inc math operation.
+    /// </summary>
+    public void SetHfForInc(ushort value, ushort inc) =>
+        Hf = (value & 0x0FFF) + (inc & 0x0FFF) > 0x0FFF;
+
     /// <summary>
     /// Call before a sub/dec math operation.
     /// </summary>

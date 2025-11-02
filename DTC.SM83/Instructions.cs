@@ -94,11 +94,12 @@ public static class Instructions
         new Instruction(
             "ADD HL,BC", // 0x09
             static cpu => {
-                // todo
-
+                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.BC);
+                var sum = (uint)cpu.Reg.HL + cpu.Reg.BC;
+                cpu.Reg.Cf = sum > 0xFFFF;
+                cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
@@ -238,11 +239,12 @@ public static class Instructions
         new Instruction(
             "ADD HL,DE", // 0x19
             static cpu => {
-                // todo
-
+                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.DE);
+                var sum = (uint)cpu.Reg.HL + cpu.Reg.DE;
+                cpu.Reg.Cf = sum > 0xFFFF;
+                cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
@@ -382,11 +384,12 @@ public static class Instructions
         new Instruction(
             "ADD HL,HL", // 0x29
             static cpu => {
-                // todo
-
+                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.HL);
+                var sum = (uint)cpu.Reg.HL + cpu.Reg.HL;
+                cpu.Reg.Cf = sum > 0xFFFF;
+                cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
@@ -526,11 +529,12 @@ public static class Instructions
         new Instruction(
             "ADD HL,SP", // 0x39
             static cpu => {
-                // todo
-
+                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.SP);
+                var sum = (uint)cpu.Reg.HL + cpu.Reg.SP;
+                cpu.Reg.Cf = sum > 0xFFFF;
+                cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.InternalWaitT();
                 return 8;
             }
         ),
