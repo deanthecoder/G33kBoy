@@ -36,11 +36,26 @@ public class CpuTests : TestsBase
         var prepared = test.Prepare();
         var cpu = new Cpu(prepared.InitialMem);
         prepared.InitialRegs.CopyTo(cpu.Reg);
-
+        cpu.Reg.PC--;
+        cpu.Ram.Clock.Reset();
+        cpu.Fetch();
+        
         cpu.Step();
 
         Assert.That(cpu.Reg, Is.EqualTo(prepared.FinalRegs));
-        Assert.That(cpu.Ram, Is.EqualTo(prepared.FinalMem));
+        Assert.That(cpu.Ram, Is.EqualTo(prepared.FinalMem), () => GetMemoryComparisonMessage(cpu.Ram, prepared.FinalMem));
+    }
+    
+    private static string GetMemoryComparisonMessage(Memory expected, Memory actual)
+    {
+        for (ushort i = 0; i < expected.Length; i++)
+        {
+            var expectedByte = expected.Peek8(i);
+            var actualByte = actual.Peek8(i);
+            if (expectedByte != actualByte)
+                return $"Memory at 0x{i:X4} ({i}) is not equal. Expected 0x{expectedByte:X2} ({expectedByte}), got 0x{actualByte:X2} ({actualByte}).";
+        }
+        return string.Empty;   
     }
 
     public class SingleTest
@@ -68,14 +83,16 @@ public class CpuTests : TestsBase
 
         public PreparedTest Prepare()
         {
+            var clock = new Clock();
             var initialRegs = new Registers();
             var finalRegs = new Registers();
-            var initialMem = new Memory(0xFFFF);
-            var finalMem = new Memory(0xFFFF);
+            var initialMem = new Memory(0xFFFF, clock);
+            var finalMem = new Memory(0xFFFF, clock);
 
             Populate(initialRegs, m_initialState);
-            Populate(finalRegs, m_finalState);
             Populate(initialMem, m_initialState);
+            
+            Populate(finalRegs, m_finalState);
             Populate(finalMem, m_finalState);
 
             return new PreparedTest(initialRegs, finalRegs, initialMem, finalMem);
@@ -111,10 +128,7 @@ public class CpuTests : TestsBase
                     continue;
 
                 var address = (ushort)entry[0];
-                if (address >= 0xFFFF)
-                    continue;
-
-                memory[address] = (byte)entry[1];
+                memory.Write8(address, (byte)entry[1]);
             }
         }
 
@@ -124,12 +138,12 @@ public class CpuTests : TestsBase
             var ram = initialState.Ram;
             var maxRamAddress = ram.Max(entry => entry[0]);
             var bytesToAllocate = maxRamAddress - pc + 1;
-            var mem = new Memory(bytesToAllocate);
+            var mem = new Memory(bytesToAllocate, new Clock());
             foreach (var ramByte in ram)
             {
                 var addr = ramByte[0] - pc;
                 if (addr >= 0)
-                    mem[(ushort)addr] = (byte)ramByte[1];
+                    mem.Write8((ushort)addr, (byte)ramByte[1]);
             }
 
             return Disassembler.GetMnemonic(mem, 0);

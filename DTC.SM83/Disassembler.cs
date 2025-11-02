@@ -21,12 +21,11 @@ public static class Disassembler
         if (memory == null)
             throw new ArgumentNullException(nameof(memory));
 
-        var opcode = memory[address];
-
+        var opcode = memory.Read8(address);
         if (opcode == 0xCB)
         {
             var cbOpcodeAddress = (ushort)(address + 1);
-            var cbOpcode = memory[cbOpcodeAddress];
+            var cbOpcode = memory.Read8(cbOpcodeAddress);
             var cbInstruction = Instructions.CbPrefixed[cbOpcode];
             return cbInstruction?.Mnemonic ?? $"CB ${cbOpcode:X2}";
         }

@@ -19,20 +19,23 @@ public sealed class Instruction
     /// <summary>
     /// Gets the mnemonic representation of the instruction.
     /// </summary>
-    public string Mnemonic { get; init; }
+    public string Mnemonic { get; }
 
     /// <summary>
     /// Gets the function that executes this instruction on the CPU and returns the number of cycles taken.
     /// </summary>
-    public Func<Cpu, int> Exec { get; init; }
+    public Func<Cpu, ulong> Execute { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Instruction"/> class.
     /// </summary>
     /// <param name="mnemonic">The mnemonic representation of the instruction.</param>
-    /// <param name="exec">The function that executes this instruction on the CPU.</param>
-    public Instruction(string mnemonic, Func<Cpu, int> exec)
+    /// <param name="execute">The function that executes this instruction on the CPU.</param>
+    public Instruction(string mnemonic, Func<Cpu, ulong> execute)
     {
-        Mnemonic = mnemonic; Exec = exec;
+        Mnemonic = mnemonic;
+        Execute = execute;
     }
+    
+    public override string ToString() => Mnemonic;
 }

@@ -18,9 +18,6 @@ public static class Instructions
         new Instruction(
             "NOP", // 0x00
             static cpu => {
-                // todo
-
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -29,7 +26,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 12;
             }
         ),
@@ -38,7 +34,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -47,7 +42,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -59,7 +53,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -71,7 +64,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -80,7 +72,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -93,7 +84,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -102,7 +92,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 20;
             }
         ),
@@ -114,7 +103,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -123,7 +111,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -132,7 +119,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -144,7 +130,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -156,7 +141,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -165,7 +149,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -178,7 +161,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -187,7 +169,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 4;
             }
         ),
@@ -196,7 +177,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 12;
             }
         ),
@@ -205,7 +185,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -214,7 +193,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -226,7 +204,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -238,7 +215,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -247,7 +223,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -260,7 +235,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -269,7 +243,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -281,7 +254,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -290,7 +262,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -299,7 +270,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -311,7 +281,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -323,7 +292,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -332,7 +300,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -345,7 +312,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -354,7 +320,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12; // 12 or 8 - todo
             }
         ),
@@ -363,7 +328,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 12;
             }
         ),
@@ -372,7 +336,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -381,7 +344,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -393,7 +355,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -405,7 +366,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -414,7 +374,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -426,7 +385,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -435,7 +393,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12; // 12 or 8 - todo
             }
         ),
@@ -447,7 +404,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -456,7 +412,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -465,7 +420,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -477,7 +431,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -489,7 +442,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -498,7 +450,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -509,7 +460,6 @@ public static class Instructions
 
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -518,7 +468,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12; // 12 or 8 - todo
             }
         ),
@@ -527,7 +476,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 12;
             }
         ),
@@ -536,7 +484,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -545,7 +492,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -557,7 +503,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 12;
             }
         ),
@@ -569,7 +514,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 12;
             }
         ),
@@ -578,7 +522,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -590,7 +533,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = true;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -599,7 +541,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12; // 12 or 8 - todo
             }
         ),
@@ -611,7 +552,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -620,7 +560,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -629,7 +568,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -641,7 +579,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -653,7 +590,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -662,7 +598,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -674,7 +609,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -683,7 +617,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -692,7 +625,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -701,7 +633,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -710,7 +641,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -719,7 +649,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -728,7 +657,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -737,7 +665,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -746,7 +673,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -755,7 +681,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -764,7 +689,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -773,7 +697,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -782,7 +705,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -791,7 +713,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -800,7 +721,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -809,7 +729,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -818,7 +737,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -827,7 +745,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -836,7 +753,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -845,7 +761,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -854,7 +769,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -863,7 +777,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -872,7 +785,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -881,7 +793,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -890,7 +801,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -899,7 +809,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -908,7 +817,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -917,7 +825,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -926,7 +833,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -935,7 +841,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -944,7 +849,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -953,7 +857,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -962,7 +865,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -971,7 +873,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -980,7 +881,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -989,7 +889,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -998,7 +897,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1007,7 +905,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1016,7 +913,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1025,7 +921,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1034,7 +929,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1043,7 +937,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1052,7 +945,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1061,7 +953,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1070,7 +961,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1079,7 +969,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1088,7 +977,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1097,7 +985,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1106,7 +993,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1115,7 +1001,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1124,7 +1009,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1133,7 +1017,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1142,7 +1025,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1151,7 +1033,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1160,7 +1041,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1169,7 +1049,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1178,7 +1057,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1187,7 +1065,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1196,7 +1073,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1205,7 +1081,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1214,7 +1089,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1223,7 +1097,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1232,7 +1105,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1241,7 +1113,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1250,7 +1121,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1263,7 +1133,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1276,7 +1145,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1289,7 +1157,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1302,7 +1169,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1315,7 +1181,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1328,7 +1193,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1341,7 +1205,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1354,7 +1217,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1367,7 +1229,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1380,7 +1241,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1393,7 +1253,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1406,7 +1265,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1419,7 +1277,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1432,7 +1289,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1445,7 +1301,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1458,7 +1313,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1471,7 +1325,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1484,7 +1337,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1497,7 +1349,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1510,7 +1361,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1523,7 +1373,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1536,7 +1385,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1549,7 +1397,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1562,7 +1409,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1575,7 +1421,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1588,7 +1433,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1601,7 +1445,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1614,7 +1457,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1627,7 +1469,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1640,7 +1481,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1653,7 +1493,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1665,7 +1504,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1678,7 +1516,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1691,7 +1528,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1704,7 +1540,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1717,7 +1552,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1730,7 +1564,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1743,7 +1576,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1756,7 +1588,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1769,7 +1600,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1782,7 +1612,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1795,7 +1624,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1808,7 +1636,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1821,7 +1648,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1834,7 +1660,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1847,7 +1672,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1860,7 +1684,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1873,7 +1696,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1886,7 +1708,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1899,7 +1720,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1912,7 +1732,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1925,7 +1744,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1938,7 +1756,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1951,7 +1768,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1964,7 +1780,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -1977,7 +1792,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -1990,7 +1804,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2003,7 +1816,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2016,7 +1828,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2029,7 +1840,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2042,7 +1852,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2055,7 +1864,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2068,7 +1876,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -2081,7 +1888,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2090,7 +1896,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 20; // 20 or 8 - todo
             }
         ),
@@ -2099,7 +1904,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 12;
             }
         ),
@@ -2108,7 +1912,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 16; // 16 or 12 - todo
             }
         ),
@@ -2117,7 +1920,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 16;
             }
         ),
@@ -2126,7 +1928,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 24; // 24 or 12 - todo
             }
         ),
@@ -2135,7 +1936,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2148,7 +1948,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2157,7 +1956,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2166,7 +1964,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 20; // 20 or 8 - todo
             }
         ),
@@ -2175,7 +1972,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2184,7 +1980,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 16; // 16 or 12 - todo
             }
         ),
@@ -2193,7 +1988,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2202,7 +1996,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 24; // 24 or 12 - todo
             }
         ),
@@ -2211,7 +2004,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 24;
             }
         ),
@@ -2224,7 +2016,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2233,7 +2024,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2242,7 +2032,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 20; // 20 or 8 - todo
             }
         ),
@@ -2251,7 +2040,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 12;
             }
         ),
@@ -2260,7 +2048,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 16; // 16 or 12 - todo
             }
         ),
@@ -2270,7 +2057,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 24; // 24 or 12 - todo
             }
         ),
@@ -2279,7 +2065,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2292,7 +2077,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2301,7 +2085,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2310,7 +2093,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 20; // 20 or 8 - todo
             }
         ),
@@ -2319,7 +2101,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2328,7 +2109,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 16; // 16 or 12 - todo
             }
         ),
@@ -2338,7 +2118,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 24; // 24 or 12 - todo
             }
         ),
@@ -2352,7 +2131,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2361,7 +2139,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2370,7 +2147,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -2379,7 +2155,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 12;
             }
         ),
@@ -2388,7 +2163,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -2399,7 +2173,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2412,7 +2185,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2421,7 +2193,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2434,7 +2205,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -2443,7 +2213,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2452,7 +2221,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 16;
             }
         ),
@@ -2468,7 +2236,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2477,7 +2244,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2486,7 +2252,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -2499,7 +2264,6 @@ public static class Instructions
                 cpu.Reg.Nf = false; // todo - Calculate
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 1;
                 return 12;
             }
         ),
@@ -2508,7 +2272,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -2517,7 +2280,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2527,7 +2289,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2540,7 +2301,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2549,7 +2309,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         ),
@@ -2562,7 +2321,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -2571,7 +2329,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 8;
             }
         ),
@@ -2580,7 +2337,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 3;
                 return 16;
             }
         ),
@@ -2589,7 +2345,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 4;
             }
         ),
@@ -2604,7 +2359,6 @@ public static class Instructions
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false; // todo - Calculate
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2613,7 +2367,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 1;
                 return 16;
             }
         )
@@ -2630,7 +2383,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2643,7 +2395,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2656,7 +2407,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2669,7 +2419,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2682,7 +2431,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2695,7 +2443,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2708,7 +2455,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -2721,7 +2467,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2734,7 +2479,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2747,7 +2491,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2760,7 +2503,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2773,7 +2515,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2786,7 +2527,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2799,7 +2539,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2812,7 +2551,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -2825,7 +2563,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2838,7 +2575,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2851,7 +2587,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2864,7 +2599,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2877,7 +2611,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2890,7 +2623,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2903,7 +2635,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2916,7 +2647,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -2929,7 +2659,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2942,7 +2671,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2955,7 +2683,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2968,7 +2695,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2981,7 +2707,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -2994,7 +2719,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3007,7 +2731,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3020,7 +2743,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -3033,7 +2755,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3046,7 +2767,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3059,7 +2779,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3072,7 +2791,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3085,7 +2803,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3098,7 +2815,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3111,7 +2827,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3124,7 +2839,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -3137,7 +2851,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3150,7 +2863,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3163,7 +2875,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3176,7 +2887,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3189,7 +2899,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3202,7 +2911,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3215,7 +2923,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3228,7 +2935,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -3241,7 +2947,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3254,7 +2959,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3267,7 +2971,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3280,7 +2983,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3293,7 +2995,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3306,7 +3007,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3319,7 +3019,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3332,7 +3031,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -3345,7 +3043,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3358,7 +3055,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3371,7 +3067,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3384,7 +3079,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3397,7 +3091,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3410,7 +3103,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3423,7 +3115,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3436,7 +3127,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -3449,7 +3139,6 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false; // todo - Calculate
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3461,7 +3150,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3473,7 +3161,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3485,7 +3172,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3497,7 +3183,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3509,7 +3194,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3521,7 +3205,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3533,7 +3216,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -3545,7 +3227,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3557,7 +3238,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3569,7 +3249,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3581,7 +3260,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3593,7 +3271,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3605,7 +3282,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3617,7 +3293,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3629,7 +3304,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -3641,7 +3315,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3653,7 +3326,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3665,7 +3337,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3677,7 +3348,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3689,7 +3359,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3701,7 +3370,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3713,7 +3381,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3725,7 +3392,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -3737,7 +3403,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3749,7 +3414,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3761,7 +3425,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3773,7 +3436,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3785,7 +3447,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3797,7 +3458,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3809,7 +3469,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3821,7 +3480,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -3833,7 +3491,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3845,7 +3502,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3857,7 +3513,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3869,7 +3524,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3881,7 +3535,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3893,7 +3546,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3905,7 +3557,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3917,7 +3568,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -3929,7 +3579,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3941,7 +3590,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3953,7 +3601,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3965,7 +3612,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3977,7 +3623,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -3989,7 +3634,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4001,7 +3645,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4013,7 +3656,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -4025,7 +3667,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4037,7 +3678,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4049,7 +3689,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4061,7 +3700,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4073,7 +3711,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4085,7 +3722,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4097,7 +3733,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4109,7 +3744,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -4121,7 +3755,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4133,7 +3766,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4145,7 +3777,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4157,7 +3788,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4169,7 +3799,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4181,7 +3810,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4193,7 +3821,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4205,7 +3832,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 12;
             }
         ),
@@ -4217,7 +3843,6 @@ public static class Instructions
                 cpu.Reg.Zf = false; // todo - Calculate
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4226,7 +3851,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4235,7 +3859,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4244,7 +3867,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4253,7 +3875,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4262,7 +3883,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4271,7 +3891,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4280,7 +3899,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4289,7 +3907,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4298,7 +3915,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4307,7 +3923,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4316,7 +3931,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4325,7 +3939,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4334,7 +3947,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4343,7 +3955,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4352,7 +3963,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4361,7 +3971,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4370,7 +3979,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4379,7 +3987,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4388,7 +3995,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4397,7 +4003,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4406,7 +4011,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4415,7 +4019,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4424,7 +4027,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4433,7 +4035,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4442,7 +4043,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4451,7 +4051,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4460,7 +4059,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4469,7 +4067,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4478,7 +4075,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4487,7 +4083,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4496,7 +4091,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4505,7 +4099,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4514,7 +4107,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4523,7 +4115,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4532,7 +4123,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4541,7 +4131,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4550,7 +4139,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4559,7 +4147,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4568,7 +4155,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4577,7 +4163,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4586,7 +4171,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4595,7 +4179,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4604,7 +4187,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4613,7 +4195,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4622,7 +4203,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4631,7 +4211,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4640,7 +4219,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4649,7 +4227,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4658,7 +4235,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4667,7 +4243,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4676,7 +4251,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4685,7 +4259,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4694,7 +4267,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4703,7 +4275,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4712,7 +4283,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4721,7 +4291,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4730,7 +4299,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4739,7 +4307,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4748,7 +4315,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4757,7 +4323,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4766,7 +4331,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4775,7 +4339,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4784,7 +4347,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4793,7 +4355,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4802,7 +4363,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4811,7 +4371,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4820,7 +4379,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4829,7 +4387,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4838,7 +4395,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4847,7 +4403,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4856,7 +4411,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4865,7 +4419,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4874,7 +4427,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4883,7 +4435,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4892,7 +4443,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4901,7 +4451,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4910,7 +4459,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4919,7 +4467,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4928,7 +4475,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -4937,7 +4483,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4946,7 +4491,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4955,7 +4499,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4964,7 +4507,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4973,7 +4515,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4982,7 +4523,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -4991,7 +4531,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5000,7 +4539,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -5009,7 +4547,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5018,7 +4555,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5027,7 +4563,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5036,7 +4571,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5045,7 +4579,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5054,7 +4587,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5063,7 +4595,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5072,7 +4603,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -5081,7 +4611,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5090,7 +4619,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5099,7 +4627,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5108,7 +4635,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5117,7 +4643,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5126,7 +4651,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5135,7 +4659,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5144,7 +4667,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -5153,7 +4675,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5162,7 +4683,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5171,7 +4691,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5180,7 +4699,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5189,7 +4707,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5198,7 +4715,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5207,7 +4723,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5216,7 +4731,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -5225,7 +4739,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5234,7 +4747,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5243,7 +4755,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5252,7 +4763,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5261,7 +4771,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5270,7 +4779,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5279,7 +4787,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5288,7 +4795,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -5297,7 +4803,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5306,7 +4811,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5315,7 +4819,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5324,7 +4827,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5333,7 +4835,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5342,7 +4843,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5351,7 +4851,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         ),
@@ -5360,7 +4859,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 16;
             }
         ),
@@ -5369,7 +4867,6 @@ public static class Instructions
             static cpu => {
                 // todo
 
-                cpu.Reg.PC += 2;
                 return 8;
             }
         )
