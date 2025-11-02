@@ -163,6 +163,12 @@ public class Registers
     /// <summary>
     /// Call before a sub/dec math operation.
     /// </summary>
-    public void SetHfForDec(byte value, int dec) =>
+    public void SetHfForDec(byte value, byte dec) =>
         Hf = (value & 0x0F) < (dec & 0x0F);
+
+    /// <summary>
+    /// Call before a sub/dec math operation.
+    /// </summary>
+    public void SetHfForDec(ushort value, ushort dec) =>
+        Hf = (value & 0x0FFF) < (dec & 0x0FFF);
 }

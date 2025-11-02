@@ -49,7 +49,7 @@ public class Cpu
     public void Step()
     {
         // Decode instruction.
-        var instruction = m_fetchedOpcode == 0xCB ? Instructions.CbPrefixed[Fetch8()] : Instructions.Unprefixed[m_fetchedOpcode];
+        var instruction = m_fetchedOpcode == 0xCB ? PrefixedInstructions.Table[Fetch8()] : Instructions.Table[m_fetchedOpcode];
         if (instruction == null)
             throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
         

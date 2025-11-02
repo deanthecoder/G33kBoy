@@ -26,11 +26,11 @@ public static class Disassembler
         {
             var cbOpcodeAddress = (ushort)(address + 1);
             var cbOpcode = memory.Read8(cbOpcodeAddress);
-            var cbInstruction = Instructions.CbPrefixed[cbOpcode];
+            var cbInstruction = PrefixedInstructions.Table[cbOpcode];
             return cbInstruction?.Mnemonic ?? $"CB ${cbOpcode:X2}";
         }
 
-        var instruction = Instructions.Unprefixed[opcode];
+        var instruction = Instructions.Table[opcode];
         return instruction?.Mnemonic ?? $"DB ${opcode:X2}";
     }
 }
