@@ -1790,8 +1790,8 @@ public static class Instructions
         new Instruction(
             "POP BC", // 0xC1
             static cpu => {
-                // todo
-
+                cpu.Reg.BC = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
                 return 12;
             }
         ),
@@ -1821,9 +1821,11 @@ public static class Instructions
         ),
         new Instruction(
             "PUSH BC", // 0xC5
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.BC);
+                cpu.InternalWaitT();
                 return 16;
             }
         ),
@@ -1926,8 +1928,8 @@ public static class Instructions
         new Instruction(
             "POP DE", // 0xD1
             static cpu => {
-                // todo
-
+                cpu.Reg.DE = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
                 return 12;
             }
         ),
@@ -1951,8 +1953,9 @@ public static class Instructions
         new Instruction(
             "PUSH DE", // 0xD5
             static cpu => {
-                // todo
-
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.DE);
+                cpu.InternalWaitT();
                 return 16;
             }
         ),
@@ -2040,8 +2043,8 @@ public static class Instructions
         new Instruction(
             "POP HL", // 0xE1
             static cpu => {
-                // todo
-
+                cpu.Reg.HL = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
                 return 12;
             }
         ),
@@ -2057,8 +2060,9 @@ public static class Instructions
         new Instruction(
             "PUSH HL", // 0xE5
             static cpu => {
-                // todo
-
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.HL);
+                cpu.InternalWaitT();
                 return 16;
             }
         ),
@@ -2142,12 +2146,12 @@ public static class Instructions
         new Instruction(
             "POP AF", // 0xF1
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = false; // todo - Calculate
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                var restoredF = cpu.Ram.Read8(cpu.Reg.SP++);
+                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.SP++);
+                cpu.Reg.Zf = (restoredF & 0x80) != 0;
+                cpu.Reg.Nf = (restoredF & 0x40) != 0;
+                cpu.Reg.Hf = (restoredF & 0x20) != 0;
+                cpu.Reg.Cf = (restoredF & 0x10) != 0;
                 return 12;
             }
         ),
@@ -2170,8 +2174,9 @@ public static class Instructions
         new Instruction(
             "PUSH AF", // 0xF5
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.A);
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.F);
+                cpu.InternalWaitT();
                 return 16;
             }
         ),
