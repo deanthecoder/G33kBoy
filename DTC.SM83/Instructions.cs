@@ -1797,17 +1797,21 @@ public static class Instructions
         ),
         new Instruction(
             "JP NZ,a16", // 0xC2 nn nn
-            static cpu => {
-                // todo
-
-                return 16; // 16 or 12 - todo
+            static cpu =>
+            {
+                var target = cpu.Fetch16();
+                if (cpu.Reg.Zf)
+                    return 12;
+                cpu.Reg.PC = target;
+                cpu.InternalWaitT();
+                return 16;
             }
         ),
         new Instruction(
             "JP a16", // 0xC3 nn nn
             static cpu => {
-                // todo
-
+                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.PC);
+                cpu.InternalWaitT();
                 return 16;
             }
         ),
@@ -1868,9 +1872,12 @@ public static class Instructions
         new Instruction(
             "JP Z,a16", // 0xCA nn nn
             static cpu => {
-                // todo
-
-                return 16; // 16 or 12 - todo
+                var target = cpu.Fetch16();
+                if (!cpu.Reg.Zf)
+                    return 12;
+                cpu.Reg.PC = target;
+                cpu.InternalWaitT();
+                return 16;
             }
         ),
         new Instruction(
@@ -1936,9 +1943,12 @@ public static class Instructions
         new Instruction(
             "JP NC,a16", // 0xD2 nn nn
             static cpu => {
-                // todo
-
-                return 16; // 16 or 12 - todo
+                var target = cpu.Fetch16();
+                if (cpu.Reg.Cf)
+                    return 12;
+                cpu.Reg.PC = target;
+                cpu.InternalWaitT();
+                return 16;
             }
         ),
         null, // 0xD3
@@ -1998,9 +2008,12 @@ public static class Instructions
         new Instruction(
             "JP C,a16", // 0xDA nn nn
             static cpu => {
-                // todo
-
-                return 16; // 16 or 12 - todo
+                var target = cpu.Fetch16();
+                if (!cpu.Reg.Cf)
+                    return 12;
+                cpu.Reg.PC = target;
+                cpu.InternalWaitT();
+                return 16;
             }
         ),
         null, // 0xDB
@@ -2101,8 +2114,7 @@ public static class Instructions
         new Instruction(
             "JP HL", // 0xE9
             static cpu => {
-                // todo
-
+                cpu.Reg.PC = cpu.Reg.HL;
                 return 4;
             }
         ),
