@@ -32,8 +32,7 @@ public static class Instructions
         new Instruction(
             "LD (BC),A", // 0x02
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.BC, cpu.Reg.A);
                 return 8;
             }
         ),
@@ -181,8 +180,7 @@ public static class Instructions
         new Instruction(
             "LD (DE),A", // 0x12
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.DE, cpu.Reg.A);
                 return 8;
             }
         ),
@@ -328,10 +326,10 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD (HL),A", // 0x22
+            "LD (HL+),A", // 0x22
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.A);
+                cpu.Reg.HL++;
                 return 8;
             }
         ),
@@ -403,10 +401,10 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,(HL)", // 0x2A
+            "LD A,(HL+)", // 0x2A
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.HL++;
                 return 8;
             }
         ),
@@ -473,10 +471,10 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD (HL),A", // 0x32
+            "LD (HL-),A", // 0x32
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.A);
+                cpu.Reg.HL--;
                 return 8;
             }
         ),
@@ -549,10 +547,10 @@ public static class Instructions
             }
         ),
         new Instruction(
-            "LD A,(HL)", // 0x3A
+            "LD A,(HL-)", // 0x3A
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.HL--;
                 return 8;
             }
         ),

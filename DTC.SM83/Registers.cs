@@ -25,8 +25,16 @@ public class Registers
 
     public ushort BC => (ushort)((B << 8) | C);
     public ushort DE => (ushort)((D << 8) | E);
-    public ushort HL => (ushort)((H << 8) | L);
-    
+    public ushort HL
+    {
+        get => (ushort)((H << 8) | L);
+        set
+        {
+            H = (byte)(value >> 8);
+            L = (byte)(value & 0xFF);
+        }
+    }
+
     public ushort SP { get; set; } = 0xFFFE;
     public ushort PC { get; set; }
     
