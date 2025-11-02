@@ -1031,96 +1031,105 @@ public static class Instructions
         new Instruction(
             "ADD A,B", // 0x80
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.B);
+                var sum = cpu.Reg.A + cpu.Reg.B;
+                cpu.Reg.A = (byte)sum;
+                
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,C", // 0x81
             static cpu => {
-                // todo
+                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.C);
+                var sum = cpu.Reg.A + cpu.Reg.C;
+                cpu.Reg.A = (byte)sum;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,D", // 0x82
             static cpu => {
-                // todo
+                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.D);
+                var sum = cpu.Reg.A + cpu.Reg.D;
+                cpu.Reg.A = (byte)sum;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,E", // 0x83
             static cpu => {
-                // todo
+                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.E);
+                var sum = cpu.Reg.A + cpu.Reg.E;
+                cpu.Reg.A = (byte)sum;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,H", // 0x84
             static cpu => {
-                // todo
+                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.H);
+                var sum = cpu.Reg.A + cpu.Reg.H;
+                cpu.Reg.A = (byte)sum;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,L", // 0x85
             static cpu => {
-                // todo
+                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.L);
+                var sum = cpu.Reg.A + cpu.Reg.L;
+                cpu.Reg.A = (byte)sum;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,(HL)", // 0x86
             static cpu => {
-                // todo
+                var inc = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.SetHfForInc(cpu.Reg.A, inc);
+                var sum = cpu.Reg.A + inc;
+                cpu.Reg.A = (byte)sum;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 8;
             }
         ),
         new Instruction(
             "ADD A,A", // 0x87
             static cpu => {
-                // todo
+                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.A);
+                var sum = cpu.Reg.A + cpu.Reg.A;
+                cpu.Reg.A = (byte)sum;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 4;
             }
         ),
@@ -1223,92 +1232,86 @@ public static class Instructions
         new Instruction(
             "SUB A,B", // 0x90
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.B);
+                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.B;
+                cpu.Reg.A -= cpu.Reg.B;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,C", // 0x91
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.C);
+                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.C;
+                cpu.Reg.A -= cpu.Reg.C;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,D", // 0x92
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.D);
+                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.D;
+                cpu.Reg.A -= cpu.Reg.D;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,E", // 0x93
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.E);
+                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.E;
+                cpu.Reg.A -= cpu.Reg.E;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,H", // 0x94
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.H);
+                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.H;
+                cpu.Reg.A -= cpu.Reg.H;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,L", // 0x95
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.L);
+                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.L;
+                cpu.Reg.A -= cpu.Reg.L;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,(HL)", // 0x96
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.SetHfForDec(cpu.Reg.A, value);
+                cpu.Reg.Cf = cpu.Reg.A < value;
+                cpu.Reg.A -= value;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "SUB A,A", // 0x97
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                cpu.Reg.A = 0;
                 cpu.Reg.Zf = true;
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = false;
@@ -1975,12 +1978,12 @@ public static class Instructions
         new Instruction(
             "SUB A,nn", // 0xD6 nn
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var value = cpu.Fetch8();
+                cpu.Reg.SetHfForDec(cpu.Reg.A, value);
+                cpu.Reg.Cf = cpu.Reg.A < value;
+                cpu.Reg.A -= value;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),

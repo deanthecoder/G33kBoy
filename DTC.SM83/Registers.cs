@@ -151,7 +151,7 @@ public class Registers
     /// <summary>
     /// Call before an add/inc math operation.
     /// </summary>
-    public void SetHfForInc(byte value, int inc) =>
+    public void SetHfForInc(byte value, byte inc) =>
         Hf = (value & 0x0F) + (inc & 0x0F) > 0x0F;
 
     /// <summary>
