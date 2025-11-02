@@ -11,6 +11,9 @@
 
 namespace DTC.SM83;
 
+/// <summary>
+/// Initially auto-generated from https://gbdev.io/gb-opcodes/Opcodes.json
+/// </summary>
 public static class Instructions
 {
     public static readonly Instruction[] Unprefixed =
@@ -67,8 +70,7 @@ public static class Instructions
         new Instruction(
             "LD B,nn", // 0x06 nn
             static cpu => {
-                // todo
-
+                cpu.Reg.B = cpu.Fetch();
                 return 8;
             }
         ),
@@ -144,8 +146,7 @@ public static class Instructions
         new Instruction(
             "LD C,nn", // 0x0E nn
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Fetch();
                 return 8;
             }
         ),
@@ -218,8 +219,7 @@ public static class Instructions
         new Instruction(
             "LD D,nn", // 0x16 nn
             static cpu => {
-                // todo
-
+                cpu.Reg.D = cpu.Fetch();
                 return 8;
             }
         ),
@@ -295,8 +295,7 @@ public static class Instructions
         new Instruction(
             "LD E,nn", // 0x1E nn
             static cpu => {
-                // todo
-
+                cpu.Reg.E = cpu.Fetch();
                 return 8;
             }
         ),
@@ -369,8 +368,7 @@ public static class Instructions
         new Instruction(
             "LD H,nn", // 0x26 nn
             static cpu => {
-                // todo
-
+                cpu.Reg.H = cpu.Fetch();
                 return 8;
             }
         ),
@@ -445,8 +443,7 @@ public static class Instructions
         new Instruction(
             "LD L,nn", // 0x2E nn
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Fetch();
                 return 8;
             }
         ),
@@ -593,8 +590,7 @@ public static class Instructions
         new Instruction(
             "LD A,nn", // 0x3E nn
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Fetch();
                 return 8;
             }
         ),
@@ -611,49 +607,39 @@ public static class Instructions
         ),
         new Instruction(
             "LD B,B", // 0x40
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD B,C", // 0x41
             static cpu => {
-                // todo
-
+                cpu.Reg.B = cpu.Reg.C;
                 return 4;
             }
         ),
         new Instruction(
             "LD B,D", // 0x42
             static cpu => {
-                // todo
-
+                cpu.Reg.B = cpu.Reg.D;
                 return 4;
             }
         ),
         new Instruction(
             "LD B,E", // 0x43
             static cpu => {
-                // todo
-
+                cpu.Reg.B = cpu.Reg.E;
                 return 4;
             }
         ),
         new Instruction(
             "LD B,H", // 0x44
             static cpu => {
-                // todo
-
+                cpu.Reg.B = cpu.Reg.H;
                 return 4;
             }
         ),
         new Instruction(
             "LD B,L", // 0x45
             static cpu => {
-                // todo
-
+                cpu.Reg.B = cpu.Reg.L;
                 return 4;
             }
         ),
@@ -668,56 +654,45 @@ public static class Instructions
         new Instruction(
             "LD B,A", // 0x47
             static cpu => {
-                // todo
-
+                cpu.Reg.B = cpu.Reg.A;
                 return 4;
             }
         ),
         new Instruction(
             "LD C,B", // 0x48
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Reg.B;
                 return 4;
             }
         ),
         new Instruction(
             "LD C,C", // 0x49
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD C,D", // 0x4A
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Reg.D;
                 return 4;
             }
         ),
         new Instruction(
             "LD C,E", // 0x4B
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Reg.E;
                 return 4;
             }
         ),
         new Instruction(
             "LD C,H", // 0x4C
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Reg.H;
                 return 4;
             }
         ),
         new Instruction(
             "LD C,L", // 0x4D
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Reg.L;
                 return 4;
             }
         ),
@@ -732,56 +707,45 @@ public static class Instructions
         new Instruction(
             "LD C,A", // 0x4F
             static cpu => {
-                // todo
-
+                cpu.Reg.C = cpu.Reg.A;
                 return 4;
             }
         ),
         new Instruction(
             "LD D,B", // 0x50
             static cpu => {
-                // todo
-
+                cpu.Reg.D = cpu.Reg.B;
                 return 4;
             }
         ),
         new Instruction(
             "LD D,C", // 0x51
             static cpu => {
-                // todo
-
+                cpu.Reg.D = cpu.Reg.C;
                 return 4;
             }
         ),
         new Instruction(
             "LD D,D", // 0x52
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD D,E", // 0x53
             static cpu => {
-                // todo
-
+                cpu.Reg.D = cpu.Reg.E;
                 return 4;
             }
         ),
         new Instruction(
             "LD D,H", // 0x54
             static cpu => {
-                // todo
-
+                cpu.Reg.D = cpu.Reg.H;
                 return 4;
             }
         ),
         new Instruction(
             "LD D,L", // 0x55
             static cpu => {
-                // todo
-
+                cpu.Reg.D = cpu.Reg.L;
                 return 4;
             }
         ),
@@ -796,24 +760,21 @@ public static class Instructions
         new Instruction(
             "LD D,A", // 0x57
             static cpu => {
-                // todo
-
+                cpu.Reg.D = cpu.Reg.A;
                 return 4;
             }
         ),
         new Instruction(
             "LD E,B", // 0x58
             static cpu => {
-                // todo
-
+                cpu.Reg.E = cpu.Reg.B;
                 return 4;
             }
         ),
         new Instruction(
             "LD E,C", // 0x59
             static cpu => {
-                // todo
-
+                cpu.Reg.E = cpu.Reg.C;
                 return 4;
             }
         ),
@@ -827,25 +788,18 @@ public static class Instructions
         ),
         new Instruction(
             "LD E,E", // 0x5B
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD E,H", // 0x5C
             static cpu => {
-                // todo
-
+                cpu.Reg.E = cpu.Reg.H;
                 return 4;
             }
         ),
         new Instruction(
             "LD E,L", // 0x5D
             static cpu => {
-                // todo
-
+                cpu.Reg.E = cpu.Reg.L;
                 return 4;
             }
         ),
@@ -860,56 +814,45 @@ public static class Instructions
         new Instruction(
             "LD E,A", // 0x5F
             static cpu => {
-                // todo
-
+                cpu.Reg.E = cpu.Reg.A;
                 return 4;
             }
         ),
         new Instruction(
             "LD H,B", // 0x60
             static cpu => {
-                // todo
-
+                cpu.Reg.H = cpu.Reg.B;
                 return 4;
             }
         ),
         new Instruction(
             "LD H,C", // 0x61
             static cpu => {
-                // todo
-
+                cpu.Reg.H = cpu.Reg.C;
                 return 4;
             }
         ),
         new Instruction(
             "LD H,D", // 0x62
             static cpu => {
-                // todo
-
+                cpu.Reg.H = cpu.Reg.D;
                 return 4;
             }
         ),
         new Instruction(
             "LD H,E", // 0x63
             static cpu => {
-                // todo
-
+                cpu.Reg.H = cpu.Reg.E;
                 return 4;
             }
         ),
         new Instruction(
             "LD H,H", // 0x64
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD H,L", // 0x65
             static cpu => {
-                // todo
-
+                cpu.Reg.H = cpu.Reg.L;
                 return 4;
             }
         ),
@@ -924,59 +867,48 @@ public static class Instructions
         new Instruction(
             "LD H,A", // 0x67
             static cpu => {
-                // todo
-
+                cpu.Reg.H = cpu.Reg.A;
                 return 4;
             }
         ),
         new Instruction(
             "LD L,B", // 0x68
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Reg.B;
                 return 4;
             }
         ),
         new Instruction(
             "LD L,C", // 0x69
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Reg.C;
                 return 4;
             }
         ),
         new Instruction(
             "LD L,D", // 0x6A
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Reg.D;
                 return 4;
             }
         ),
         new Instruction(
             "LD L,E", // 0x6B
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Reg.E;
                 return 4;
             }
         ),
         new Instruction(
             "LD L,H", // 0x6C
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Reg.H;
                 return 4;
             }
         ),
         new Instruction(
             "LD L,L", // 0x6D
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD L,(HL)", // 0x6E
             static cpu => {
@@ -988,8 +920,7 @@ public static class Instructions
         new Instruction(
             "LD L,A", // 0x6F
             static cpu => {
-                // todo
-
+                cpu.Reg.L = cpu.Reg.A;
                 return 4;
             }
         ),
@@ -1060,48 +991,42 @@ public static class Instructions
         new Instruction(
             "LD A,B", // 0x78
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Reg.B;
                 return 4;
             }
         ),
         new Instruction(
             "LD A,C", // 0x79
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Reg.C;
                 return 4;
             }
         ),
         new Instruction(
             "LD A,D", // 0x7A
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Reg.D;
                 return 4;
             }
         ),
         new Instruction(
             "LD A,E", // 0x7B
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Reg.E;
                 return 4;
             }
         ),
         new Instruction(
             "LD A,H", // 0x7C
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Reg.H;
                 return 4;
             }
         ),
         new Instruction(
             "LD A,L", // 0x7D
             static cpu => {
-                // todo
-
+                cpu.Reg.A = cpu.Reg.L;
                 return 4;
             }
         ),
@@ -1115,12 +1040,7 @@ public static class Instructions
         ),
         new Instruction(
             "LD A,A", // 0x7F
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "ADD A,B", // 0x80
             static cpu => {

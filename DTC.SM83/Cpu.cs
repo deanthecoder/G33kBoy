@@ -30,17 +30,15 @@ public class Cpu
         Ram.Clock.Reset();
 
         // Pre-load first opcode.
+        m_fetchStartTime = Ram.Clock.Ticks;
         Fetch();
     }
 
     /// <summary>
-    /// Fetch opcode at PC, and advance PC.
+    /// Fetch value at PC, and advance PC.
     /// </summary>
-    public byte Fetch()
-    {
-        m_fetchStartTime = Ram.Clock.Ticks;
-        return m_fetchedOpcode = Ram.Read8(Reg.PC++);
-    }
+    public byte Fetch() =>
+        m_fetchedOpcode = Ram.Read8(Reg.PC++);
 
     public void Step()
     {
@@ -60,6 +58,7 @@ public class Cpu
         }
 
         // Fetch opcode.
+        m_fetchStartTime = Ram.Clock.Ticks;
         Fetch();
     }
 }
