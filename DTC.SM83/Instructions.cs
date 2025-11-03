@@ -1833,8 +1833,10 @@ public static class Instructions
         new Instruction(
             "RST $00", // 0xC7
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x00;
                 return 16;
             }
         ),
@@ -1905,8 +1907,10 @@ public static class Instructions
         new Instruction(
             "RST $08", // 0xCF
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x08;
                 return 16;
             }
         ),
@@ -1974,8 +1978,10 @@ public static class Instructions
         new Instruction(
             "RST $10", // 0xD7
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x10;
                 return 16;
             }
         ),
@@ -2036,8 +2042,10 @@ public static class Instructions
         new Instruction(
             "RST $18", // 0xDF
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x18;
                 return 16;
             }
         ),
@@ -2088,8 +2096,10 @@ public static class Instructions
         new Instruction(
             "RST $20", // 0xE7
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x20;
                 return 16;
             }
         ),
@@ -2140,8 +2150,10 @@ public static class Instructions
         new Instruction(
             "RST $28", // 0xEF
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x28;
                 return 16;
             }
         ),
@@ -2203,8 +2215,10 @@ public static class Instructions
         new Instruction(
             "RST $30", // 0xF7
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x30;
                 return 16;
             }
         ),
@@ -2264,8 +2278,10 @@ public static class Instructions
         new Instruction(
             "RST $38", // 0xFF
             static cpu => {
-                // todo
-
+                cpu.InternalWaitM();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = 0x38;
                 return 16;
             }
         )
