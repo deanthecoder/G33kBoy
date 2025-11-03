@@ -74,12 +74,11 @@ public static class Instructions
         new Instruction(
             "RLCA", // 0x07
             static cpu => {
-                // todo
-
+                cpu.Reg.Cf = (cpu.Reg.A & 0x80) != 0;
+                cpu.Reg.A = (byte)((cpu.Reg.A << 1) + (cpu.Reg.Cf ? 1 : 0));
                 cpu.Reg.Zf = false;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),

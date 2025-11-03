@@ -18,20 +18,27 @@ namespace UnitTests;
 [TestFixture, Parallelizable(ParallelScope.All)]
 public class CpuTests : TestsBase
 {
-    public static SingleTest[] Tests { get; } = LoadTests();
+    public static SingleTest[] UnprefixedTests { get; } = LoadTests(targetCb: false);
+    public static SingleTest[] PrefixedTests { get; } = LoadTests(targetCb: true);
 
-    private static SingleTest[] LoadTests()
+    private static SingleTest[] LoadTests(bool targetCb)
     {
         var testDir = ProjectDir.GetDir("../external/GameboyCPUTests/v2/");
-        var testFiles = testDir.TryGetFiles("*.json");
+        var testFiles = testDir.TryGetFiles("*.json").Where(o => o.Name.StartsWith("cb") == targetCb);
         return testFiles
             .SelectMany(SingleTest.LoadFromFile)
-            .Select(test => test)
             .ToArray();
     }
 
     [Test]
-    public void RunTests([ValueSource(nameof(Tests))] SingleTest test)
+    public void RunUnprefixedTests([ValueSource(nameof(UnprefixedTests))] SingleTest test) =>
+        ProcessTest(test);
+
+    [Test]
+    public void RunPrefixedTests([ValueSource(nameof(PrefixedTests))] SingleTest test) =>
+        ProcessTest(test);
+
+    private static void ProcessTest(SingleTest test)
     {
         var prepared = test.Prepare();
         var cpu = new Cpu(prepared.InitialMem);
@@ -45,7 +52,7 @@ public class CpuTests : TestsBase
         Assert.That(cpu.Reg, Is.EqualTo(prepared.FinalRegs));
         Assert.That(cpu.Ram, Is.EqualTo(prepared.FinalMem), () => GetMemoryComparisonMessage(cpu.Ram, prepared.FinalMem));
     }
-    
+
     private static string GetMemoryComparisonMessage(Memory expected, Memory actual)
     {
         for (ushort i = 0; i < expected.Length; i++)
@@ -75,10 +82,7 @@ public class CpuTests : TestsBase
         {
             var json = testJson.ReadAllText();
             var testCases = JsonConvert.DeserializeObject<TestCaseDto[]>(json) ?? [];
-            return
-                testCases
-                    .Take(8)
-                    .Select(testCase => new SingleTest(testCase));
+            return testCases.Select(testCase => new SingleTest(testCase));
         }
 
         public PreparedTest Prepare()
