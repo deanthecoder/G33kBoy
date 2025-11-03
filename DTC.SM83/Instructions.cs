@@ -1759,9 +1759,13 @@ public static class Instructions
         new Instruction(
             "RET NZ", // 0xC0
             static cpu => {
-                // todo
-
-                return 20; // 20 or 8 - todo
+                cpu.InternalWaitM();
+                if (cpu.Reg.Zf)
+                    return 8;
+                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
+                cpu.InternalWaitM();
+                return 20;
             }
         ),
         new Instruction(
@@ -1843,16 +1847,22 @@ public static class Instructions
         new Instruction(
             "RET Z", // 0xC8
             static cpu => {
-                // todo
-
-                return 20; // 20 or 8 - todo
+                cpu.InternalWaitM();
+                if (!cpu.Reg.Zf)
+                    return 8;
+                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
+                cpu.InternalWaitM();
+                return 20;
             }
         ),
         new Instruction(
             "RET", // 0xC9
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -1917,9 +1927,13 @@ public static class Instructions
         new Instruction(
             "RET NC", // 0xD0
             static cpu => {
-                // todo
-
-                return 20; // 20 or 8 - todo
+                cpu.InternalWaitM();
+                if (cpu.Reg.Cf)
+                    return 8;
+                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
+                cpu.InternalWaitM();
+                return 20;
             }
         ),
         new Instruction(
@@ -1988,9 +2002,13 @@ public static class Instructions
         new Instruction(
             "RET C", // 0xD8
             static cpu => {
-                // todo
-
-                return 20; // 20 or 8 - todo
+                cpu.InternalWaitM();
+                if (!cpu.Reg.Cf)
+                    return 8;
+                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.SP += 2;
+                cpu.InternalWaitM();
+                return 20;
             }
         ),
         new Instruction(
