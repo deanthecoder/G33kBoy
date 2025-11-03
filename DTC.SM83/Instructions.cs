@@ -40,7 +40,7 @@ public static class Instructions
             "INC BC", // 0x03
             static cpu => {
                 cpu.Reg.BC++;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -98,7 +98,7 @@ public static class Instructions
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -113,7 +113,7 @@ public static class Instructions
             "DEC BC", // 0x0B
             static cpu => {
                 cpu.Reg.BC--;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -183,7 +183,7 @@ public static class Instructions
             "INC DE", // 0x13
             static cpu => {
                 cpu.Reg.DE++;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -232,7 +232,7 @@ public static class Instructions
             {
                 var diff = (sbyte)cpu.Fetch8();
                 cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 12;
             }
         ),
@@ -244,7 +244,7 @@ public static class Instructions
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -259,7 +259,7 @@ public static class Instructions
             "DEC DE", // 0x1B
             static cpu => {
                 cpu.Reg.DE--;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -309,7 +309,7 @@ public static class Instructions
                 if (cpu.Reg.Zf)
                     return 8;
                 cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 12;
             }
         ),
@@ -333,7 +333,7 @@ public static class Instructions
             "INC HL", // 0x23
             static cpu => {
                 cpu.Reg.HL++;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -382,7 +382,7 @@ public static class Instructions
                 if (!cpu.Reg.Zf)
                     return 8;
                 cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 12;
             }
         ),
@@ -394,7 +394,7 @@ public static class Instructions
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -410,7 +410,7 @@ public static class Instructions
             "DEC HL", // 0x2B
             static cpu => {
                 cpu.Reg.HL--;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -458,7 +458,7 @@ public static class Instructions
                 if (cpu.Reg.Cf)
                     return 8;
                 cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 12;
             }
         ),
@@ -481,7 +481,7 @@ public static class Instructions
             "INC SP", // 0x33
             static cpu => {
                 cpu.Reg.SP++;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -532,7 +532,7 @@ public static class Instructions
                 if (!cpu.Reg.Cf)
                     return 8;
                 cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 12;
             }
         ),
@@ -544,7 +544,7 @@ public static class Instructions
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
                 cpu.Reg.Nf = false;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -560,7 +560,7 @@ public static class Instructions
             "DEC SP", // 0x3B
             static cpu => {
                 cpu.Reg.SP--;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),
@@ -1794,7 +1794,7 @@ public static class Instructions
                 if (cpu.Reg.Zf)
                     return 12;
                 cpu.Reg.PC = target;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -1802,7 +1802,7 @@ public static class Instructions
             "JP a16", // 0xC3 nn nn
             static cpu => {
                 cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.PC);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -1820,19 +1820,22 @@ public static class Instructions
             {
                 cpu.Reg.SP -= 2;
                 cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.BC);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
         new Instruction(
             "ADD A,nn", // 0xC6 nn
-            static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+            static cpu =>
+            {
+                var imm = cpu.Fetch8();
+                cpu.Reg.SetHfForInc(cpu.Reg.A, imm);
+                var sum = cpu.Reg.A + imm;
+                cpu.Reg.A = (byte)sum;
+                
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = sum > 0xFF;
                 return 8;
             }
         ),
@@ -1867,7 +1870,7 @@ public static class Instructions
                 if (!cpu.Reg.Zf)
                     return 12;
                 cpu.Reg.PC = target;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -1938,7 +1941,7 @@ public static class Instructions
                 if (cpu.Reg.Cf)
                     return 12;
                 cpu.Reg.PC = target;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -1956,7 +1959,7 @@ public static class Instructions
             static cpu => {
                 cpu.Reg.SP -= 2;
                 cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.DE);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -2003,7 +2006,7 @@ public static class Instructions
                 if (!cpu.Reg.Cf)
                     return 12;
                 cpu.Reg.PC = target;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -2066,7 +2069,7 @@ public static class Instructions
             static cpu => {
                 cpu.Reg.SP -= 2;
                 cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.HL);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -2091,13 +2094,17 @@ public static class Instructions
         ),
         new Instruction(
             "ADD SP,e8", // 0xE8 nn
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                var imm = cpu.Fetch8();
+                var off = (sbyte)imm;
+                var sp = cpu.Reg.SP;
+                cpu.Reg.SP = (ushort)(sp + off);
                 cpu.Reg.Zf = false;
                 cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Hf = (sp & 0x000F) + (imm & 0x0F) > 0x0F;
+                cpu.Reg.Cf = (sp & 0x00FF) + imm > 0xFF;
+                cpu.InternalWaitM(2);
                 return 16;
             }
         ),
@@ -2177,7 +2184,7 @@ public static class Instructions
             static cpu => {
                 cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.A);
                 cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.F);
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 16;
             }
         ),
@@ -2213,7 +2220,7 @@ public static class Instructions
                 cpu.Reg.SetHfForInc((byte)sp, imm);
                 cpu.Reg.Cf = (sp & 0xFF) + imm > 0xFF;
                 
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 12;
             }
         ),
@@ -2221,7 +2228,7 @@ public static class Instructions
             "LD SP,HL", // 0xF9
             static cpu => {
                 cpu.Reg.SP = cpu.Reg.HL;
-                cpu.InternalWaitT();
+                cpu.InternalWaitM();
                 return 8;
             }
         ),

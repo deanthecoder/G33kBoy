@@ -68,6 +68,6 @@ public class Cpu
         Fetch8();
     }
     
-    public void InternalWaitT() =>
-        Ram.Clock.AdvanceT(4);
+    public void InternalWaitM(ulong m = 1) =>
+        Ram.Clock.AdvanceT(4 * m);
 }
