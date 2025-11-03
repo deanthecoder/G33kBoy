@@ -146,12 +146,11 @@ public static class Instructions
         new Instruction(
             "RRCA", // 0x0F
             static cpu => {
-                // todo
-
+                cpu.Reg.Cf = (cpu.Reg.A & 0x01) != 0;
+                cpu.Reg.A = (byte)((cpu.Reg.A >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
                 cpu.Reg.Zf = false;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
