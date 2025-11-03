@@ -1411,10 +1411,10 @@ public static class Instructions
         ),
         new Instruction(
             "AND A,B", // 0xA0
-            static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+            static cpu =>
+            {
+                cpu.Reg.A &= cpu.Reg.B;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -1424,9 +1424,8 @@ public static class Instructions
         new Instruction(
             "AND A,C", // 0xA1
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A &= cpu.Reg.C;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -1436,9 +1435,8 @@ public static class Instructions
         new Instruction(
             "AND A,D", // 0xA2
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A &= cpu.Reg.D;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -1448,9 +1446,8 @@ public static class Instructions
         new Instruction(
             "AND A,E", // 0xA3
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A &= cpu.Reg.E;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -1460,9 +1457,8 @@ public static class Instructions
         new Instruction(
             "AND A,H", // 0xA4
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A &= cpu.Reg.H;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -1472,9 +1468,8 @@ public static class Instructions
         new Instruction(
             "AND A,L", // 0xA5
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A &= cpu.Reg.L;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -1484,9 +1479,8 @@ public static class Instructions
         new Instruction(
             "AND A,(HL)", // 0xA6
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A &= cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -1495,10 +1489,9 @@ public static class Instructions
         ),
         new Instruction(
             "AND A,A", // 0xA7
-            static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+            static cpu =>
+            {
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
@@ -2096,9 +2089,8 @@ public static class Instructions
         new Instruction(
             "AND A,nn", // 0xE6 nn
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A &= cpu.Fetch8();
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 cpu.Reg.Cf = false;
