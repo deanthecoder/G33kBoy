@@ -291,12 +291,12 @@ public static class Instructions
         new Instruction(
             "RRA", // 0x1F
             static cpu => {
-                // todo
-
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.A & 0x01) != 0;
+                cpu.Reg.A = (byte)((cpu.Reg.A >> 1) + (cf ? 0x80 : 0x00));
                 cpu.Reg.Zf = false;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
