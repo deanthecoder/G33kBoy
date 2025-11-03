@@ -228,9 +228,11 @@ public static class Instructions
         ),
         new Instruction(
             "JR e8", // 0x18 nn
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                var diff = (sbyte)cpu.Fetch8();
+                cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
+                cpu.InternalWaitT();
                 return 12;
             }
         ),
@@ -303,9 +305,12 @@ public static class Instructions
         new Instruction(
             "JR NZ,e8", // 0x20 nn
             static cpu => {
-                // todo
-
-                return 12; // 12 or 8 - todo
+                var diff = (sbyte)cpu.Fetch8();
+                if (cpu.Reg.Zf)
+                    return 8;
+                cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
+                cpu.InternalWaitT();
+                return 12;
             }
         ),
         new Instruction(
@@ -373,9 +378,12 @@ public static class Instructions
         new Instruction(
             "JR Z,e8", // 0x28 nn
             static cpu => {
-                // todo
-
-                return 12; // 12 or 8 - todo
+                var diff = (sbyte)cpu.Fetch8();
+                if (!cpu.Reg.Zf)
+                    return 8;
+                cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
+                cpu.InternalWaitT();
+                return 12;
             }
         ),
         new Instruction(
@@ -446,9 +454,12 @@ public static class Instructions
         new Instruction(
             "JR NC,e8", // 0x30 nn
             static cpu => {
-                // todo
-
-                return 12; // 12 or 8 - todo
+                var diff = (sbyte)cpu.Fetch8();
+                if (cpu.Reg.Cf)
+                    return 8;
+                cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
+                cpu.InternalWaitT();
+                return 12;
             }
         ),
         new Instruction(
@@ -517,9 +528,12 @@ public static class Instructions
         new Instruction(
             "JR C,e8", // 0x38 nn
             static cpu => {
-                // todo
-
-                return 12; // 12 or 8 - todo
+                var diff = (sbyte)cpu.Fetch8();
+                if (!cpu.Reg.Cf)
+                    return 8;
+                cpu.Reg.PC = (ushort) (cpu.Reg.PC + diff);
+                cpu.InternalWaitT();
+                return 12;
             }
         ),
         new Instruction(
