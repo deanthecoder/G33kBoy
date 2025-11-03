@@ -47,9 +47,9 @@ public static class Instructions
         new Instruction(
             "INC B", // 0x04
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.B, 1);
+                cpu.Reg.SetHfForInc(cpu.Reg.B);
                 cpu.Reg.B++;
-                cpu.Reg.SetZfFrom(cpu.Reg.B);
+                cpu.Reg.Zf = cpu.Reg.B == 0;
                 cpu.Reg.Nf = false;
                 return 4;
             }
@@ -57,9 +57,9 @@ public static class Instructions
         new Instruction(
             "DEC B", // 0x05
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.B, 1);
+                cpu.Reg.SetHfForDec(cpu.Reg.B);
                 cpu.Reg.B--;
-                cpu.Reg.SetZfFrom(cpu.Reg.B);
+                cpu.Reg.Zf = cpu.Reg.B == 0;
                 cpu.Reg.Nf = true;
                 return 4;
             }
@@ -93,7 +93,7 @@ public static class Instructions
         new Instruction(
             "ADD HL,BC", // 0x09
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.BC);
+                cpu.Reg.Hf = (cpu.Reg.HL & 0x0FFF) + (cpu.Reg.BC & 0x0FFF) > 0x0FFF;
                 var sum = (uint)cpu.Reg.HL + cpu.Reg.BC;
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
@@ -120,9 +120,9 @@ public static class Instructions
         new Instruction(
             "INC C", // 0x0C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.C, 1);
+                cpu.Reg.SetHfForInc(cpu.Reg.C);
                 cpu.Reg.C++;
-                cpu.Reg.SetZfFrom(cpu.Reg.C);
+                cpu.Reg.Zf = cpu.Reg.C == 0;
                 cpu.Reg.Nf = false;
                 return 4;
             }
@@ -130,9 +130,9 @@ public static class Instructions
         new Instruction(
             "DEC C", // 0x0D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.C, 1);
+                cpu.Reg.SetHfForDec(cpu.Reg.C);
                 cpu.Reg.C--;
-                cpu.Reg.SetZfFrom(cpu.Reg.C);
+                cpu.Reg.Zf = cpu.Reg.C == 0;
                 cpu.Reg.Nf = true;
                 return 4;
             }
@@ -190,9 +190,9 @@ public static class Instructions
         new Instruction(
             "INC D", // 0x14
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.D, 1);
+                cpu.Reg.SetHfForInc(cpu.Reg.D);
                 cpu.Reg.D++;
-                cpu.Reg.SetZfFrom(cpu.Reg.D);
+                cpu.Reg.Zf = cpu.Reg.D == 0;
                 cpu.Reg.Nf = false;
                 return 4;
             }
@@ -200,9 +200,9 @@ public static class Instructions
         new Instruction(
             "DEC D", // 0x15
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.D, 1);
+                cpu.Reg.SetHfForDec(cpu.Reg.D);
                 cpu.Reg.D--;
-                cpu.Reg.SetZfFrom(cpu.Reg.D);
+                cpu.Reg.Zf = cpu.Reg.D == 0;
                 cpu.Reg.Nf = true;
                 return 4;
             }
@@ -239,7 +239,7 @@ public static class Instructions
         new Instruction(
             "ADD HL,DE", // 0x19
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.DE);
+                cpu.Reg.Hf = (cpu.Reg.HL & 0x0FFF) + (cpu.Reg.DE & 0x0FFF) > 0x0FFF;
                 var sum = (uint)cpu.Reg.HL + cpu.Reg.DE;
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
@@ -266,9 +266,9 @@ public static class Instructions
         new Instruction(
             "INC E", // 0x1C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.E, 1);
+                cpu.Reg.SetHfForInc(cpu.Reg.E);
                 cpu.Reg.E++;
-                cpu.Reg.SetZfFrom(cpu.Reg.E);
+                cpu.Reg.Zf = cpu.Reg.E == 0;
                 cpu.Reg.Nf = false;
                 return 4;
             }
@@ -276,9 +276,9 @@ public static class Instructions
         new Instruction(
             "DEC E", // 0x1D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.E, 1);
+                cpu.Reg.SetHfForDec(cpu.Reg.E);
                 cpu.Reg.E--;
-                cpu.Reg.SetZfFrom(cpu.Reg.E);
+                cpu.Reg.Zf = cpu.Reg.E == 0;
                 cpu.Reg.Nf = true;
                 return 4;
             }
@@ -340,9 +340,9 @@ public static class Instructions
         new Instruction(
             "INC H", // 0x24
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.H, 1);
+                cpu.Reg.SetHfForInc(cpu.Reg.H);
                 cpu.Reg.H++;
-                cpu.Reg.SetZfFrom(cpu.Reg.H);
+                cpu.Reg.Zf = cpu.Reg.H == 0;
                 cpu.Reg.Nf = false;
                 return 4;
             }
@@ -350,9 +350,9 @@ public static class Instructions
         new Instruction(
             "DEC H", // 0x25
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.H, 1);
+                cpu.Reg.SetHfForDec(cpu.Reg.H);
                 cpu.Reg.H--;
-                cpu.Reg.SetZfFrom(cpu.Reg.H);
+                cpu.Reg.Zf = cpu.Reg.H == 0;
                 cpu.Reg.Nf = true;
                 return 4;
             }
@@ -389,7 +389,7 @@ public static class Instructions
         new Instruction(
             "ADD HL,HL", // 0x29
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.HL);
+                cpu.Reg.Hf = (cpu.Reg.HL & 0x0FFF) + (cpu.Reg.HL & 0x0FFF) > 0x0FFF;
                 var sum = (uint)cpu.Reg.HL + cpu.Reg.HL;
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
@@ -417,9 +417,9 @@ public static class Instructions
         new Instruction(
             "INC L", // 0x2C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.L, 1);
+                cpu.Reg.SetHfForInc(cpu.Reg.L);
                 cpu.Reg.L++;
-                cpu.Reg.SetZfFrom(cpu.Reg.L);
+                cpu.Reg.Zf = cpu.Reg.L == 0;
                 cpu.Reg.Nf = false;
                 return 4;
             }
@@ -427,9 +427,9 @@ public static class Instructions
         new Instruction(
             "DEC L", // 0x2D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.L, 1);
+                cpu.Reg.SetHfForDec(cpu.Reg.L);
                 cpu.Reg.L--;
-                cpu.Reg.SetZfFrom(cpu.Reg.L);
+                cpu.Reg.Zf = cpu.Reg.L == 0;
                 cpu.Reg.Nf = true;
                 return 4;
             }
@@ -489,9 +489,9 @@ public static class Instructions
             "INC (HL)", // 0x34
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.SetHfForInc(value, 1);
+                cpu.Reg.SetHfForInc(value);
                 cpu.Ram.Write8(cpu.Reg.HL, (byte)(value + 1));
-                cpu.Reg.SetZfFrom(value);
+                cpu.Reg.Zf = value == 0;
                 cpu.Reg.Nf = false;
                 return 12;
             }
@@ -500,9 +500,9 @@ public static class Instructions
             "DEC (HL)", // 0x35
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.SetHfForDec(value, 1);
+                cpu.Reg.SetHfForDec(value);
                 cpu.Ram.Write8(cpu.Reg.HL, (byte)(value - 1));
-                cpu.Reg.SetZfFrom(value);
+                cpu.Reg.Zf = value == 0;
                 cpu.Reg.Nf = true;
                 return 12;
             }
@@ -539,7 +539,7 @@ public static class Instructions
         new Instruction(
             "ADD HL,SP", // 0x39
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.HL, cpu.Reg.SP);
+                cpu.Reg.Hf = (cpu.Reg.HL & 0x0FFF) + (cpu.Reg.SP & 0x0FFF) > 0x0FFF;
                 var sum = (uint)cpu.Reg.HL + cpu.Reg.SP;
                 cpu.Reg.Cf = sum > 0xFFFF;
                 cpu.Reg.HL = (ushort)sum;
@@ -567,9 +567,9 @@ public static class Instructions
         new Instruction(
             "INC A", // 0x3C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, 1);
+                cpu.Reg.SetHfForInc(cpu.Reg.A);
                 cpu.Reg.A++;
-                cpu.Reg.SetZfFrom(cpu.Reg.A);
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 return 4;
             }
@@ -577,9 +577,9 @@ public static class Instructions
         new Instruction(
             "DEC A", // 0x3D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A, 1);
+                cpu.Reg.SetHfForDec(cpu.Reg.A);
                 cpu.Reg.A--;
-                cpu.Reg.SetZfFrom(cpu.Reg.A);
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = true;
                 return 4;
             }
@@ -1795,9 +1795,14 @@ public static class Instructions
         new Instruction(
             "CALL NZ,a16", // 0xC4 nn nn
             static cpu => {
-                // todo
-
-                return 24; // 24 or 12 - todo
+                var addr = cpu.Fetch16();
+                if (cpu.Reg.Zf)
+                    return 12; // No jump.
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = addr;
+                cpu.InternalWaitM();
+                return 24;
             }
         ),
         new Instruction(
@@ -1860,27 +1865,28 @@ public static class Instructions
                 return 16;
             }
         ),
-        new Instruction(
-            "PREFIX", // 0xCB
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+        null, // 0xCB
         new Instruction(
             "CALL Z,a16", // 0xCC nn nn
             static cpu => {
-                // todo
-
-                return 24; // 24 or 12 - todo
-            }
+                var addr = cpu.Fetch16();
+                if (!cpu.Reg.Zf)
+                    return 12; // No jump.
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = addr;
+                cpu.InternalWaitM();
+                return 24;            }
         ),
         new Instruction(
             "CALL a16", // 0xCD nn nn
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                var addr = cpu.Fetch16();
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = addr;
+                cpu.InternalWaitM();
                 return 24;
             }
         ),
@@ -1935,10 +1941,14 @@ public static class Instructions
         new Instruction(
             "CALL NC,a16", // 0xD4 nn nn
             static cpu => {
-                // todo
-
-                return 24; // 24 or 12 - todo
-            }
+                var addr = cpu.Fetch16();
+                if (cpu.Reg.Cf)
+                    return 12; // No jump.
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = addr;
+                cpu.InternalWaitM();
+                return 24;            }
         ),
         new Instruction(
             "PUSH DE", // 0xD5
@@ -2000,9 +2010,14 @@ public static class Instructions
         new Instruction(
             "CALL C,a16", // 0xDC nn nn
             static cpu => {
-                // todo
-
-                return 24; // 24 or 12 - todo
+                var addr = cpu.Fetch16();
+                if (!cpu.Reg.Cf)
+                    return 12; // No jump.
+                cpu.Reg.SP -= 2;
+                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.Reg.PC = addr;
+                cpu.InternalWaitM();
+                return 24;
             }
         ),
         null, // 0xDD

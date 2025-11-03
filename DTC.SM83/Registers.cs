@@ -10,11 +10,12 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 // ReSharper disable NonReadonlyMemberInGetHashCode
-using System.Text.Json;
+
+using System.Runtime.CompilerServices;
 
 namespace DTC.SM83;
 
-public class Registers
+public sealed class Registers
 {
     public byte A { get; set; }
     public byte F => (byte)((Zf ? 0x80 : 0) | (Nf ? 0x40 : 0) | (Hf ? 0x20 : 0) | (Cf ? 0x10 : 0));
@@ -31,7 +32,7 @@ public class Registers
         set
         {
             B = (byte)(value >> 8);
-            C = (byte)(value & 0xFF);
+            C = (byte)value;
         }
     }
     
@@ -41,7 +42,7 @@ public class Registers
         set
         {
             D = (byte)(value >> 8);
-            E = (byte)(value & 0xFF);
+            E = (byte)value;
         }
     }
 
@@ -51,7 +52,7 @@ public class Registers
         set
         {
             H = (byte)(value >> 8);
-            L = (byte)(value & 0xFF);
+            L = (byte)value;
         }
     }
 
@@ -141,34 +142,18 @@ public class Registers
     
     public override string ToString() =>
         $"A:{A:X2} F:{F:X2} B:{B:X2} C:{C:X2} D:{D:X2} E:{E:X2} H:{H:X2} L:{L:X2} SP:{SP:X4} PC:{PC:X4}";
-    
-    /// <summary>
-    /// Call after a math operation.
-    /// </summary>
-    public void SetZfFrom(byte value) =>
-        Zf = value == 0;
-    
+
     /// <summary>
     /// Call before an add/inc math operation.
     /// </summary>
-    public void SetHfForInc(byte value, byte inc) =>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetHfForInc(byte value, byte inc = 1) =>
         Hf = (value & 0x0F) + (inc & 0x0F) > 0x0F;
 
     /// <summary>
-    /// Call before an add/inc math operation.
-    /// </summary>
-    public void SetHfForInc(ushort value, ushort inc) =>
-        Hf = (value & 0x0FFF) + (inc & 0x0FFF) > 0x0FFF;
-
-    /// <summary>
     /// Call before a sub/dec math operation.
     /// </summary>
-    public void SetHfForDec(byte value, byte dec) =>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetHfForDec(byte value, byte dec = 1) =>
         Hf = (value & 0x0F) < (dec & 0x0F);
-
-    /// <summary>
-    /// Call before a sub/dec math operation.
-    /// </summary>
-    public void SetHfForDec(ushort value, ushort dec) =>
-        Hf = (value & 0x0FFF) < (dec & 0x0FFF);
 }
