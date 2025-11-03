@@ -1501,9 +1501,8 @@ public static class Instructions
         new Instruction(
             "XOR A,B", // 0xA8
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Reg.B;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -1513,9 +1512,8 @@ public static class Instructions
         new Instruction(
             "XOR A,C", // 0xA9
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Reg.C;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -1525,9 +1523,8 @@ public static class Instructions
         new Instruction(
             "XOR A,D", // 0xAA
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Reg.D;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -1537,9 +1534,8 @@ public static class Instructions
         new Instruction(
             "XOR A,E", // 0xAB
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Reg.E;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -1549,9 +1545,8 @@ public static class Instructions
         new Instruction(
             "XOR A,H", // 0xAC
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Reg.H;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -1561,9 +1556,8 @@ public static class Instructions
         new Instruction(
             "XOR A,L", // 0xAD
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Reg.L;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -1573,9 +1567,8 @@ public static class Instructions
         new Instruction(
             "XOR A,(HL)", // 0xAE
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -1584,9 +1577,9 @@ public static class Instructions
         ),
         new Instruction(
             "XOR A,A", // 0xAF
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                cpu.Reg.A = 0;
                 cpu.Reg.Zf = true;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
@@ -2128,9 +2121,8 @@ public static class Instructions
         new Instruction(
             "XOR A,nn", // 0xEE nn
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A ^= cpu.Fetch8();
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
