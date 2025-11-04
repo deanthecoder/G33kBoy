@@ -214,13 +214,14 @@ public static class Instructions
         ),
         new Instruction(
             "RLA", // 0x17
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.A & 0x80) != 0;
+                cpu.Reg.A = (byte)((cpu.Reg.A << 1) + (cf ? 1 : 0));
                 cpu.Reg.Zf = false;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
@@ -488,8 +489,9 @@ public static class Instructions
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
                 cpu.Reg.SetHfForInc(value);
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(value + 1));
-                cpu.Reg.Zf = value == 0;
+                var newValue = (byte)(value + 1);
+                cpu.Ram.Write8(cpu.Reg.HL, newValue);
+                cpu.Reg.Zf = newValue == 0;
                 cpu.Reg.Nf = false;
                 return 12;
             }
@@ -499,8 +501,9 @@ public static class Instructions
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
                 cpu.Reg.SetHfForDec(value);
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(value - 1));
-                cpu.Reg.Zf = value == 0;
+                var newValue = (byte)(value - 1);
+                cpu.Ram.Write8(cpu.Reg.HL, newValue);
+                cpu.Reg.Zf = newValue == 0;
                 cpu.Reg.Nf = true;
                 return 12;
             }
@@ -1749,7 +1752,7 @@ public static class Instructions
             static cpu => {
                 cpu.Reg.Zf = true;
                 cpu.Reg.Nf = true;
-                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.B);
+                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.A);
                 cpu.Reg.Cf = false;
                 return 4;
             }
@@ -1789,7 +1792,7 @@ public static class Instructions
         new Instruction(
             "JP a16", // 0xC3 nn nn
             static cpu => {
-                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.PC);
+                cpu.Reg.PC = cpu.Fetch16();
                 cpu.InternalWaitM();
                 return 16;
             }
