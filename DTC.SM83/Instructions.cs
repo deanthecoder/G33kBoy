@@ -595,11 +595,9 @@ public static class Instructions
         new Instruction(
             "CCF", // 0x3F
             static cpu => {
-                // todo
-
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
+                cpu.Reg.Cf = !cpu.Reg.Cf;
                 return 4;
             }
         ),
