@@ -759,9 +759,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,B", // 0x40
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -770,9 +768,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,C", // 0x41
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -781,9 +777,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,D", // 0x42
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -792,9 +786,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,E", // 0x43
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -803,9 +795,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,H", // 0x44
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -814,9 +804,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,L", // 0x45
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -825,9 +813,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,(HL)", // 0x46
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -836,9 +822,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,A", // 0x47
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 0) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -847,9 +831,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,B", // 0x48
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -858,9 +840,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,C", // 0x49
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -869,9 +849,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,D", // 0x4A
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -880,9 +858,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,E", // 0x4B
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -891,9 +867,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,H", // 0x4C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -902,9 +876,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,L", // 0x4D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -913,9 +885,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,(HL)", // 0x4E
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -924,9 +894,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,A", // 0x4F
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 1) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -935,9 +903,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,B", // 0x50
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -946,9 +912,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,C", // 0x51
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -957,9 +921,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,D", // 0x52
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -968,9 +930,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,E", // 0x53
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -979,9 +939,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,H", // 0x54
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -990,9 +948,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,L", // 0x55
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1001,9 +957,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,(HL)", // 0x56
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1012,9 +966,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,A", // 0x57
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 2) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1023,9 +975,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,B", // 0x58
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1034,9 +984,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,C", // 0x59
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1045,9 +993,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,D", // 0x5A
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1056,9 +1002,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,E", // 0x5B
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1067,9 +1011,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,H", // 0x5C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1078,9 +1020,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,L", // 0x5D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1089,9 +1029,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,(HL)", // 0x5E
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1100,9 +1038,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,A", // 0x5F
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 3) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1111,9 +1047,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,B", // 0x60
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1122,9 +1056,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,C", // 0x61
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1133,9 +1065,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,D", // 0x62
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1144,9 +1074,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,E", // 0x63
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1155,9 +1083,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,H", // 0x64
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1166,9 +1092,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,L", // 0x65
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1177,9 +1101,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,(HL)", // 0x66
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1188,9 +1110,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,A", // 0x67
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 4) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1199,9 +1119,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,B", // 0x68
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1210,9 +1128,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,C", // 0x69
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1221,9 +1137,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,D", // 0x6A
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1232,9 +1146,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,E", // 0x6B
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1243,9 +1155,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,H", // 0x6C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1254,9 +1164,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,L", // 0x6D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1265,9 +1173,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,(HL)", // 0x6E
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1276,9 +1182,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,A", // 0x6F
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 5) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1287,9 +1191,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,B", // 0x70
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1298,9 +1200,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,C", // 0x71
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1309,9 +1209,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,D", // 0x72
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1320,9 +1218,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,E", // 0x73
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1331,9 +1227,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,H", // 0x74
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1342,9 +1236,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,L", // 0x75
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1353,9 +1245,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,(HL)", // 0x76
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1364,9 +1254,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,A", // 0x77
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 6) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1375,9 +1263,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,B", // 0x78
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Reg.B) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1386,9 +1272,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,C", // 0x79
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Reg.C) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1397,9 +1281,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,D", // 0x7A
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Reg.D) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1408,9 +1290,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,E", // 0x7B
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Reg.E) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1419,9 +1299,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,H", // 0x7C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Reg.H) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1430,9 +1308,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,L", // 0x7D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Reg.L) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
@@ -1441,9 +1317,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,(HL)", // 0x7E
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1452,9 +1326,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,A", // 0x7F
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Zf = ((1 << 7) & cpu.Reg.A) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 8;
