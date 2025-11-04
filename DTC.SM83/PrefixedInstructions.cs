@@ -202,96 +202,98 @@ public static class PrefixedInstructions
         new Instruction(
             "RL B", // 0x10
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.B & 0x80) != 0;
+                cpu.Reg.B = (byte)((cpu.Reg.B << 1) + (cf ? 1 : 0));
+                cpu.Reg.Zf = cpu.Reg.B == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "RL C", // 0x11
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.C & 0x80) != 0;
+                cpu.Reg.C = (byte)((cpu.Reg.C << 1) + (cf ? 1 : 0));
+                cpu.Reg.Zf = cpu.Reg.C == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "RL D", // 0x12
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.D & 0x80) != 0;
+                cpu.Reg.D = (byte)((cpu.Reg.D << 1) + (cf ? 1 : 0));
+                cpu.Reg.Zf = cpu.Reg.D == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "RL E", // 0x13
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.E & 0x80) != 0;
+                cpu.Reg.E = (byte)((cpu.Reg.E << 1) + (cf ? 1 : 0));
+                cpu.Reg.Zf = cpu.Reg.E == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "RL H", // 0x14
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.H & 0x80) != 0;
+                cpu.Reg.H = (byte)((cpu.Reg.H << 1) + (cf ? 1 : 0));
+                cpu.Reg.Zf = cpu.Reg.H == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "RL L", // 0x15
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.L & 0x80) != 0;
+                cpu.Reg.L = (byte)((cpu.Reg.L << 1) + (cf ? 1 : 0));
+                cpu.Reg.Zf = cpu.Reg.L == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "RL (HL)", // 0x16
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.Cf = (value & 0x80) != 0;
+                value = (byte)((value << 1) + (cf ? 1 : 0));
+                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Reg.Zf = value == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 16;
             }
         ),
         new Instruction(
             "RL A", // 0x17
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var cf = cpu.Reg.Cf;
+                cpu.Reg.Cf = (cpu.Reg.A & 0x80) != 0;
+                cpu.Reg.A = (byte)((cpu.Reg.A << 1) + (cf ? 1 : 0));
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
