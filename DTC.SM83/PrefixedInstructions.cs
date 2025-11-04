@@ -396,97 +396,92 @@ public static class PrefixedInstructions
         ),
         new Instruction(
             "SLA B", // 0x20
-            static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+            static cpu =>
+            {
+                cpu.Reg.Cf = (cpu.Reg.B & 0x80) != 0;
+                cpu.Reg.B <<= 1;
+                cpu.Reg.Zf = cpu.Reg.B == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "SLA C", // 0x21
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Cf = (cpu.Reg.C & 0x80) != 0;
+                cpu.Reg.C <<= 1;
+                cpu.Reg.Zf = cpu.Reg.C == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "SLA D", // 0x22
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Cf = (cpu.Reg.D & 0x80) != 0;
+                cpu.Reg.D <<= 1;
+                cpu.Reg.Zf = cpu.Reg.D == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "SLA E", // 0x23
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Cf = (cpu.Reg.E & 0x80) != 0;
+                cpu.Reg.E <<= 1;
+                cpu.Reg.Zf = cpu.Reg.E == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "SLA H", // 0x24
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Cf = (cpu.Reg.H & 0x80) != 0;
+                cpu.Reg.H <<= 1;
+                cpu.Reg.Zf = cpu.Reg.H == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "SLA L", // 0x25
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Cf = (cpu.Reg.L & 0x80) != 0;
+                cpu.Reg.L <<= 1;
+                cpu.Reg.Zf = cpu.Reg.L == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
         new Instruction(
             "SLA (HL)", // 0x26
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var value = cpu.Ram.Read8(cpu.Reg.HL);;
+                cpu.Reg.Cf = (value & 0x80) != 0;
+                value <<= 1;
+                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Reg.Zf = value == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 16;
             }
         ),
         new Instruction(
             "SLA A", // 0x27
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.Cf = (cpu.Reg.A & 0x80) != 0;
+                cpu.Reg.A <<= 1;
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 8;
             }
         ),
