@@ -1335,512 +1335,448 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 0,B", // 0x80
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 0));
                 return 8;
             }
         ),
         new Instruction(
             "RES 0,C", // 0x81
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 0));
                 return 8;
             }
         ),
         new Instruction(
             "RES 0,D", // 0x82
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 0));
                 return 8;
             }
         ),
         new Instruction(
             "RES 0,E", // 0x83
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 0));
                 return 8;
             }
         ),
         new Instruction(
             "RES 0,H", // 0x84
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 0));
                 return 8;
             }
         ),
         new Instruction(
             "RES 0,L", // 0x85
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 0));
                 return 8;
             }
         ),
         new Instruction(
             "RES 0,(HL)", // 0x86
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 0)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 0,A", // 0x87
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 0));
                 return 8;
             }
         ),
         new Instruction(
             "RES 1,B", // 0x88
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 1));
                 return 8;
             }
         ),
         new Instruction(
             "RES 1,C", // 0x89
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 1));
                 return 8;
             }
         ),
         new Instruction(
             "RES 1,D", // 0x8A
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 1));
                 return 8;
             }
         ),
         new Instruction(
             "RES 1,E", // 0x8B
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 1));
                 return 8;
             }
         ),
         new Instruction(
             "RES 1,H", // 0x8C
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 1));
                 return 8;
             }
         ),
         new Instruction(
             "RES 1,L", // 0x8D
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 1));
                 return 8;
             }
         ),
         new Instruction(
             "RES 1,(HL)", // 0x8E
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 1)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 1,A", // 0x8F
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 1));
                 return 8;
             }
         ),
         new Instruction(
             "RES 2,B", // 0x90
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 2));
                 return 8;
             }
         ),
         new Instruction(
             "RES 2,C", // 0x91
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 2));
                 return 8;
             }
         ),
         new Instruction(
             "RES 2,D", // 0x92
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 2));
                 return 8;
             }
         ),
         new Instruction(
             "RES 2,E", // 0x93
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 2));
                 return 8;
             }
         ),
         new Instruction(
             "RES 2,H", // 0x94
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 2));
                 return 8;
             }
         ),
         new Instruction(
             "RES 2,L", // 0x95
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 2));
                 return 8;
             }
         ),
         new Instruction(
             "RES 2,(HL)", // 0x96
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 2)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 2,A", // 0x97
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 2));
                 return 8;
             }
         ),
         new Instruction(
             "RES 3,B", // 0x98
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 3));
                 return 8;
             }
         ),
         new Instruction(
             "RES 3,C", // 0x99
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 3));
                 return 8;
             }
         ),
         new Instruction(
             "RES 3,D", // 0x9A
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 3));
                 return 8;
             }
         ),
         new Instruction(
             "RES 3,E", // 0x9B
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 3));
                 return 8;
             }
         ),
         new Instruction(
             "RES 3,H", // 0x9C
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 3));
                 return 8;
             }
         ),
         new Instruction(
             "RES 3,L", // 0x9D
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 3));
                 return 8;
             }
         ),
         new Instruction(
             "RES 3,(HL)", // 0x9E
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 3)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 3,A", // 0x9F
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 3));
                 return 8;
             }
         ),
         new Instruction(
             "RES 4,B", // 0xA0
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 4));
                 return 8;
             }
         ),
         new Instruction(
             "RES 4,C", // 0xA1
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 4));
                 return 8;
             }
         ),
         new Instruction(
             "RES 4,D", // 0xA2
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 4));
                 return 8;
             }
         ),
         new Instruction(
             "RES 4,E", // 0xA3
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 4));
                 return 8;
             }
         ),
         new Instruction(
             "RES 4,H", // 0xA4
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 4));
                 return 8;
             }
         ),
         new Instruction(
             "RES 4,L", // 0xA5
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 4));
                 return 8;
             }
         ),
         new Instruction(
             "RES 4,(HL)", // 0xA6
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 4)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 4,A", // 0xA7
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 4));
                 return 8;
             }
         ),
         new Instruction(
             "RES 5,B", // 0xA8
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 5));
                 return 8;
             }
         ),
         new Instruction(
             "RES 5,C", // 0xA9
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 5));
                 return 8;
             }
         ),
         new Instruction(
             "RES 5,D", // 0xAA
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 5));
                 return 8;
             }
         ),
         new Instruction(
             "RES 5,E", // 0xAB
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 5));
                 return 8;
             }
         ),
         new Instruction(
             "RES 5,H", // 0xAC
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 5));
                 return 8;
             }
         ),
         new Instruction(
             "RES 5,L", // 0xAD
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 5));
                 return 8;
             }
         ),
         new Instruction(
             "RES 5,(HL)", // 0xAE
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 5)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 5,A", // 0xAF
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 5));
                 return 8;
             }
         ),
         new Instruction(
             "RES 6,B", // 0xB0
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 6));
                 return 8;
             }
         ),
         new Instruction(
             "RES 6,C", // 0xB1
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 6));
                 return 8;
             }
         ),
         new Instruction(
             "RES 6,D", // 0xB2
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 6));
                 return 8;
             }
         ),
         new Instruction(
             "RES 6,E", // 0xB3
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 6));
                 return 8;
             }
         ),
         new Instruction(
             "RES 6,H", // 0xB4
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 6));
                 return 8;
             }
         ),
         new Instruction(
             "RES 6,L", // 0xB5
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 6));
                 return 8;
             }
         ),
         new Instruction(
             "RES 6,(HL)", // 0xB6
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 6)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 6,A", // 0xB7
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 6));
                 return 8;
             }
         ),
         new Instruction(
             "RES 7,B", // 0xB8
             static cpu => {
-                // todo
-
+                cpu.Reg.B = (byte)(cpu.Reg.B & ~(1 << 7));
                 return 8;
             }
         ),
         new Instruction(
             "RES 7,C", // 0xB9
             static cpu => {
-                // todo
-
+                cpu.Reg.C = (byte)(cpu.Reg.C & ~(1 << 7));
                 return 8;
             }
         ),
         new Instruction(
             "RES 7,D", // 0xBA
             static cpu => {
-                // todo
-
+                cpu.Reg.D = (byte)(cpu.Reg.D & ~(1 << 7));
                 return 8;
             }
         ),
         new Instruction(
             "RES 7,E", // 0xBB
             static cpu => {
-                // todo
-
+                cpu.Reg.E = (byte)(cpu.Reg.E & ~(1 << 7));
                 return 8;
             }
         ),
         new Instruction(
             "RES 7,H", // 0xBC
             static cpu => {
-                // todo
-
+                cpu.Reg.H = (byte)(cpu.Reg.H & ~(1 << 7));
                 return 8;
             }
         ),
         new Instruction(
             "RES 7,L", // 0xBD
             static cpu => {
-                // todo
-
+                cpu.Reg.L = (byte)(cpu.Reg.L & ~(1 << 7));
                 return 8;
             }
         ),
         new Instruction(
             "RES 7,(HL)", // 0xBE
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 7)));
                 return 16;
             }
         ),
         new Instruction(
             "RES 7,A", // 0xBF
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)(cpu.Reg.A & ~(1 << 7));
                 return 8;
             }
         ),
