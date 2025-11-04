@@ -443,8 +443,7 @@ public static class Instructions
         new Instruction(
             "CPL", // 0x2F
             static cpu => {
-                // todo
-
+                cpu.Reg.A = (byte)~cpu.Reg.A;
                 cpu.Reg.Nf = true;
                 cpu.Reg.Hf = true;
                 return 4;
