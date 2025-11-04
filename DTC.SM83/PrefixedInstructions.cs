@@ -577,10 +577,10 @@ public static class PrefixedInstructions
         ),
         new Instruction(
             "SWAP B", // 0x30
-            static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+            static cpu =>
+            {
+                cpu.Reg.B = (byte)((cpu.Reg.B >> 4) | (cpu.Reg.B << 4));
+                cpu.Reg.Zf = cpu.Reg.B == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -590,9 +590,8 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP C", // 0x31
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.C = (byte)((cpu.Reg.C >> 4) | (cpu.Reg.C << 4));
+                cpu.Reg.Zf = cpu.Reg.C == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -602,9 +601,8 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP D", // 0x32
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.D = (byte)((cpu.Reg.D >> 4) | (cpu.Reg.D << 4));
+                cpu.Reg.Zf = cpu.Reg.D == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -614,9 +612,8 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP E", // 0x33
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.E = (byte)((cpu.Reg.E >> 4) | (cpu.Reg.E << 4));
+                cpu.Reg.Zf = cpu.Reg.E == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -626,9 +623,8 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP H", // 0x34
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.H = (byte)((cpu.Reg.H >> 4) | (cpu.Reg.H << 4));
+                cpu.Reg.Zf = cpu.Reg.H == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -638,9 +634,8 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP L", // 0x35
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.L = (byte)((cpu.Reg.L >> 4) | (cpu.Reg.L << 4));
+                cpu.Reg.Zf = cpu.Reg.L == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -650,9 +645,10 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP (HL)", // 0x36
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                value = (byte)((value >> 4) | (value << 4));
+                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Reg.Zf = value == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
@@ -662,9 +658,8 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP A", // 0x37
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
+                cpu.Reg.A = (byte)((cpu.Reg.A >> 4) | (cpu.Reg.A << 4));
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = false;
