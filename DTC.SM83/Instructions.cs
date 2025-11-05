@@ -334,15 +334,33 @@ public static class Instructions
                 cpu.Reg.H = cpu.Fetch8();
                 return 8;
             }
-        ),
+        ), 
         new Instruction(
             "DAA", // 0x27
-            static cpu => {
-                // todo
+            static cpu =>
+            {
+                if (cpu.Reg.Nf)
+                {
+                    var adjust = cpu.Reg.Hf ? 0x06 : 0x00;
+                    if (cpu.Reg.Cf)
+                        adjust |= 0x60;
 
-                cpu.Reg.Zf = false; // todo - Calculate
+                    cpu.Reg.A = (byte)(cpu.Reg.A - adjust);
+                }
+                else
+                {
+                    var adjust = (cpu.Reg.Hf || (cpu.Reg.A & 0x0F) > 0x09) ? 0x06 : 0x00;
+                    if (cpu.Reg.Cf || cpu.Reg.A > 0x99)
+                    {
+                        adjust |= 0x60;
+                        cpu.Reg.Cf = true;
+                    }
+
+                    cpu.Reg.A = (byte)(cpu.Reg.A + adjust);
+                }
+
+                cpu.Reg.Zf = cpu.Reg.A == 0;
                 cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false; // todo - Calculate
                 return 4;
             }
         ),
