@@ -21,7 +21,7 @@ public class MemoryTests : TestsBase
     [Test]
     public void CheckDefaultMemoryIsZeroed()
     {
-        var memory = new Memory(0xFFFF, m_clock);
+        var memory = new Memory(0x10000, m_clock);
 
         Assert.That(memory.Read8(0x1234), Is.Zero);
     }
@@ -29,7 +29,7 @@ public class MemoryTests : TestsBase
     [Test]
     public void CheckIndexerReadsBackWrittenValue()
     {
-        var memory = new Memory(0xFFFF, m_clock);
+        var memory = new Memory(0x10000, m_clock);
         const ushort address = 0x2345;
         const byte value = 0x7A;
 
@@ -41,7 +41,7 @@ public class MemoryTests : TestsBase
     [Test]
     public void CheckWrite16StoresLittleEndianBytes()
     {
-        var memory = new Memory(0xFFFF, m_clock);
+        var memory = new Memory(0x10000, m_clock);
         const ushort address = 0x3456;
 
         memory.Write16(address, 0xABCD);
@@ -53,7 +53,7 @@ public class MemoryTests : TestsBase
     [Test]
     public void CheckRead16CombinesLittleEndianBytes()
     {
-        var memory = new Memory(0xFFFF, m_clock);
+        var memory = new Memory(0x10000, m_clock);
         const ushort address = 0x4567;
 
         memory.Write8(address, 0xEF);

@@ -495,8 +495,6 @@ public static class Instructions
         new Instruction(
             "SCF", // 0x37
             static cpu => {
-                // todo
-
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
                 cpu.Reg.Cf = true;
@@ -928,9 +926,21 @@ public static class Instructions
         ),
         new Instruction(
             "HALT", // 0x76
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                if (cpu.IME)
+                {
+                    cpu.IsHalted = true; // Sleep until an interrupt is about to be serviced.
+                }
+                else
+                {
+                    var ieif = (byte)(cpu.IE & cpu.IF);
+                    if (ieif == 0)
+                        cpu.IsHalted = true; // IME=0, no pending -> wake when any pending appears (but don't service)
+                    else
+                        cpu.HaltBug = true; // IME=0, pending!=0 -> HALT bug (don't halt; next opcode byte read twice)
+                }
+                
                 return 4;
             }
         ),
@@ -1531,8 +1541,7 @@ public static class Instructions
                 var addr = cpu.Fetch16();
                 if (cpu.Reg.Zf)
                     return 12; // No jump.
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = addr;
                 cpu.InternalWaitM();
                 return 24;
@@ -1560,8 +1569,7 @@ public static class Instructions
             "RST $00", // 0xC7
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x00;
                 return 16;
             }
@@ -1602,8 +1610,7 @@ public static class Instructions
                 var addr = cpu.Fetch16();
                 if (!cpu.Reg.Zf)
                     return 12; // No jump.
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = addr;
                 cpu.InternalWaitM();
                 return 24;            }
@@ -1613,8 +1620,7 @@ public static class Instructions
             static cpu =>
             {
                 var addr = cpu.Fetch16();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = addr;
                 cpu.InternalWaitM();
                 return 24;
@@ -1631,8 +1637,7 @@ public static class Instructions
             "RST $08", // 0xCF
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x08;
                 return 16;
             }
@@ -1673,8 +1678,7 @@ public static class Instructions
                 var addr = cpu.Fetch16();
                 if (cpu.Reg.Cf)
                     return 12; // No jump.
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = addr;
                 cpu.InternalWaitM();
                 return 24;            }
@@ -1699,8 +1703,7 @@ public static class Instructions
             "RST $10", // 0xD7
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x10;
                 return 16;
             }
@@ -1741,8 +1744,7 @@ public static class Instructions
                 var addr = cpu.Fetch16();
                 if (!cpu.Reg.Cf)
                     return 12; // No jump.
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = addr;
                 cpu.InternalWaitM();
                 return 24;
@@ -1760,8 +1762,7 @@ public static class Instructions
             "RST $18", // 0xDF
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x18;
                 return 16;
             }
@@ -1810,8 +1811,7 @@ public static class Instructions
             "RST $20", // 0xE7
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x20;
                 return 16;
             }
@@ -1860,8 +1860,7 @@ public static class Instructions
             "RST $28", // 0xEF
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x28;
                 return 16;
             }
@@ -1920,8 +1919,7 @@ public static class Instructions
             "RST $30", // 0xF7
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x30;
                 return 16;
             }
@@ -1982,19 +1980,19 @@ public static class Instructions
             "RST $38", // 0xFF
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.PC);
+                cpu.PushPC();
                 cpu.Reg.PC = 0x38;
                 return 16;
             }
         )
     ];
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void DoRET(Cpu cpu)
     {
-
-        cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
-        cpu.Reg.SP += 2;
+        var lo = cpu.Ram.Read8(cpu.Reg.SP++);
+        var hi = cpu.Ram.Read8(cpu.Reg.SP++);
+        cpu.Reg.PC = (ushort)(hi << 8 | lo);
         cpu.InternalWaitM();
     }
 

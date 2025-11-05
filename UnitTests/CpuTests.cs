@@ -90,8 +90,8 @@ public class CpuTests : TestsBase
             var clock = new Clock();
             var initialRegs = new Registers();
             var finalRegs = new Registers();
-            var initialMem = new Memory(0xFFFF, clock);
-            var finalMem = new Memory(0xFFFF, clock);
+            var initialMem = new Memory(0x10000, clock);
+            var finalMem = new Memory(0x10000, clock);
 
             Populate(initialRegs, m_initialState);
             Populate(initialMem, m_initialState);
