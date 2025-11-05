@@ -375,7 +375,8 @@ public static class PrefixedInstructions
                 var cf = cpu.Reg.Cf;
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
                 cpu.Reg.Cf = (value & 0x01) != 0;
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)((value >> 1) + (cf ? 0x80 : 0x00)));
+                value = (byte)((value >> 1) + (cf ? 0x80 : 0x00));
+                cpu.Ram.Write8(cpu.Reg.HL, value);
                 cpu.Reg.Zf = value == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = false;
