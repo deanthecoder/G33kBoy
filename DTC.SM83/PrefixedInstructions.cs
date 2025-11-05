@@ -1513,513 +1513,451 @@ public static class PrefixedInstructions
         ),
         new Instruction(
             "SET 0,B", // 0xC0
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                cpu.Reg.B |= 1 << 0;
                 return 8;
             }
         ),
         new Instruction(
             "SET 0,C", // 0xC1
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 0;
                 return 8;
             }
         ),
         new Instruction(
             "SET 0,D", // 0xC2
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 0;
                 return 8;
             }
         ),
         new Instruction(
             "SET 0,E", // 0xC3
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 0;
                 return 8;
             }
         ),
         new Instruction(
             "SET 0,H", // 0xC4
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 0;
                 return 8;
             }
         ),
         new Instruction(
             "SET 0,L", // 0xC5
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 0;
                 return 8;
             }
         ),
         new Instruction(
             "SET 0,(HL)", // 0xC6
-            static cpu => {
-                // todo
-
+            static cpu =>
+            {
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 0)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 0,A", // 0xC7
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 0;
                 return 8;
             }
         ),
         new Instruction(
             "SET 1,B", // 0xC8
             static cpu => {
-                // todo
-
+                cpu.Reg.B |= 1 << 1;
                 return 8;
             }
         ),
         new Instruction(
             "SET 1,C", // 0xC9
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 1;
                 return 8;
             }
         ),
         new Instruction(
             "SET 1,D", // 0xCA
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 1;
                 return 8;
             }
         ),
         new Instruction(
             "SET 1,E", // 0xCB
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 1;
                 return 8;
             }
         ),
         new Instruction(
             "SET 1,H", // 0xCC
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 1;
                 return 8;
             }
         ),
         new Instruction(
             "SET 1,L", // 0xCD
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 1;
                 return 8;
             }
         ),
         new Instruction(
             "SET 1,(HL)", // 0xCE
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 1)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 1,A", // 0xCF
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 1;
                 return 8;
             }
         ),
         new Instruction(
             "SET 2,B", // 0xD0
             static cpu => {
-                // todo
-
+                cpu.Reg.B |= 1 << 2;
                 return 8;
             }
         ),
         new Instruction(
             "SET 2,C", // 0xD1
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 2;
                 return 8;
             }
         ),
         new Instruction(
             "SET 2,D", // 0xD2
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 2;
                 return 8;
             }
         ),
         new Instruction(
             "SET 2,E", // 0xD3
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 2;
                 return 8;
             }
         ),
         new Instruction(
             "SET 2,H", // 0xD4
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 2;
                 return 8;
             }
         ),
         new Instruction(
             "SET 2,L", // 0xD5
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 2;
                 return 8;
             }
         ),
         new Instruction(
             "SET 2,(HL)", // 0xD6
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 2)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 2,A", // 0xD7
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 2;
                 return 8;
             }
         ),
         new Instruction(
             "SET 3,B", // 0xD8
             static cpu => {
-                // todo
-
+                cpu.Reg.B |= 1 << 3;
                 return 8;
             }
         ),
         new Instruction(
             "SET 3,C", // 0xD9
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 3;
                 return 8;
             }
         ),
         new Instruction(
             "SET 3,D", // 0xDA
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 3;
                 return 8;
             }
         ),
         new Instruction(
             "SET 3,E", // 0xDB
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 3;
                 return 8;
             }
         ),
         new Instruction(
             "SET 3,H", // 0xDC
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 3;
                 return 8;
             }
         ),
         new Instruction(
             "SET 3,L", // 0xDD
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 3;
                 return 8;
             }
         ),
         new Instruction(
             "SET 3,(HL)", // 0xDE
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 3)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 3,A", // 0xDF
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 3;
                 return 8;
             }
         ),
         new Instruction(
             "SET 4,B", // 0xE0
             static cpu => {
-                // todo
-
+                cpu.Reg.B |= 1 << 4;
                 return 8;
             }
         ),
         new Instruction(
             "SET 4,C", // 0xE1
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 4;
                 return 8;
             }
         ),
         new Instruction(
             "SET 4,D", // 0xE2
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 4;
                 return 8;
             }
         ),
         new Instruction(
             "SET 4,E", // 0xE3
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 4;
                 return 8;
             }
         ),
         new Instruction(
             "SET 4,H", // 0xE4
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 4;
                 return 8;
             }
         ),
         new Instruction(
             "SET 4,L", // 0xE5
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 4;
                 return 8;
             }
         ),
         new Instruction(
             "SET 4,(HL)", // 0xE6
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 4)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 4,A", // 0xE7
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 4;
                 return 8;
             }
         ),
         new Instruction(
             "SET 5,B", // 0xE8
             static cpu => {
-                // todo
-
+                cpu.Reg.B |= 1 << 5;
                 return 8;
             }
         ),
         new Instruction(
             "SET 5,C", // 0xE9
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 5;
                 return 8;
             }
         ),
         new Instruction(
             "SET 5,D", // 0xEA
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 5;
                 return 8;
             }
         ),
         new Instruction(
             "SET 5,E", // 0xEB
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 5;
                 return 8;
             }
         ),
         new Instruction(
             "SET 5,H", // 0xEC
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 5;
                 return 8;
             }
         ),
         new Instruction(
             "SET 5,L", // 0xED
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 5;
                 return 8;
             }
         ),
         new Instruction(
             "SET 5,(HL)", // 0xEE
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 5)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 5,A", // 0xEF
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 5;
                 return 8;
             }
         ),
         new Instruction(
             "SET 6,B", // 0xF0
             static cpu => {
-                // todo
-
+                cpu.Reg.B |= 1 << 6;
                 return 8;
             }
         ),
         new Instruction(
             "SET 6,C", // 0xF1
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 6;
                 return 8;
             }
         ),
         new Instruction(
             "SET 6,D", // 0xF2
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 6;
                 return 8;
             }
         ),
         new Instruction(
             "SET 6,E", // 0xF3
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 6;
                 return 8;
             }
         ),
         new Instruction(
             "SET 6,H", // 0xF4
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 6;
                 return 8;
             }
         ),
         new Instruction(
             "SET 6,L", // 0xF5
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 6;
                 return 8;
             }
         ),
         new Instruction(
             "SET 6,(HL)", // 0xF6
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 6)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 6,A", // 0xF7
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 6;
                 return 8;
             }
         ),
         new Instruction(
             "SET 7,B", // 0xF8
             static cpu => {
-                // todo
-
+                cpu.Reg.B |= 1 << 7;
                 return 8;
             }
         ),
         new Instruction(
             "SET 7,C", // 0xF9
             static cpu => {
-                // todo
-
+                cpu.Reg.C |= 1 << 7;
                 return 8;
             }
         ),
         new Instruction(
             "SET 7,D", // 0xFA
             static cpu => {
-                // todo
-
+                cpu.Reg.D |= 1 << 7;
                 return 8;
             }
         ),
         new Instruction(
             "SET 7,E", // 0xFB
             static cpu => {
-                // todo
-
+                cpu.Reg.E |= 1 << 7;
                 return 8;
             }
         ),
         new Instruction(
             "SET 7,H", // 0xFC
             static cpu => {
-                // todo
-
+                cpu.Reg.H |= 1 << 7;
                 return 8;
             }
         ),
         new Instruction(
             "SET 7,L", // 0xFD
             static cpu => {
-                // todo
-
+                cpu.Reg.L |= 1 << 7;
                 return 8;
             }
         ),
         new Instruction(
             "SET 7,(HL)", // 0xFE
             static cpu => {
-                // todo
-
+                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 7)));
                 return 16;
             }
         ),
         new Instruction(
             "SET 7,A", // 0xFF
             static cpu => {
-                // todo
-
+                cpu.Reg.A |= 1 << 7;
                 return 8;
             }
         )
