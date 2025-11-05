@@ -17,14 +17,14 @@ namespace DTC.SM83;
 
 public sealed class Registers
 {
-    public byte A { get; set; }
+    public byte A;
     public byte F => (byte)((Zf ? 0x80 : 0) | (Nf ? 0x40 : 0) | (Hf ? 0x20 : 0) | (Cf ? 0x10 : 0));
-    public byte B { get; set; }
-    public byte C { get; set; }
-    public byte D { get; set; }
-    public byte E { get; set; }
-    public byte H { get; set; }
-    public byte L { get; set; }
+    public byte B;
+    public byte C;
+    public byte D;
+    public byte E;
+    public byte H;
+    public byte L;
 
     public ushort BC
     {

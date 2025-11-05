@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System.Runtime.CompilerServices;
+
 namespace DTC.SM83;
 
 /// <summary>
@@ -22,66 +24,42 @@ public static class PrefixedInstructions
             "RLC B", // 0x00
             static cpu =>
             {
-                cpu.Reg.Cf = (cpu.Reg.B & 0x80) != 0;
-                cpu.Reg.B = (byte)((cpu.Reg.B << 1) + (cpu.Reg.Cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRLC(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "RLC C", // 0x01
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.C & 0x80) != 0;
-                cpu.Reg.C = (byte)((cpu.Reg.C << 1) + (cpu.Reg.Cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRLC(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "RLC D", // 0x02
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.D & 0x80) != 0;
-                cpu.Reg.D = (byte)((cpu.Reg.D << 1) + (cpu.Reg.Cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRLC(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "RLC E", // 0x03
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.E & 0x80) != 0;
-                cpu.Reg.E = (byte)((cpu.Reg.E << 1) + (cpu.Reg.Cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRLC(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "RLC H", // 0x04
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.H & 0x80) != 0;
-                cpu.Reg.H = (byte)((cpu.Reg.H << 1) + (cpu.Reg.Cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRLC(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "RLC L", // 0x05
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.L & 0x80) != 0;
-                cpu.Reg.L = (byte)((cpu.Reg.L << 1) + (cpu.Reg.Cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRLC(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
@@ -89,89 +67,57 @@ public static class PrefixedInstructions
             "RLC (HL)", // 0x06
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Cf = (value & 0x80) != 0;
-                value = (byte)((value << 1) + (cpu.Reg.Cf ? 1 : 0));
+                DoRLC(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
                 return 16;
             }
         ),
         new Instruction(
             "RLC A", // 0x07
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.A & 0x80) != 0;
-                cpu.Reg.A = (byte)((cpu.Reg.A << 1) + (cpu.Reg.Cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRLC(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
         new Instruction(
             "RRC B", // 0x08
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.B & 0x01) != 0;
-                cpu.Reg.B = (byte)((cpu.Reg.B >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRRC(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "RRC C", // 0x09
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.C & 0x01) != 0;
-                cpu.Reg.C = (byte)((cpu.Reg.C >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRRC(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "RRC D", // 0x0A
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.D & 0x01) != 0;
-                cpu.Reg.D = (byte)((cpu.Reg.D >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRRC(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "RRC E", // 0x0B
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.E & 0x01) != 0;
-                cpu.Reg.E = (byte)((cpu.Reg.E >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRRC(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "RRC H", // 0x0C
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.H & 0x01) != 0;
-                cpu.Reg.H = (byte)((cpu.Reg.H >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRRC(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "RRC L", // 0x0D
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.L & 0x01) != 0;
-                cpu.Reg.L = (byte)((cpu.Reg.L >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRRC(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
@@ -179,219 +125,131 @@ public static class PrefixedInstructions
             "RRC (HL)", // 0x0E
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Cf = (value & 0x01) != 0;
-                value = (byte)((value >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
+                DoRRC(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
                 return 16;
             }
         ),
         new Instruction(
             "RRC A", // 0x0F
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.A & 0x01) != 0;
-                cpu.Reg.A = (byte)((cpu.Reg.A >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRRC(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
         new Instruction(
             "RL B", // 0x10
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.B & 0x80) != 0;
-                cpu.Reg.B = (byte)((cpu.Reg.B << 1) + (cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRL(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "RL C", // 0x11
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.C & 0x80) != 0;
-                cpu.Reg.C = (byte)((cpu.Reg.C << 1) + (cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRL(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "RL D", // 0x12
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.D & 0x80) != 0;
-                cpu.Reg.D = (byte)((cpu.Reg.D << 1) + (cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRL(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "RL E", // 0x13
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.E & 0x80) != 0;
-                cpu.Reg.E = (byte)((cpu.Reg.E << 1) + (cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRL(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "RL H", // 0x14
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.H & 0x80) != 0;
-                cpu.Reg.H = (byte)((cpu.Reg.H << 1) + (cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRL(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "RL L", // 0x15
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.L & 0x80) != 0;
-                cpu.Reg.L = (byte)((cpu.Reg.L << 1) + (cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRL(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
         new Instruction(
             "RL (HL)", // 0x16
             static cpu => {
-                var cf = cpu.Reg.Cf;
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Cf = (value & 0x80) != 0;
-                value = (byte)((value << 1) + (cf ? 1 : 0));
+                DoRL(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
                 return 16;
             }
         ),
         new Instruction(
             "RL A", // 0x17
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.A & 0x80) != 0;
-                cpu.Reg.A = (byte)((cpu.Reg.A << 1) + (cf ? 1 : 0));
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRL(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
         new Instruction(
             "RR B", // 0x18
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.B & 0x01) != 0;
-                cpu.Reg.B = (byte)((cpu.Reg.B >> 1) + (cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRR(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "RR C", // 0x19
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.C & 0x01) != 0;
-                cpu.Reg.C = (byte)((cpu.Reg.C >> 1) + (cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRR(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "RR D", // 0x1A
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.D & 0x01) != 0;
-                cpu.Reg.D = (byte)((cpu.Reg.D >> 1) + (cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRR(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "RR E", // 0x1B
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.E & 0x01) != 0;
-                cpu.Reg.E = (byte)((cpu.Reg.E >> 1) + (cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRR(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "RR H", // 0x1C
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.H & 0x01) != 0;
-                cpu.Reg.H = (byte)((cpu.Reg.H >> 1) + (cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRR(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "RR L", // 0x1D
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.L & 0x01) != 0;
-                cpu.Reg.L = (byte)((cpu.Reg.L >> 1) + (cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRR(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
         new Instruction(
             "RR (HL)", // 0x1E
             static cpu => {
-                var cf = cpu.Reg.Cf;
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Cf = (value & 0x01) != 0;
-                value = (byte)((value >> 1) + (cf ? 0x80 : 0x00));
+                DoRR(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
                 return 16;
             }
         ),
         new Instruction(
             "RR A", // 0x1F
             static cpu => {
-                var cf = cpu.Reg.Cf;
-                cpu.Reg.Cf = (cpu.Reg.A & 0x01) != 0;
-                cpu.Reg.A = (byte)((cpu.Reg.A >> 1) + (cf ? 0x80 : 0x00));
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoRR(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
@@ -399,66 +257,42 @@ public static class PrefixedInstructions
             "SLA B", // 0x20
             static cpu =>
             {
-                cpu.Reg.Cf = (cpu.Reg.B & 0x80) != 0;
-                cpu.Reg.B <<= 1;
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSLA(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "SLA C", // 0x21
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.C & 0x80) != 0;
-                cpu.Reg.C <<= 1;
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSLA(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "SLA D", // 0x22
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.D & 0x80) != 0;
-                cpu.Reg.D <<= 1;
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSLA(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "SLA E", // 0x23
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.E & 0x80) != 0;
-                cpu.Reg.E <<= 1;
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSLA(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "SLA H", // 0x24
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.H & 0x80) != 0;
-                cpu.Reg.H <<= 1;
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSLA(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "SLA L", // 0x25
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.L & 0x80) != 0;
-                cpu.Reg.L <<= 1;
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSLA(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
@@ -466,89 +300,57 @@ public static class PrefixedInstructions
             "SLA (HL)", // 0x26
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Cf = (value & 0x80) != 0;
-                value <<= 1;
+                DoSLA(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
                 return 16;
             }
         ),
         new Instruction(
             "SLA A", // 0x27
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.A & 0x80) != 0;
-                cpu.Reg.A <<= 1;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSLA(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
         new Instruction(
             "SRA B", // 0x28
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.B & 0x01) != 0;
-                cpu.Reg.B = (byte)((cpu.Reg.B >> 1) | (cpu.Reg.B & 0x80));
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRA(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "SRA C", // 0x29
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.C & 0x01) != 0;
-                cpu.Reg.C = (byte)((cpu.Reg.C >> 1) | (cpu.Reg.C & 0x80));
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRA(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "SRA D", // 0x2A
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.D & 0x01) != 0;
-                cpu.Reg.D = (byte)((cpu.Reg.D >> 1) | (cpu.Reg.D & 0x80));
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRA(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "SRA E", // 0x2B
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.E & 0x01) != 0;
-                cpu.Reg.E = (byte)((cpu.Reg.E >> 1) | (cpu.Reg.E & 0x80));
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRA(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "SRA H", // 0x2C
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.H & 0x01) != 0;
-                cpu.Reg.H = (byte)((cpu.Reg.H >> 1) | (cpu.Reg.H & 0x80));
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRA(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "SRA L", // 0x2D
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.L & 0x01) != 0;
-                cpu.Reg.L = (byte)((cpu.Reg.L >> 1) | (cpu.Reg.L & 0x80));
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRA(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
@@ -556,23 +358,15 @@ public static class PrefixedInstructions
             "SRA (HL)", // 0x2E
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Cf = (value & 0x01) != 0;
-                value = (byte)((value >> 1) | (value & 0x80));
+                DoSRA(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
                 return 16;
             }
         ),
         new Instruction(
             "SRA A", // 0x2F
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.A & 0x01) != 0;
-                cpu.Reg.A = (byte)((cpu.Reg.A >> 1) | (cpu.Reg.A & 0x80));
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRA(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
@@ -580,66 +374,42 @@ public static class PrefixedInstructions
             "SWAP B", // 0x30
             static cpu =>
             {
-                cpu.Reg.B = (byte)((cpu.Reg.B >> 4) | (cpu.Reg.B << 4));
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoSWAP(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "SWAP C", // 0x31
             static cpu => {
-                cpu.Reg.C = (byte)((cpu.Reg.C >> 4) | (cpu.Reg.C << 4));
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoSWAP(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "SWAP D", // 0x32
             static cpu => {
-                cpu.Reg.D = (byte)((cpu.Reg.D >> 4) | (cpu.Reg.D << 4));
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoSWAP(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "SWAP E", // 0x33
             static cpu => {
-                cpu.Reg.E = (byte)((cpu.Reg.E >> 4) | (cpu.Reg.E << 4));
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoSWAP(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "SWAP H", // 0x34
             static cpu => {
-                cpu.Reg.H = (byte)((cpu.Reg.H >> 4) | (cpu.Reg.H << 4));
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoSWAP(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "SWAP L", // 0x35
             static cpu => {
-                cpu.Reg.L = (byte)((cpu.Reg.L >> 4) | (cpu.Reg.L << 4));
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoSWAP(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
@@ -647,89 +417,57 @@ public static class PrefixedInstructions
             "SWAP (HL)", // 0x36
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                value = (byte)((value >> 4) | (value << 4));
+                DoSWAP(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
                 return 16;
             }
         ),
         new Instruction(
             "SWAP A", // 0x37
             static cpu => {
-                cpu.Reg.A = (byte)((cpu.Reg.A >> 4) | (cpu.Reg.A << 4));
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoSWAP(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
         new Instruction(
             "SRL B", // 0x38
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.B & 0x01) != 0;
-                cpu.Reg.B >>= 1;
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRL(cpu, ref cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "SRL C", // 0x39
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.C & 0x01) != 0;
-                cpu.Reg.C >>= 1;
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRL(cpu, ref cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "SRL D", // 0x3A
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.D & 0x01) != 0;
-                cpu.Reg.D >>= 1;
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRL(cpu, ref cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "SRL E", // 0x3B
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.E & 0x01) != 0;
-                cpu.Reg.E >>= 1;
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRL(cpu, ref cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "SRL H", // 0x3C
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.H & 0x01) != 0;
-                cpu.Reg.H >>= 1;
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRL(cpu, ref cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "SRL L", // 0x3D
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.L & 0x01) != 0;
-                cpu.Reg.L >>= 1;
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRL(cpu, ref cpu.Reg.L);
                 return 8;
             }
         ),
@@ -737,23 +475,15 @@ public static class PrefixedInstructions
             "SRL (HL)", // 0x3E
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Cf = (value & 0x01) != 0;
-                value >>= 1;
+                DoSRL(cpu, ref value);
                 cpu.Ram.Write8(cpu.Reg.HL, value);
-                cpu.Reg.Zf = value == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
                 return 16;
             }
         ),
         new Instruction(
             "SRL A", // 0x3F
             static cpu => {
-                cpu.Reg.Cf = (cpu.Reg.A & 0x01) != 0;
-                cpu.Reg.A >>= 1;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
+                DoSRL(cpu, ref cpu.Reg.A);
                 return 8;
             }
         ),
@@ -2295,4 +2025,85 @@ public static class PrefixedInstructions
         )
     ];
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoRR(Cpu cpu, ref byte reg)
+    {
+        var cf = cpu.Reg.Cf;
+        cpu.Reg.Cf = (reg & 0x01) != 0;
+        reg = (byte)((reg >> 1) + (cf ? 0x80 : 0x00));
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoRL(Cpu cpu, ref byte reg)
+    {
+        var cf = cpu.Reg.Cf;
+        cpu.Reg.Cf = (reg & 0x80) != 0;
+        reg = (byte)((reg << 1) + (cf ? 1 : 0));
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoRLC(Cpu cpu, ref byte reg)
+    {
+        cpu.Reg.Cf = (reg & 0x80) != 0;
+        reg = (byte)((reg << 1) + (cpu.Reg.Cf ? 1 : 0));
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoRRC(Cpu cpu, ref byte reg)
+    {
+        cpu.Reg.Cf = (reg & 0x01) != 0;
+        reg = (byte)((reg >> 1) + (cpu.Reg.Cf ? 0x80 : 0x00));
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoSLA(Cpu cpu, ref byte reg)
+    {
+        cpu.Reg.Cf = (reg & 0x80) != 0;
+        reg <<= 1;
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoSRA(Cpu cpu, ref byte reg)
+    {
+        cpu.Reg.Cf = (reg & 0x01) != 0;
+        reg = (byte)((reg >> 1) | (reg & 0x80));
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoSWAP(Cpu cpu, ref byte reg)
+    {
+        reg = (byte)((reg >> 4) | (reg << 4));
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+        cpu.Reg.Cf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoSRL(Cpu cpu, ref byte reg)
+    {
+        cpu.Reg.Cf = (reg & 0x01) != 0;
+        reg >>= 1;
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+    }
 }

@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System.Runtime.CompilerServices;
+
 namespace DTC.SM83;
 
 /// <summary>
@@ -47,20 +49,14 @@ public static class Instructions
         new Instruction(
             "INC B", // 0x04
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.B);
-                cpu.Reg.B++;
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref cpu.Reg.B);
                 return 4;
             }
         ),
         new Instruction(
             "DEC B", // 0x05
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.B);
-                cpu.Reg.B--;
-                cpu.Reg.Zf = cpu.Reg.B == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref cpu.Reg.B);
                 return 4;
             }
         ),
@@ -119,20 +115,14 @@ public static class Instructions
         new Instruction(
             "INC C", // 0x0C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.C);
-                cpu.Reg.C++;
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref cpu.Reg.C);
                 return 4;
             }
         ),
         new Instruction(
             "DEC C", // 0x0D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.C);
-                cpu.Reg.C--;
-                cpu.Reg.Zf = cpu.Reg.C == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref cpu.Reg.C);
                 return 4;
             }
         ),
@@ -188,20 +178,14 @@ public static class Instructions
         new Instruction(
             "INC D", // 0x14
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.D);
-                cpu.Reg.D++;
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref cpu.Reg.D);
                 return 4;
             }
         ),
         new Instruction(
             "DEC D", // 0x15
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.D);
-                cpu.Reg.D--;
-                cpu.Reg.Zf = cpu.Reg.D == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref cpu.Reg.D);
                 return 4;
             }
         ),
@@ -265,20 +249,14 @@ public static class Instructions
         new Instruction(
             "INC E", // 0x1C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.E);
-                cpu.Reg.E++;
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref cpu.Reg.E);
                 return 4;
             }
         ),
         new Instruction(
             "DEC E", // 0x1D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.E);
-                cpu.Reg.E--;
-                cpu.Reg.Zf = cpu.Reg.E == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref cpu.Reg.E);
                 return 4;
             }
         ),
@@ -339,20 +317,14 @@ public static class Instructions
         new Instruction(
             "INC H", // 0x24
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.H);
-                cpu.Reg.H++;
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref cpu.Reg.H);
                 return 4;
             }
         ),
         new Instruction(
             "DEC H", // 0x25
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.H);
-                cpu.Reg.H--;
-                cpu.Reg.Zf = cpu.Reg.H == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref cpu.Reg.H);
                 return 4;
             }
         ),
@@ -416,20 +388,14 @@ public static class Instructions
         new Instruction(
             "INC L", // 0x2C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.L);
-                cpu.Reg.L++;
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref cpu.Reg.L);
                 return 4;
             }
         ),
         new Instruction(
             "DEC L", // 0x2D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.L);
-                cpu.Reg.L--;
-                cpu.Reg.Zf = cpu.Reg.L == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref cpu.Reg.L);
                 return 4;
             }
         ),
@@ -487,11 +453,8 @@ public static class Instructions
             "INC (HL)", // 0x34
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.SetHfForInc(value);
-                var newValue = (byte)(value + 1);
-                cpu.Ram.Write8(cpu.Reg.HL, newValue);
-                cpu.Reg.Zf = newValue == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref value);
+                cpu.Ram.Write8(cpu.Reg.HL, value);
                 return 12;
             }
         ),
@@ -499,11 +462,8 @@ public static class Instructions
             "DEC (HL)", // 0x35
             static cpu => {
                 var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.SetHfForDec(value);
-                var newValue = (byte)(value - 1);
-                cpu.Ram.Write8(cpu.Reg.HL, newValue);
-                cpu.Reg.Zf = newValue == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref value);
+                cpu.Ram.Write8(cpu.Reg.HL, value);
                 return 12;
             }
         ),
@@ -567,20 +527,14 @@ public static class Instructions
         new Instruction(
             "INC A", // 0x3C
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A);
-                cpu.Reg.A++;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
+                DoINC(cpu, ref cpu.Reg.A);
                 return 4;
             }
         ),
         new Instruction(
             "DEC A", // 0x3D
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A);
-                cpu.Reg.A--;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoDEC(cpu, ref cpu.Reg.A);
                 return 4;
             }
         ),
@@ -1024,105 +978,56 @@ public static class Instructions
         new Instruction(
             "ADD A,B", // 0x80
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.B);
-                var sum = cpu.Reg.A + cpu.Reg.B;
-                cpu.Reg.A = (byte)sum;
-                
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Reg.B);
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,C", // 0x81
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.C);
-                var sum = cpu.Reg.A + cpu.Reg.C;
-                cpu.Reg.A = (byte)sum;
-
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Reg.C);
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,D", // 0x82
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.D);
-                var sum = cpu.Reg.A + cpu.Reg.D;
-                cpu.Reg.A = (byte)sum;
-
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Reg.D);
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,E", // 0x83
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.E);
-                var sum = cpu.Reg.A + cpu.Reg.E;
-                cpu.Reg.A = (byte)sum;
-
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Reg.E);
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,H", // 0x84
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.H);
-                var sum = cpu.Reg.A + cpu.Reg.H;
-                cpu.Reg.A = (byte)sum;
-
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Reg.H);
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,L", // 0x85
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.L);
-                var sum = cpu.Reg.A + cpu.Reg.L;
-                cpu.Reg.A = (byte)sum;
-
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Reg.L);
                 return 4;
             }
         ),
         new Instruction(
             "ADD A,(HL)", // 0x86
             static cpu => {
-                var inc = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.SetHfForInc(cpu.Reg.A, inc);
-                var sum = cpu.Reg.A + inc;
-                cpu.Reg.A = (byte)sum;
-
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Ram.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
         new Instruction(
             "ADD A,A", // 0x87
             static cpu => {
-                cpu.Reg.SetHfForInc(cpu.Reg.A, cpu.Reg.A);
-                var sum = cpu.Reg.A + cpu.Reg.A;
-                cpu.Reg.A = (byte)sum;
-
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Reg.A);
                 return 4;
             }
         ),
@@ -1225,78 +1130,49 @@ public static class Instructions
         new Instruction(
             "SUB A,B", // 0x90
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.B);
-                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.B;
-                cpu.Reg.A -= cpu.Reg.B;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Reg.B);
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,C", // 0x91
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.C);
-                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.C;
-                cpu.Reg.A -= cpu.Reg.C;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Reg.C);
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,D", // 0x92
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.D);
-                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.D;
-                cpu.Reg.A -= cpu.Reg.D;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Reg.D);
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,E", // 0x93
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.E);
-                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.E;
-                cpu.Reg.A -= cpu.Reg.E;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Reg.E);
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,H", // 0x94
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.H);
-                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.H;
-                cpu.Reg.A -= cpu.Reg.H;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Reg.H);
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,L", // 0x95
             static cpu => {
-                cpu.Reg.SetHfForDec(cpu.Reg.A, cpu.Reg.L);
-                cpu.Reg.Cf = cpu.Reg.A < cpu.Reg.L;
-                cpu.Reg.A -= cpu.Reg.L;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Reg.L);
                 return 4;
             }
         ),
         new Instruction(
             "SUB A,(HL)", // 0x96
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.SetHfForDec(cpu.Reg.A, value);
-                cpu.Reg.Cf = cpu.Reg.A < value;
-                cpu.Reg.A -= value;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Ram.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1411,77 +1287,49 @@ public static class Instructions
             "AND A,B", // 0xA0
             static cpu =>
             {
-                cpu.Reg.A &= cpu.Reg.B;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Reg.B);
                 return 4;
             }
         ),
         new Instruction(
             "AND A,C", // 0xA1
             static cpu => {
-                cpu.Reg.A &= cpu.Reg.C;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Reg.C);
                 return 4;
             }
         ),
         new Instruction(
             "AND A,D", // 0xA2
             static cpu => {
-                cpu.Reg.A &= cpu.Reg.D;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Reg.D);
                 return 4;
             }
         ),
         new Instruction(
             "AND A,E", // 0xA3
             static cpu => {
-                cpu.Reg.A &= cpu.Reg.E;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Reg.E);
                 return 4;
             }
         ),
         new Instruction(
             "AND A,H", // 0xA4
             static cpu => {
-                cpu.Reg.A &= cpu.Reg.H;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Reg.H);
                 return 4;
             }
         ),
         new Instruction(
             "AND A,L", // 0xA5
             static cpu => {
-                cpu.Reg.A &= cpu.Reg.L;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Reg.L);
                 return 4;
             }
         ),
         new Instruction(
             "AND A,(HL)", // 0xA6
             static cpu => {
-                cpu.Reg.A &= cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Ram.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1499,77 +1347,49 @@ public static class Instructions
         new Instruction(
             "XOR A,B", // 0xA8
             static cpu => {
-                cpu.Reg.A ^= cpu.Reg.B;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Reg.B);
                 return 4;
             }
         ),
         new Instruction(
             "XOR A,C", // 0xA9
             static cpu => {
-                cpu.Reg.A ^= cpu.Reg.C;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Reg.C);
                 return 4;
             }
         ),
         new Instruction(
             "XOR A,D", // 0xAA
             static cpu => {
-                cpu.Reg.A ^= cpu.Reg.D;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Reg.D);
                 return 4;
             }
         ),
         new Instruction(
             "XOR A,E", // 0xAB
             static cpu => {
-                cpu.Reg.A ^= cpu.Reg.E;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Reg.E);
                 return 4;
             }
         ),
         new Instruction(
             "XOR A,H", // 0xAC
             static cpu => {
-                cpu.Reg.A ^= cpu.Reg.H;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Reg.H);
                 return 4;
             }
         ),
         new Instruction(
             "XOR A,L", // 0xAD
             static cpu => {
-                cpu.Reg.A ^= cpu.Reg.L;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Reg.L);
                 return 4;
             }
         ),
         new Instruction(
             "XOR A,(HL)", // 0xAE
             static cpu => {
-                cpu.Reg.A ^= cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Ram.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1588,77 +1408,49 @@ public static class Instructions
         new Instruction(
             "OR A,B", // 0xB0
             static cpu => {
-                cpu.Reg.A |= cpu.Reg.B;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Reg.B);
                 return 4;
             }
         ),
         new Instruction(
             "OR A,C", // 0xB1
             static cpu => {
-                cpu.Reg.A |= cpu.Reg.C;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Reg.C);
                 return 4;
             }
         ),
         new Instruction(
             "OR A,D", // 0xB2
             static cpu => {
-                cpu.Reg.A |= cpu.Reg.D;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Reg.D);
                 return 4;
             }
         ),
         new Instruction(
             "OR A,E", // 0xB3
             static cpu => {
-                cpu.Reg.A |= cpu.Reg.E;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Reg.E);
                 return 4;
             }
         ),
         new Instruction(
             "OR A,H", // 0xB4
             static cpu => {
-                cpu.Reg.A |= cpu.Reg.H;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Reg.H);
                 return 4;
             }
         ),
         new Instruction(
             "OR A,L", // 0xB5
             static cpu => {
-                cpu.Reg.A |= cpu.Reg.L;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Reg.L);
                 return 4;
             }
         ),
         new Instruction(
             "OR A,(HL)", // 0xB6
             static cpu => {
-                cpu.Reg.A |= cpu.Ram.Read8(cpu.Reg.HL);
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Ram.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1821,14 +1613,7 @@ public static class Instructions
             "ADD A,nn", // 0xC6 nn
             static cpu =>
             {
-                var imm = cpu.Fetch8();
-                cpu.Reg.SetHfForInc(cpu.Reg.A, imm);
-                var sum = cpu.Reg.A + imm;
-                cpu.Reg.A = (byte)sum;
-                
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Cf = sum > 0xFF;
+                DoADD(cpu, cpu.Fetch8());
                 return 8;
             }
         ),
@@ -1978,12 +1763,7 @@ public static class Instructions
         new Instruction(
             "SUB A,nn", // 0xD6 nn
             static cpu => {
-                var value = cpu.Fetch8();
-                cpu.Reg.SetHfForDec(cpu.Reg.A, value);
-                cpu.Reg.Cf = cpu.Reg.A < value;
-                cpu.Reg.A -= value;
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = true;
+                DoSUB(cpu, cpu.Fetch8());
                 return 8;
             }
         ),
@@ -2068,7 +1848,7 @@ public static class Instructions
         new Instruction(
             "LDH (a8),A", // 0xE0 nn
             static cpu => {
-                cpu.Ram.Write8((ushort)(0xFF00 + cpu.Fetch8()), cpu.Reg.A);;
+                cpu.Ram.Write8((ushort)(0xFF00 + cpu.Fetch8()), cpu.Reg.A);
                 return 12;
             }
         ),
@@ -2101,11 +1881,7 @@ public static class Instructions
         new Instruction(
             "AND A,nn", // 0xE6 nn
             static cpu => {
-                cpu.Reg.A &= cpu.Fetch8();
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = true;
-                cpu.Reg.Cf = false;
+                DoAND(cpu, cpu.Fetch8());
                 return 8;
             }
         ),
@@ -2155,11 +1931,7 @@ public static class Instructions
         new Instruction(
             "XOR A,nn", // 0xEE nn
             static cpu => {
-                cpu.Reg.A ^= cpu.Fetch8();
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoXOR(cpu, cpu.Fetch8());
                 return 8;
             }
         ),
@@ -2220,11 +1992,7 @@ public static class Instructions
         new Instruction(
             "OR A,nn", // 0xF6 nn
             static cpu => {
-                cpu.Reg.A |= cpu.Fetch8();
-                cpu.Reg.Zf = cpu.Reg.A == 0;
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false;
-                cpu.Reg.Cf = false;
+                DoOR(cpu, cpu.Fetch8());
                 return 8;
             }
         ),
@@ -2302,4 +2070,73 @@ public static class Instructions
             }
         )
     ];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoADD(Cpu cpu, byte value)
+    {
+        cpu.Reg.SetHfForInc(cpu.Reg.A, value);
+        var sum = cpu.Reg.A + value;
+        cpu.Reg.A = (byte)sum;
+        cpu.Reg.Zf = cpu.Reg.A == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Cf = sum > 0xFF;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoSUB(Cpu cpu, byte value)
+    {
+        cpu.Reg.SetHfForDec(cpu.Reg.A, value);
+        cpu.Reg.Cf = cpu.Reg.A < value;
+        cpu.Reg.A -= value;
+        cpu.Reg.Zf = cpu.Reg.A == 0;
+        cpu.Reg.Nf = true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoINC(Cpu cpu, ref byte reg)
+    {
+        cpu.Reg.SetHfForInc(reg);
+        reg++;
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoDEC(Cpu cpu, ref byte reg)
+    {
+        cpu.Reg.SetHfForDec(reg);
+        reg--;
+        cpu.Reg.Zf = reg == 0;
+        cpu.Reg.Nf = true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoAND(Cpu cpu, byte value)
+    {
+        cpu.Reg.A &= value;
+        cpu.Reg.Zf = cpu.Reg.A == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = true;
+        cpu.Reg.Cf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoXOR(Cpu cpu, byte value)
+    {
+        cpu.Reg.A ^= value;
+        cpu.Reg.Zf = cpu.Reg.A == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+        cpu.Reg.Cf = false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoOR(Cpu cpu, byte value)
+    {
+        cpu.Reg.A |= value;
+        cpu.Reg.Zf = cpu.Reg.A == 0;
+        cpu.Reg.Nf = false;
+        cpu.Reg.Hf = false;
+        cpu.Reg.Cf = false;
+    }
 }
