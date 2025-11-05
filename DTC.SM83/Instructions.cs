@@ -1811,8 +1811,8 @@ public static class Instructions
             "PUSH BC", // 0xC5
             static cpu =>
             {
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.BC);
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.B);
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.C);
                 cpu.InternalWaitM();
                 return 16;
             }
@@ -1969,8 +1969,8 @@ public static class Instructions
         new Instruction(
             "PUSH DE", // 0xD5
             static cpu => {
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.DE);
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.D);
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.E);
                 cpu.InternalWaitM();
                 return 16;
             }
@@ -2092,8 +2092,8 @@ public static class Instructions
         new Instruction(
             "PUSH HL", // 0xE5
             static cpu => {
-                cpu.Reg.SP -= 2;
-                cpu.Ram.Write16(cpu.Reg.SP, cpu.Reg.HL);
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.H);
+                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.L);
                 cpu.InternalWaitM();
                 return 16;
             }
