@@ -146,12 +146,7 @@ public static class Instructions
         ),
         new Instruction(
             "STOP nn", // 0x10 nn
-            static cpu => {
-                // todo
-
-                return 4;
-            }
-        ),
+            static _ => 4),
         new Instruction(
             "LD DE,nn", // 0x11 nn nn
             static cpu => {
