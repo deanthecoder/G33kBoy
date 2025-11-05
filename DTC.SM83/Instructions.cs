@@ -1629,12 +1629,7 @@ public static class Instructions
         new Instruction(
             "ADC A,nn", // 0xCE nn
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = false;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoADC(cpu, cpu.Fetch8());
                 return 8;
             }
         ),
@@ -1767,12 +1762,7 @@ public static class Instructions
         new Instruction(
             "SBC A,nn", // 0xDE nn
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Fetch8());
                 return 8;
             }
         ),

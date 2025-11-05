@@ -27,6 +27,7 @@ public class Clock
     {
         Ticks += t;
     }
+    
     public void Reset()
     {
         Ticks = 0;
