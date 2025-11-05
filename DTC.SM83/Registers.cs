@@ -12,82 +12,55 @@
 // ReSharper disable NonReadonlyMemberInGetHashCode
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace DTC.SM83;
 
+[StructLayout(LayoutKind.Explicit)]
 public sealed class Registers
 {
-    public byte A;
+    [FieldOffset(0)] public byte A;
     public byte F => (byte)((Zf ? 0x80 : 0) | (Nf ? 0x40 : 0) | (Hf ? 0x20 : 0) | (Cf ? 0x10 : 0));
-    public byte B;
-    public byte C;
-    public byte D;
-    public byte E;
-    public byte H;
-    public byte L;
+    [FieldOffset(2)] public byte B;
+    [FieldOffset(1)] public byte C;
+    [FieldOffset(4)] public byte D;
+    [FieldOffset(3)] public byte E;
+    [FieldOffset(6)] public byte H;
+    [FieldOffset(5)] public byte L;
 
-    public ushort BC
-    {
-        get => (ushort)((B << 8) | C);
-        set
-        {
-            B = (byte)(value >> 8);
-            C = (byte)value;
-        }
-    }
-    
-    public ushort DE
-    {
-        get => (ushort)((D << 8) | E);
-        set
-        {
-            D = (byte)(value >> 8);
-            E = (byte)value;
-        }
-    }
+    [FieldOffset(1)] public ushort BC;
+    [FieldOffset(3)] public ushort DE;
+    [FieldOffset(5)] public ushort HL;
 
-    public ushort HL
-    {
-        get => (ushort)((H << 8) | L);
-        set
-        {
-            H = (byte)(value >> 8);
-            L = (byte)value;
-        }
-    }
+    [FieldOffset(7)] public ushort SP = 0xFFFE;
+    [FieldOffset(9)] public ushort PC;
 
-    public ushort SP { get; set; } = 0xFFFE;
-    public ushort PC { get; set; }
-    
     /// <summary>
     /// Zero flag.
     /// </summary>
-    public bool Zf { get; set; }
-    
+    [FieldOffset(11)] public bool Zf;
+
     /// <summary>
     /// Subtract flag.
     /// </summary>
-    public bool Nf { get; set; }
-    
+    [FieldOffset(12)] public bool Nf;
+
     /// <summary>
     /// Half-carry flag.
     /// </summary>
-    public bool Hf { get; set; }
-    
+    [FieldOffset(13)] public bool Hf;
+
     /// <summary>
     /// Carry flag.
     /// </summary>
-    public bool Cf { get; set; }
+    [FieldOffset(14)] public bool Cf;
 
     public void CopyTo(Registers cpuReg)
     {
         cpuReg.A = A;
-        cpuReg.B = B;
-        cpuReg.C = C;
-        cpuReg.D = D;
-        cpuReg.E = E;
-        cpuReg.H = H;
-        cpuReg.L = L;
+        cpuReg.BC = BC;
+        cpuReg.DE = DE;
+        cpuReg.HL = HL;
         cpuReg.SP = SP;
         cpuReg.PC = PC;
         cpuReg.Zf = Zf;
@@ -103,45 +76,23 @@ public sealed class Registers
         if (left is null || right is null)
             return false;
         return left.A == right.A &&
-               left.B == right.B &&
-               left.C == right.C &&
-               left.D == right.D &&
-               left.E == right.E &&
-               left.H == right.H &&
-               left.L == right.L &&
+               left.F == right.F &&
+               left.BC == right.BC &&
+               left.DE == right.DE &&
+               left.HL == right.HL &&
                left.SP == right.SP &&
-               left.PC == right.PC &&
-               left.Zf == right.Zf &&
-               left.Nf == right.Nf &&
-               left.Hf == right.Hf &&
-               left.Cf == right.Cf;
+               left.PC == right.PC;
     }
 
     public static bool operator !=(Registers left, Registers right) => !(left == right);
 
     public override bool Equals(object obj) => obj is Registers other && this == other;
 
-    public override int GetHashCode()
-    {
-        var hash = new HashCode();
-        hash.Add(A);
-        hash.Add(B);
-        hash.Add(C);
-        hash.Add(D);
-        hash.Add(E);
-        hash.Add(H);
-        hash.Add(L);
-        hash.Add(SP);
-        hash.Add(PC);
-        hash.Add(Zf);
-        hash.Add(Nf);
-        hash.Add(Hf);
-        hash.Add(Cf);
-        return hash.ToHashCode();
-    }
-    
+    public override int GetHashCode() =>
+        ToString().GetHashCode();
+
     public override string ToString() =>
-        $"A:{A:X2} F:{F:X2} B:{B:X2} C:{C:X2} D:{D:X2} E:{E:X2} H:{H:X2} L:{L:X2} SP:{SP:X4} PC:{PC:X4}";
+        $"A:{A:X2} F:{F:X2} BC:{B:X2}{C:X2} DE:{D:X2}{E:X2} HL:{H:X2}{L:X2} SP:{SP:X4} PC:{PC:X4}";
 
     /// <summary>
     /// Call before an add/inc math operation.
