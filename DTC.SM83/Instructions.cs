@@ -349,7 +349,7 @@ public static class Instructions
                 }
                 else
                 {
-                    var adjust = (cpu.Reg.Hf || (cpu.Reg.A & 0x0F) > 0x09) ? 0x06 : 0x00;
+                    var adjust = cpu.Reg.Hf || (cpu.Reg.A & 0x0F) > 0x09 ? 0x06 : 0x00;
                     if (cpu.Reg.Cf || cpu.Reg.A > 0x99)
                     {
                         adjust |= 0x60;
@@ -1169,96 +1169,58 @@ public static class Instructions
         ),
         new Instruction(
             "SBC A,B", // 0x98
-            static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+            static cpu =>
+            {
+                DoSBC(cpu, cpu.Reg.B);
                 return 4;
             }
         ),
         new Instruction(
             "SBC A,C", // 0x99
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Reg.C);
                 return 4;
             }
         ),
         new Instruction(
             "SBC A,D", // 0x9A
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Reg.D);
                 return 4;
             }
         ),
         new Instruction(
             "SBC A,E", // 0x9B
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Reg.E);
                 return 4;
             }
         ),
         new Instruction(
             "SBC A,H", // 0x9C
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Reg.H);
                 return 4;
             }
         ),
         new Instruction(
             "SBC A,L", // 0x9D
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Reg.L);
                 return 4;
             }
         ),
         new Instruction(
             "SBC A,(HL)", // 0x9E
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
-                cpu.Reg.Cf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Ram.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
         new Instruction(
             "SBC A,A", // 0x9F
             static cpu => {
-                // todo
-
-                cpu.Reg.Zf = false; // todo - Calculate
-                cpu.Reg.Nf = true;
-                cpu.Reg.Hf = false; // todo - Calculate
+                DoSBC(cpu, cpu.Reg.A);
                 return 4;
             }
         ),
@@ -2051,6 +2013,17 @@ public static class Instructions
     ];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DoSBC(Cpu cpu, byte value)
+    {
+        var c = cpu.Reg.Cf ? 1 : 0;
+        cpu.Reg.Nf = true;
+        cpu.Reg.Hf = (cpu.Reg.A & 0xF) < (value & 0xF) + c;
+        cpu.Reg.Cf = cpu.Reg.A < value + c;
+        cpu.Reg.A = (byte)(cpu.Reg.A - value - c);
+        cpu.Reg.Zf = cpu.Reg.A == 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void DoADC(Cpu cpu, byte value)
     {
         cpu.Reg.Hf = (cpu.Reg.A & 0xF) + (value & 0xF) + (cpu.Reg.Cf ? 1 : 0) > 0xF;
@@ -2060,7 +2033,7 @@ public static class Instructions
         cpu.Reg.Nf = false;
         cpu.Reg.Cf = sum > 0xFF;
     }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void DoADD(Cpu cpu, byte value)
     {
