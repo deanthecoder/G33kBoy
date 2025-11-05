@@ -1493,9 +1493,7 @@ public static class Instructions
                 cpu.InternalWaitM();
                 if (cpu.Reg.Zf)
                     return 8;
-                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
-                cpu.InternalWaitM();
+                DoRET(cpu);
                 return 20;
             }
         ),
@@ -1574,9 +1572,7 @@ public static class Instructions
                 cpu.InternalWaitM();
                 if (!cpu.Reg.Zf)
                     return 8;
-                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
-                cpu.InternalWaitM();
+                DoRET(cpu);
                 return 20;
             }
         ),
@@ -1584,9 +1580,7 @@ public static class Instructions
             "RET", // 0xC9
             static cpu =>
             {
-                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
-                cpu.InternalWaitM();
+                DoRET(cpu);
                 return 16;
             }
         ),
@@ -1649,9 +1643,7 @@ public static class Instructions
                 cpu.InternalWaitM();
                 if (cpu.Reg.Cf)
                     return 8;
-                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
-                cpu.InternalWaitM();
+                DoRET(cpu);
                 return 20;
             }
         ),
@@ -1719,17 +1711,15 @@ public static class Instructions
                 cpu.InternalWaitM();
                 if (!cpu.Reg.Cf)
                     return 8;
-                cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
-                cpu.InternalWaitM();
+                DoRET(cpu);
                 return 20;
             }
         ),
         new Instruction(
             "RETI", // 0xD9
             static cpu => {
-                // todo
-
+                DoRET(cpu);
+                cpu.IME = true;
                 return 16;
             }
         ),
@@ -1905,8 +1895,7 @@ public static class Instructions
         new Instruction(
             "DI", // 0xF3
             static cpu => {
-                // todo
-
+                cpu.IME = false;
                 return 4;
             }
         ),
@@ -1972,8 +1961,7 @@ public static class Instructions
         new Instruction(
             "EI", // 0xFB
             static cpu => {
-                // todo
-
+                cpu.PendingIME = true;
                 return 4;
             }
         ),
@@ -2001,6 +1989,14 @@ public static class Instructions
             }
         )
     ];
+
+    private static void DoRET(Cpu cpu)
+    {
+
+        cpu.Reg.PC = cpu.Ram.Read16(cpu.Reg.SP);
+        cpu.Reg.SP += 2;
+        cpu.InternalWaitM();
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void DoSBC(Cpu cpu, byte value)

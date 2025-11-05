@@ -17,6 +17,9 @@ public class Cpu
 
     public Memory Ram { get; }
     public Registers Reg { get; private set; }
+    
+    public bool IME { get; set; }         // true = interrupts globally enabled
+    public bool PendingIME { get; set; }  // used to handle EI delay
 
     public Cpu(Memory ram)
     {
@@ -61,6 +64,13 @@ public class Cpu
         {
             // todo - Remove this once all instructions are implemented correctly.
             throw new InvalidOperationException($"Instruction {instruction.Mnemonic} expected duration of {expectedTickDuration} CPU cycles, but {actualTickDuration} CPU ticks actually elapsed.");
+        }
+
+        // Enable interrupts if necessary.
+        if (PendingIME)
+        {
+            IME = true;
+            PendingIME = false;
         }
 
         // Fetch opcode.
