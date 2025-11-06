@@ -4,3 +4,6 @@
 [submodule "DTC.Core"]
 	path = DTC.Core
 	url = https://github.com/deanthecoder/DTC.Core.git
+[submodule "external/blargg-test-roms"]
+	path = external/blargg-test-roms
+	url = https://github.com/retrio/gb-test-roms

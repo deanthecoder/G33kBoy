@@ -26,6 +26,7 @@
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=SUB/@EntryIndexedValue">SUB</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=SWAP/@EntryIndexedValue">SWAP</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=XOR/@EntryIndexedValue">XOR</s:String>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=blargg/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=reti/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=rlca/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=rrca/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>
