@@ -1,6 +1,6 @@
 // Code authored by Dean Edis (DeanTheCoder).
 // Anyone is free to copy, modify, use, compile, or distribute this software,
-// either in source code form or as a compiled binary, for any
+// either in source code form or as a compiled binary, for any non-commercial
 // purpose.
 //
 // If you modify the code, please retain this copyright header,
@@ -12,17 +12,10 @@
 namespace DTC.SM83;
 
 /// <summary>
-/// Implements basic RAM functionality with read/write operations.
+/// Represents a memory device that can be read from and written to.
 /// </summary>
-public class Memory : IMemDevice
+public interface IMemDevice
 {
-    private readonly byte[] m_ram;
-
-    public Memory(int size)
-    {
-        m_ram = new byte[size];
-    }
-
-    public byte Read8(ushort address) => m_ram[address];
-    public void Write8(ushort address, byte value) => m_ram[address] = value;
+    byte Read8(ushort addr);
+    void Write8(ushort addr, byte value);
 }

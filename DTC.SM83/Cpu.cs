@@ -15,13 +15,14 @@ public class Cpu
     private byte m_fetchedOpcode;
     private ulong m_fetchStartTime;
 
-    public Memory Ram { get; }
+    public Clock Clock { get; } = new Clock();
+    public Bus Ram { get; }
     public Registers Reg { get; private set; }
     
     public bool IsHalted { get; set; }
     
     /// <summary>
-    /// 
+    /// Allows us to implement the delayed 'halt' bug. 
     /// </summary>
     public bool HaltBug { get; set; }
     
@@ -41,23 +42,23 @@ public class Cpu
     /// <summary>
     /// Interrupt enable mask.
     /// </summary>
-    public byte IE => Ram.Read8(0xFFFF);
+    public byte IE => Read8(0xFFFF);
     
     /// <summary>
     /// Interrupt request flags.
     /// </summary>
-    public byte IF => Ram.Read8(0xFF0F);
+    public byte IF => Read8(0xFF0F);
 
-    public Cpu(Memory ram)
+    public Cpu(Bus bus)
     {
-        Ram = ram;
+        Ram = bus ?? throw new ArgumentNullException(nameof(bus));
         Reset();
     }
     
     public void Reset()
     {
         Reg = new Registers();
-        Ram.Clock.Reset();
+        Clock.Reset();
         
         IsHalted = false;
         HaltBug = false;
@@ -65,30 +66,9 @@ public class Cpu
         PendingIME = false;
 
         // Pre-load first opcode.
-        m_fetchStartTime = Ram.Clock.Ticks;
+        m_fetchStartTime = Clock.Ticks;
         Fetch8();
     }
-
-    /// <summary>
-    /// Fetch byte at PC, and advance PC.
-    /// </summary>
-    public byte Fetch8()
-    {
-        var imm = Ram.Read8(Reg.PC);
-        if (HaltBug)
-            HaltBug = false; // consume the bug: don't advance PC this time
-        else
-            Reg.PC++;
-        
-        m_fetchedOpcode = imm;
-        return m_fetchedOpcode;
-    }
-    
-    /// <summary>
-    /// Fetch word at PC, and advance PC (x2).
-    /// </summary>
-    public ushort Fetch16() =>
-        (ushort)(Fetch8() | (Fetch8() << 8));
 
     public void Step()
     {
@@ -99,7 +79,7 @@ public class Cpu
         
         // Execute instruction.
         var expectedTickDuration = instruction.Execute(this);
-        var executeEndTime = Ram.Clock.Ticks;
+        var executeEndTime = Clock.Ticks;
         var actualTickDuration = executeEndTime - m_fetchStartTime;
         if (actualTickDuration != expectedTickDuration)
         {
@@ -118,15 +98,15 @@ public class Cpu
         HandleInterrupts();
 
         // Fetch opcode.
-        m_fetchStartTime = Ram.Clock.Ticks;
+        m_fetchStartTime = Clock.Ticks;
         if (IsHalted)
-            Ram.Clock.AdvanceT(4); // Re-queue the HALT instruction. 
+            Clock.AdvanceT(4); // Re-queue the HALT instruction. 
         else
             Fetch8();
     }
     
     public void InternalWaitM(ulong m = 1) =>
-        Ram.Clock.AdvanceT(4 * m);
+        Clock.AdvanceT(4 * m);
 
     private void HandleInterrupts()
     {
@@ -178,7 +158,6 @@ public class Cpu
         {
             // Joypad
             Service(0x0060, 0x10);
-            return;
         }
         
         return;
@@ -189,19 +168,75 @@ public class Cpu
             PushPC();
 
             // Clear IF bit
-            Ram.Write8(0xFF0F, (byte)(IF & ~bitMask));
+            Write8(0xFF0F, (byte)(IF & ~bitMask));
             
             // Jump to vector
             Reg.PC = vector;
             
             // Interrupt entry takes 5 M-cycles
-            Ram.Clock.AdvanceT(20);
+            Clock.AdvanceT(20);
         }
     }
     
     public void PushPC()
     {
-        Ram.Write8(--Reg.SP, (byte)(Reg.PC >> 8));
-        Ram.Write8(--Reg.SP, (byte)(Reg.PC & 0xFF));
+        Write8(--Reg.SP, (byte)(Reg.PC >> 8));
+        Write8(--Reg.SP, (byte)(Reg.PC & 0xFF));
+    }
+
+    /// <summary>
+    /// Fetch byte at PC, and advance PC.
+    /// </summary>
+    public byte Fetch8()
+    {
+        var imm = Read8(Reg.PC);
+
+        if (HaltBug)
+            HaltBug = false; // consume the bug: don't advance PC this time
+        else
+            Reg.PC++;
+
+        m_fetchedOpcode = imm;
+        return m_fetchedOpcode;
+    }
+
+    /// <summary>
+    /// Fetch word at PC, and advance PC (x2).
+    /// </summary>
+    public ushort Fetch16() =>
+        (ushort)(Fetch8() | (Fetch8() << 8));
+
+    /// <summary>
+    /// Read memory at address and advance the clock 4 ticks.
+    /// </summary>
+    public byte Read8(ushort addr)
+    {
+        var value = Ram.Read8(addr);
+        Clock.AdvanceT(4);
+        return value;
+    }
+    
+    /// <summary>
+    /// Read 16-bit word at address and advance the clock 4 + 4 ticks.
+    /// </summary>
+    public ushort Read16(ushort addr) =>
+        (ushort)(Read8(addr) | (Read8((ushort)(addr + 1)) << 8));
+    
+    /// <summary>
+    /// Write memory at address and advance the clock 4 ticks.
+    /// </summary>
+    public void Write8(ushort addr, byte value)
+    {
+        Ram.Write8(addr, value);
+        Clock.AdvanceT(4);
+    }
+    
+    /// <summary>
+    /// Write 16-bit word at address and advance the clock 4 + 4 ticks.
+    /// </summary>
+    public void Write16(ushort addr, ushort value)
+    {
+        Write8(addr, (byte)(value & 0xFF));
+        Write8((ushort)(addr + 1), (byte)(value >> 8));   
     }
 }

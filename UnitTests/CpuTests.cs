@@ -40,28 +40,35 @@ public class CpuTests : TestsBase
 
     private static void ProcessTest(SingleTest test)
     {
+        var bus = new Bus();
+        bus.Attach(new Memory(0x10000), 0x0000, 0xFFFF);
+        
         var prepared = test.Prepare();
-        var cpu = new Cpu(prepared.InitialMem);
+        prepared.InitialMem.ForEach(o => bus.Write8((ushort)o[0], (byte)o[1]));
+        var cpu = new Cpu(bus);
         prepared.InitialRegs.CopyTo(cpu.Reg);
         cpu.Reg.PC--;
-        cpu.Ram.Clock.Reset();
+        cpu.Clock.Reset();
         cpu.Fetch8();
         
         cpu.Step();
 
         Assert.That(cpu.Reg, Is.EqualTo(prepared.FinalRegs));
-        Assert.That(cpu.Ram, Is.EqualTo(prepared.FinalMem), () => GetMemoryComparisonMessage(cpu.Ram, prepared.FinalMem));
+        var comparison = GetMemoryComparisonMessage(cpu.Ram, prepared.FinalMem);
+        Assert.That(comparison, Is.Empty);
     }
 
-    private static string GetMemoryComparisonMessage(Memory expected, Memory actual)
+    private static string GetMemoryComparisonMessage(Bus actual, int[][] expected)
     {
-        for (ushort i = 0; i < expected.Length; i++)
+        foreach (var v in expected)
         {
-            var expectedByte = expected.Peek8(i);
-            var actualByte = actual.Peek8(i);
+            var addr = v[0];
+            var expectedByte = v[1];
+            var actualByte = actual.Read8((ushort)addr);
             if (expectedByte != actualByte)
-                return $"Memory at 0x{i:X4} ({i}) is not equal. Expected 0x{expectedByte:X2} ({expectedByte}), got 0x{actualByte:X2} ({actualByte}).";
+                return $"Memory at 0x{addr:X4} ({addr}) is not equal. Expected 0x{expectedByte:X2} ({expectedByte}), got 0x{actualByte:X2} ({actualByte}).";
         }
+
         return string.Empty;   
     }
 
@@ -87,19 +94,13 @@ public class CpuTests : TestsBase
 
         public PreparedTest Prepare()
         {
-            var clock = new Clock();
             var initialRegs = new Registers();
             var finalRegs = new Registers();
-            var initialMem = new Memory(0x10000, clock);
-            var finalMem = new Memory(0x10000, clock);
 
             Populate(initialRegs, m_initialState);
-            Populate(initialMem, m_initialState);
-            
             Populate(finalRegs, m_finalState);
-            Populate(finalMem, m_finalState);
 
-            return new PreparedTest(initialRegs, finalRegs, initialMem, finalMem);
+            return new PreparedTest(initialRegs, finalRegs, m_initialState.Ram, m_finalState.Ram);
         }
 
         private static void Populate(Registers registers, CpuStateDto dto)
@@ -121,28 +122,13 @@ public class CpuTests : TestsBase
             registers.Cf = (flags & 0x10) != 0;
         }
 
-        private static void Populate(Memory memory, CpuStateDto dto)
-        {
-            if (dto.Ram is null)
-                return;
-
-            foreach (var entry in dto.Ram)
-            {
-                if (entry.Length < 2)
-                    continue;
-
-                var address = (ushort)entry[0];
-                memory.Write8(address, (byte)entry[1]);
-            }
-        }
-
         private static string GetMnemonic(CpuStateDto initialState)
         {
             var pc = (ushort)initialState.Pc - 1;
             var ram = initialState.Ram;
             var maxRamAddress = ram.Max(entry => entry[0]);
             var bytesToAllocate = maxRamAddress - pc + 1;
-            var mem = new Memory(bytesToAllocate, new Clock());
+            var mem = new Memory(bytesToAllocate);
             foreach (var ramByte in ram)
             {
                 var addr = ramByte[0] - pc;
@@ -157,7 +143,7 @@ public class CpuTests : TestsBase
 
         public readonly struct PreparedTest
         {
-            public PreparedTest(Registers initialRegs, Registers finalRegs, Memory initialMem, Memory finalMem)
+            public PreparedTest(Registers initialRegs, Registers finalRegs, int[][] initialMem, int[][] finalMem)
             {
                 InitialRegs = initialRegs ?? throw new ArgumentNullException(nameof(initialRegs));
                 FinalRegs = finalRegs ?? throw new ArgumentNullException(nameof(finalRegs));
@@ -167,8 +153,8 @@ public class CpuTests : TestsBase
 
             public Registers InitialRegs { get; }
             public Registers FinalRegs { get; }
-            public Memory InitialMem { get; }
-            public Memory FinalMem { get; }
+            public int[][] InitialMem { get; }
+            public int[][] FinalMem { get; }
         }
 
         private sealed class TestCaseDto

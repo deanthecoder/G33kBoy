@@ -66,9 +66,9 @@ public static class PrefixedInstructions
         new Instruction(
             "RLC (HL)", // 0x06
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoRLC(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -124,9 +124,9 @@ public static class PrefixedInstructions
         new Instruction(
             "RRC (HL)", // 0x0E
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoRRC(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -182,9 +182,9 @@ public static class PrefixedInstructions
         new Instruction(
             "RL (HL)", // 0x16
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoRL(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -240,9 +240,9 @@ public static class PrefixedInstructions
         new Instruction(
             "RR (HL)", // 0x1E
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoRR(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -299,9 +299,9 @@ public static class PrefixedInstructions
         new Instruction(
             "SLA (HL)", // 0x26
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoSLA(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -357,9 +357,9 @@ public static class PrefixedInstructions
         new Instruction(
             "SRA (HL)", // 0x2E
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoSRA(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -416,9 +416,9 @@ public static class PrefixedInstructions
         new Instruction(
             "SWAP (HL)", // 0x36
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoSWAP(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -474,9 +474,9 @@ public static class PrefixedInstructions
         new Instruction(
             "SRL (HL)", // 0x3E
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoSRL(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 16;
             }
         ),
@@ -544,7 +544,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 0,(HL)", // 0x46
             static cpu => {
-                cpu.Reg.Zf = ((1 << 0) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 0) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -616,7 +616,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 1,(HL)", // 0x4E
             static cpu => {
-                cpu.Reg.Zf = ((1 << 1) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 1) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -688,7 +688,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 2,(HL)", // 0x56
             static cpu => {
-                cpu.Reg.Zf = ((1 << 2) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 2) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -760,7 +760,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 3,(HL)", // 0x5E
             static cpu => {
-                cpu.Reg.Zf = ((1 << 3) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 3) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -832,7 +832,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 4,(HL)", // 0x66
             static cpu => {
-                cpu.Reg.Zf = ((1 << 4) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 4) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -904,7 +904,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 5,(HL)", // 0x6E
             static cpu => {
-                cpu.Reg.Zf = ((1 << 5) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 5) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -976,7 +976,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 6,(HL)", // 0x76
             static cpu => {
-                cpu.Reg.Zf = ((1 << 6) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 6) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1048,7 +1048,7 @@ public static class PrefixedInstructions
         new Instruction(
             "BIT 7,(HL)", // 0x7E
             static cpu => {
-                cpu.Reg.Zf = ((1 << 7) & cpu.Ram.Read8(cpu.Reg.HL)) == 0;
+                cpu.Reg.Zf = ((1 << 7) & cpu.Read8(cpu.Reg.HL)) == 0;
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = true;
                 return 12;
@@ -1108,7 +1108,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 0,(HL)", // 0x86
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 0)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 0)));
                 return 16;
             }
         ),
@@ -1164,7 +1164,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 1,(HL)", // 0x8E
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 1)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 1)));
                 return 16;
             }
         ),
@@ -1220,7 +1220,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 2,(HL)", // 0x96
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 2)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 2)));
                 return 16;
             }
         ),
@@ -1276,7 +1276,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 3,(HL)", // 0x9E
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 3)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 3)));
                 return 16;
             }
         ),
@@ -1332,7 +1332,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 4,(HL)", // 0xA6
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 4)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 4)));
                 return 16;
             }
         ),
@@ -1388,7 +1388,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 5,(HL)", // 0xAE
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 5)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 5)));
                 return 16;
             }
         ),
@@ -1444,7 +1444,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 6,(HL)", // 0xB6
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 6)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 6)));
                 return 16;
             }
         ),
@@ -1500,7 +1500,7 @@ public static class PrefixedInstructions
         new Instruction(
             "RES 7,(HL)", // 0xBE
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) & ~(1 << 7)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) & ~(1 << 7)));
                 return 16;
             }
         ),
@@ -1558,7 +1558,7 @@ public static class PrefixedInstructions
             "SET 0,(HL)", // 0xC6
             static cpu =>
             {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 0)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 0)));
                 return 16;
             }
         ),
@@ -1614,7 +1614,7 @@ public static class PrefixedInstructions
         new Instruction(
             "SET 1,(HL)", // 0xCE
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 1)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 1)));
                 return 16;
             }
         ),
@@ -1670,7 +1670,7 @@ public static class PrefixedInstructions
         new Instruction(
             "SET 2,(HL)", // 0xD6
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 2)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 2)));
                 return 16;
             }
         ),
@@ -1726,7 +1726,7 @@ public static class PrefixedInstructions
         new Instruction(
             "SET 3,(HL)", // 0xDE
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 3)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 3)));
                 return 16;
             }
         ),
@@ -1782,7 +1782,7 @@ public static class PrefixedInstructions
         new Instruction(
             "SET 4,(HL)", // 0xE6
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 4)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 4)));
                 return 16;
             }
         ),
@@ -1838,7 +1838,7 @@ public static class PrefixedInstructions
         new Instruction(
             "SET 5,(HL)", // 0xEE
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 5)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 5)));
                 return 16;
             }
         ),
@@ -1894,7 +1894,7 @@ public static class PrefixedInstructions
         new Instruction(
             "SET 6,(HL)", // 0xF6
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 6)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 6)));
                 return 16;
             }
         ),
@@ -1950,7 +1950,7 @@ public static class PrefixedInstructions
         new Instruction(
             "SET 7,(HL)", // 0xFE
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, (byte)(cpu.Ram.Read8(cpu.Reg.HL) | (1 << 7)));
+                cpu.Write8(cpu.Reg.HL, (byte)(cpu.Read8(cpu.Reg.HL) | (1 << 7)));
                 return 16;
             }
         ),

@@ -34,7 +34,7 @@ public static class Instructions
         new Instruction(
             "LD (BC),A", // 0x02
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.BC, cpu.Reg.A);
+                cpu.Write8(cpu.Reg.BC, cpu.Reg.A);
                 return 8;
             }
         ),
@@ -81,7 +81,7 @@ public static class Instructions
         new Instruction(
             "LD (a16),SP", // 0x08 nn nn
             static cpu => {
-                cpu.Ram.Write16(cpu.Fetch16(), cpu.Reg.SP);
+                cpu.Write16(cpu.Fetch16(), cpu.Reg.SP);
                 return 20;
             }
         ),
@@ -100,7 +100,7 @@ public static class Instructions
         new Instruction(
             "LD A,(BC)", // 0x0A
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.BC);
+                cpu.Reg.A = cpu.Read8(cpu.Reg.BC);
                 return 8;
             }
         ),
@@ -158,7 +158,7 @@ public static class Instructions
         new Instruction(
             "LD (DE),A", // 0x12
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.DE, cpu.Reg.A);
+                cpu.Write8(cpu.Reg.DE, cpu.Reg.A);
                 return 8;
             }
         ),
@@ -229,7 +229,7 @@ public static class Instructions
         new Instruction(
             "LD A,(DE)", // 0x1A
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.DE);
+                cpu.Reg.A = cpu.Read8(cpu.Reg.DE);
                 return 8;
             }
         ),
@@ -296,7 +296,7 @@ public static class Instructions
         new Instruction(
             "LD (HL+),A", // 0x22
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.A);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.A);
                 cpu.Reg.HL++;
                 return 8;
             }
@@ -385,7 +385,7 @@ public static class Instructions
         new Instruction(
             "LD A,(HL+)", // 0x2A
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.A = cpu.Read8(cpu.Reg.HL);
                 cpu.Reg.HL++;
                 return 8;
             }
@@ -449,7 +449,7 @@ public static class Instructions
         new Instruction(
             "LD (HL-),A", // 0x32
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.A);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.A);
                 cpu.Reg.HL--;
                 return 8;
             }
@@ -465,25 +465,25 @@ public static class Instructions
         new Instruction(
             "INC (HL)", // 0x34
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoINC(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 12;
             }
         ),
         new Instruction(
             "DEC (HL)", // 0x35
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 DoDEC(cpu, ref value);
-                cpu.Ram.Write8(cpu.Reg.HL, value);
+                cpu.Write8(cpu.Reg.HL, value);
                 return 12;
             }
         ),
         new Instruction(
             "LD (HL),nn", // 0x36 nn
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Fetch8());
+                cpu.Write8(cpu.Reg.HL, cpu.Fetch8());
                 return 12;
             }
         ),
@@ -522,7 +522,7 @@ public static class Instructions
         new Instruction(
             "LD A,(HL-)", // 0x3A
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.A = cpu.Read8(cpu.Reg.HL);
                 cpu.Reg.HL--;
                 return 8;
             }
@@ -606,7 +606,7 @@ public static class Instructions
         new Instruction(
             "LD B,(HL)", // 0x46
             static cpu => {
-                cpu.Reg.B = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.B = cpu.Read8(cpu.Reg.HL);
                 return 8;
             }
         ),
@@ -658,7 +658,7 @@ public static class Instructions
         new Instruction(
             "LD C,(HL)", // 0x4E
             static cpu => {
-                cpu.Reg.C = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.C = cpu.Read8(cpu.Reg.HL);
                 return 8;
             }
         ),
@@ -710,7 +710,7 @@ public static class Instructions
         new Instruction(
             "LD D,(HL)", // 0x56
             static cpu => {
-                cpu.Reg.D = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.D = cpu.Read8(cpu.Reg.HL);
                 return 8;
             }
         ),
@@ -762,7 +762,7 @@ public static class Instructions
         new Instruction(
             "LD E,(HL)", // 0x5E
             static cpu => {
-                cpu.Reg.E = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.E = cpu.Read8(cpu.Reg.HL);
                 return 8;
             }
         ),
@@ -814,7 +814,7 @@ public static class Instructions
         new Instruction(
             "LD H,(HL)", // 0x66
             static cpu => {
-                cpu.Reg.H = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.H = cpu.Read8(cpu.Reg.HL);
                 return 8;
             }
         ),
@@ -866,7 +866,7 @@ public static class Instructions
         new Instruction(
             "LD L,(HL)", // 0x6E
             static cpu => {
-                cpu.Reg.L = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.L = cpu.Read8(cpu.Reg.HL);
                 return 8;
             }
         ),
@@ -880,42 +880,42 @@ public static class Instructions
         new Instruction(
             "LD (HL),B", // 0x70
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.B);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.B);
                 return 8;
             }
         ),
         new Instruction(
             "LD (HL),C", // 0x71
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.C);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.C);
                 return 8;
             }
         ),
         new Instruction(
             "LD (HL),D", // 0x72
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.D);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.D);
                 return 8;
             }
         ),
         new Instruction(
             "LD (HL),E", // 0x73
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.E);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.E);
                 return 8;
             }
         ),
         new Instruction(
             "LD (HL),H", // 0x74
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.H);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.H);
                 return 8;
             }
         ),
         new Instruction(
             "LD (HL),L", // 0x75
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.L);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.L);
                 return 8;
             }
         ),
@@ -942,7 +942,7 @@ public static class Instructions
         new Instruction(
             "LD (HL),A", // 0x77
             static cpu => {
-                cpu.Ram.Write8(cpu.Reg.HL, cpu.Reg.A);
+                cpu.Write8(cpu.Reg.HL, cpu.Reg.A);
                 return 8;
             }
         ),
@@ -991,7 +991,7 @@ public static class Instructions
         new Instruction(
             "LD A,(HL)", // 0x7E
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.HL);
+                cpu.Reg.A = cpu.Read8(cpu.Reg.HL);
                 return 8;
             }
         ),
@@ -1043,7 +1043,7 @@ public static class Instructions
         new Instruction(
             "ADD A,(HL)", // 0x86
             static cpu => {
-                DoADD(cpu, cpu.Ram.Read8(cpu.Reg.HL));
+                DoADD(cpu, cpu.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1100,7 +1100,7 @@ public static class Instructions
         new Instruction(
             "ADC A,(HL)", // 0x8E
             static cpu => {
-                DoADC(cpu, cpu.Ram.Read8(cpu.Reg.HL));
+                DoADC(cpu, cpu.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1156,7 +1156,7 @@ public static class Instructions
         new Instruction(
             "SUB A,(HL)", // 0x96
             static cpu => {
-                DoSUB(cpu, cpu.Ram.Read8(cpu.Reg.HL));
+                DoSUB(cpu, cpu.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1218,7 +1218,7 @@ public static class Instructions
         new Instruction(
             "SBC A,(HL)", // 0x9E
             static cpu => {
-                DoSBC(cpu, cpu.Ram.Read8(cpu.Reg.HL));
+                DoSBC(cpu, cpu.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1275,7 +1275,7 @@ public static class Instructions
         new Instruction(
             "AND A,(HL)", // 0xA6
             static cpu => {
-                DoAND(cpu, cpu.Ram.Read8(cpu.Reg.HL));
+                DoAND(cpu, cpu.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1335,7 +1335,7 @@ public static class Instructions
         new Instruction(
             "XOR A,(HL)", // 0xAE
             static cpu => {
-                DoXOR(cpu, cpu.Ram.Read8(cpu.Reg.HL));
+                DoXOR(cpu, cpu.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1396,7 +1396,7 @@ public static class Instructions
         new Instruction(
             "OR A,(HL)", // 0xB6
             static cpu => {
-                DoOR(cpu, cpu.Ram.Read8(cpu.Reg.HL));
+                DoOR(cpu, cpu.Read8(cpu.Reg.HL));
                 return 8;
             }
         ),
@@ -1474,7 +1474,7 @@ public static class Instructions
         new Instruction(
             "CP A,(HL)", // 0xBE
             static cpu => {
-                var value = cpu.Ram.Read8(cpu.Reg.HL);
+                var value = cpu.Read8(cpu.Reg.HL);
                 cpu.Reg.Zf = cpu.Reg.A == value;
                 cpu.Reg.Nf = true;
                 cpu.Reg.SetHfForDec(cpu.Reg.A, value);
@@ -1505,7 +1505,7 @@ public static class Instructions
         new Instruction(
             "POP BC", // 0xC1
             static cpu => {
-                cpu.Reg.BC = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.BC = cpu.Read16(cpu.Reg.SP);
                 cpu.Reg.SP += 2;
                 return 12;
             }
@@ -1547,8 +1547,8 @@ public static class Instructions
             static cpu =>
             {
                 cpu.InternalWaitM();
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.B);
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.C);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.B);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.C);
                 return 16;
             }
         ),
@@ -1650,7 +1650,7 @@ public static class Instructions
         new Instruction(
             "POP DE", // 0xD1
             static cpu => {
-                cpu.Reg.DE = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.DE = cpu.Read16(cpu.Reg.SP);
                 cpu.Reg.SP += 2;
                 return 12;
             }
@@ -1682,8 +1682,8 @@ public static class Instructions
             "PUSH DE", // 0xD5
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.D);
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.E);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.D);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.E);
                 return 16;
             }
         ),
@@ -1765,14 +1765,14 @@ public static class Instructions
         new Instruction(
             "LDH (a8),A", // 0xE0 nn
             static cpu => {
-                cpu.Ram.Write8((ushort)(0xFF00 + cpu.Fetch8()), cpu.Reg.A);
+                cpu.Write8((ushort)(0xFF00 + cpu.Fetch8()), cpu.Reg.A);
                 return 12;
             }
         ),
         new Instruction(
             "POP HL", // 0xE1
             static cpu => {
-                cpu.Reg.HL = cpu.Ram.Read16(cpu.Reg.SP);
+                cpu.Reg.HL = cpu.Read16(cpu.Reg.SP);
                 cpu.Reg.SP += 2;
                 return 12;
             }
@@ -1780,7 +1780,7 @@ public static class Instructions
         new Instruction(
             "LDH (C),A", // 0xE2
             static cpu => {
-                cpu.Ram.Write8((ushort)(0xFF00 + cpu.Reg.C), cpu.Reg.A);
+                cpu.Write8((ushort)(0xFF00 + cpu.Reg.C), cpu.Reg.A);
                 return 8;
             }
         ),
@@ -1790,8 +1790,8 @@ public static class Instructions
             "PUSH HL", // 0xE5
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.H);
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.L);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.H);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.L);
                 return 16;
             }
         ),
@@ -1837,7 +1837,7 @@ public static class Instructions
         new Instruction(
             "LD (a16),A", // 0xEA nn nn
             static cpu => {
-                cpu.Ram.Write8(cpu.Fetch16(), cpu.Reg.A);
+                cpu.Write8(cpu.Fetch16(), cpu.Reg.A);
                 return 16;
             }
         ),
@@ -1863,15 +1863,15 @@ public static class Instructions
         new Instruction(
             "LDH A,(a8)", // 0xF0 nn
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8((ushort)(0xFF00 + cpu.Fetch8()));
+                cpu.Reg.A = cpu.Read8((ushort)(0xFF00 + cpu.Fetch8()));
                 return 12;
             }
         ),
         new Instruction(
             "POP AF", // 0xF1
             static cpu => {
-                var restoredF = cpu.Ram.Read8(cpu.Reg.SP++);
-                cpu.Reg.A = cpu.Ram.Read8(cpu.Reg.SP++);
+                var restoredF = cpu.Read8(cpu.Reg.SP++);
+                cpu.Reg.A = cpu.Read8(cpu.Reg.SP++);
                 cpu.Reg.Zf = (restoredF & 0x80) != 0;
                 cpu.Reg.Nf = (restoredF & 0x40) != 0;
                 cpu.Reg.Hf = (restoredF & 0x20) != 0;
@@ -1882,7 +1882,7 @@ public static class Instructions
         new Instruction(
             "LDH A,(C)", // 0xF2
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8((ushort)(0xFF00 + cpu.Reg.C));
+                cpu.Reg.A = cpu.Read8((ushort)(0xFF00 + cpu.Reg.C));
                 return 8;
             }
         ),
@@ -1898,8 +1898,8 @@ public static class Instructions
             "PUSH AF", // 0xF5
             static cpu => {
                 cpu.InternalWaitM();
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.A);
-                cpu.Ram.Write8(--cpu.Reg.SP, cpu.Reg.F);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.A);
+                cpu.Write8(--cpu.Reg.SP, cpu.Reg.F);
                 return 16;
             }
         ),
@@ -1947,7 +1947,7 @@ public static class Instructions
         new Instruction(
             "LD A,(a16)", // 0xFA nn nn
             static cpu => {
-                cpu.Reg.A = cpu.Ram.Read8(cpu.Fetch16());
+                cpu.Reg.A = cpu.Read8(cpu.Fetch16());
                 return 16;
             }
         ),
@@ -1985,8 +1985,8 @@ public static class Instructions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void DoRET(Cpu cpu)
     {
-        var lo = cpu.Ram.Read8(cpu.Reg.SP++);
-        var hi = cpu.Ram.Read8(cpu.Reg.SP++);
+        var lo = cpu.Read8(cpu.Reg.SP++);
+        var hi = cpu.Read8(cpu.Reg.SP++);
         cpu.Reg.PC = (ushort)(hi << 8 | lo);
         cpu.InternalWaitM();
     }
