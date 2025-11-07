@@ -14,12 +14,12 @@ using DTC.SM83;
 
 namespace UnitTests;
 
-public class MemoryTests : TestsBase
+public class BusTests : TestsBase
 {
     [Test]
     public void CheckDefaultMemoryIsZeroed()
     {
-        var memory = new Memory(0x10000);
+        using var memory = new Bus(0x2000, attachDevices: false);
 
         Assert.That(memory.Read8(0x1234), Is.Zero);
     }
@@ -27,7 +27,7 @@ public class MemoryTests : TestsBase
     [Test]
     public void CheckIndexerReadsBackWrittenValue()
     {
-        var memory = new Memory(0x10000);
+        using var memory = new Bus(0x4000, attachDevices: false);
         const ushort address = 0x2345;
         const byte value = 0x7A;
 

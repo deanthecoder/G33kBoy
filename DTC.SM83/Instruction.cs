@@ -24,14 +24,14 @@ public sealed class Instruction
     /// <summary>
     /// Gets the function that executes this instruction on the CPU and returns the number of cycles taken.
     /// </summary>
-    public Func<Cpu, ulong> Execute { get; }
+    public Action<Cpu> Execute { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Instruction"/> class.
     /// </summary>
     /// <param name="mnemonic">The mnemonic representation of the instruction.</param>
     /// <param name="execute">The function that executes this instruction on the CPU.</param>
-    public Instruction(string mnemonic, Func<Cpu, ulong> execute)
+    public Instruction(string mnemonic, Action<Cpu> execute)
     {
         Mnemonic = mnemonic;
         Execute = execute;

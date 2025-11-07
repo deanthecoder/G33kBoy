@@ -8,9 +8,11 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+
 using DTC.Core.Extensions;
 using DTC.Core.UnitTesting;
 using DTC.SM83;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace UnitTests;
@@ -18,78 +20,129 @@ namespace UnitTests;
 [TestFixture, Parallelizable(ParallelScope.All)]
 public class CpuTests : TestsBase
 {
-    public static SingleTest[] UnprefixedTests { get; } = LoadTests(targetCb: false);
-    public static SingleTest[] PrefixedTests { get; } = LoadTests(targetCb: true);
+    public static InstructionTests[] AllTests { get; } = LoadTests();
 
-    private static SingleTest[] LoadTests(bool targetCb)
-    {
-        var testDir = ProjectDir.GetDir("../external/GameboyCPUTests/v2/");
-        var testFiles = testDir.TryGetFiles("*.json").Where(o => o.Name.StartsWith("cb") == targetCb);
-        return testFiles
-            .SelectMany(SingleTest.LoadFromFile)
+    private static InstructionTests[] LoadTests() =>
+        ProjectDir
+            .GetDir("../external/GameboyCPUTests/v2/")
+            .TryGetFiles("*.json")
+            .Select(InstructionTests.LoadFromFile)
             .ToArray();
-    }
 
     [Test]
-    public void RunUnprefixedTests([ValueSource(nameof(UnprefixedTests))] SingleTest test) =>
-        ProcessTest(test);
+    public void RunTests([ValueSource(nameof(AllTests))] InstructionTests test) => test.Run();
 
-    [Test]
-    public void RunPrefixedTests([ValueSource(nameof(PrefixedTests))] SingleTest test) =>
-        ProcessTest(test);
-
-    private static void ProcessTest(SingleTest test)
+    /// <summary>
+    /// All all tests for a single instruction. 
+    /// </summary>
+    public class InstructionTests
     {
-        var bus = new Bus();
-        bus.Attach(new Memory(0x10000), 0x0000, 0xFFFF);
-        
-        var prepared = test.Prepare();
-        prepared.InitialMem.ForEach(o => bus.Write8((ushort)o[0], (byte)o[1]));
-        var cpu = new Cpu(bus);
-        prepared.InitialRegs.CopyTo(cpu.Reg);
-        cpu.Reg.PC--;
-        cpu.Clock.Reset();
-        cpu.Fetch8();
-        
-        cpu.Step();
+        private readonly string m_name;
+        private readonly SingleTest[] m_tests;
 
-        Assert.That(cpu.Reg, Is.EqualTo(prepared.FinalRegs));
-        var comparison = GetMemoryComparisonMessage(cpu.Ram, prepared.FinalMem);
-        Assert.That(comparison, Is.Empty);
-    }
-
-    private static string GetMemoryComparisonMessage(Bus actual, int[][] expected)
-    {
-        foreach (var v in expected)
+        private InstructionTests(string name, [NotNull] SingleTest[] tests)
         {
-            var addr = v[0];
-            var expectedByte = v[1];
-            var actualByte = actual.Read8((ushort)addr);
-            if (expectedByte != actualByte)
-                return $"Memory at 0x{addr:X4} ({addr}) is not equal. Expected 0x{expectedByte:X2} ({expectedByte}), got 0x{actualByte:X2} ({actualByte}).";
+            m_name = name;
+            m_tests = tests ?? throw new ArgumentNullException(nameof(tests));
         }
 
-        return string.Empty;   
+        public static InstructionTests LoadFromFile(FileInfo testJson)
+        {
+            var json = testJson.ReadAllText();
+            var testCases = JsonConvert.DeserializeObject<TestCaseDto[]>(json) ?? [];
+            var singleTests = testCases.Select(testCase => new SingleTest(testCase)).ToArray();
+            return new InstructionTests(testJson.LeafName(), singleTests);
+        }
+
+        public void Run()
+        {
+            foreach (var test in m_tests)
+            {
+                using var bus = new Bus(0x10000, attachDevices: false);
+                var cpu = new Cpu(bus);
+        
+                var prepared = test.Prepare();
+                foreach (var memState in prepared.InitialMem)
+                    bus.Write8((ushort)memState[0], (byte)memState[1]);
+                
+                prepared.InitialRegs.CopyTo(cpu.Reg);
+                cpu.Reg.PC--;
+                cpu.Bus.ResetClock();
+                cpu.Fetch8();
+        
+                cpu.Step();
+
+                Assert.That(cpu.Reg, Is.EqualTo(prepared.FinalRegs), test.GetMnemonic);
+                var comparison = GetMemoryComparisonMessage(cpu.Bus, prepared.FinalMem);
+                Assert.That(comparison, Is.Empty, test.GetMnemonic);
+            }
+        }
+
+        private static string GetMemoryComparisonMessage(IMemDevice actualRam, int[][] expectedValues)
+        {
+            foreach (var v in expectedValues)
+            {
+                var addr = v[0];
+                var expectedByte = v[1];
+                var actualByte = actualRam.Read8((ushort)addr);
+                if (expectedByte != actualByte)
+                    return $"Memory at 0x{addr:X4} ({addr}) is not equal. Expected 0x{expectedByte:X2} ({expectedByte}), got 0x{actualByte:X2} ({actualByte}).";
+            }
+
+            return string.Empty;   
+        }
+
+        public override string ToString() => m_name;
     }
 
+    public sealed class TestCaseDto
+    {
+        [JsonProperty("name")] public string Name { get; set; } = string.Empty;
+
+        [JsonProperty("initial")] public CpuStateDto Initial { get; set; } = new CpuStateDto();
+
+        [JsonProperty("final")] public CpuStateDto Final { get; set; } = new CpuStateDto();
+    }
+
+    public sealed class CpuStateDto
+    {
+        [JsonProperty("a")] public int A { get; set; }
+
+        [JsonProperty("b")] public int B { get; set; }
+
+        [JsonProperty("c")] public int C { get; set; }
+
+        [JsonProperty("d")] public int D { get; set; }
+
+        [JsonProperty("e")] public int E { get; set; }
+
+        [JsonProperty("f")] public int F { get; set; }
+
+        [JsonProperty("h")] public int H { get; set; }
+
+        [JsonProperty("l")] public int L { get; set; }
+
+        [JsonProperty("pc")] public int Pc { get; set; }
+
+        [JsonProperty("sp")] public int Sp { get; set; }
+
+        [JsonProperty("ram")] public int[][] Ram { get; set; }
+    }
+
+    /// <summary>
+    /// A test for a single setup of a single instruction.
+    /// </summary>
     public class SingleTest
     {
         private readonly CpuStateDto m_initialState;
         private readonly CpuStateDto m_finalState;
         private readonly string m_name;
 
-        private SingleTest(TestCaseDto testCase)
+        public SingleTest(TestCaseDto testCase)
         {
             m_initialState = testCase.Initial;
             m_finalState = testCase.Final;
-            m_name = $"({testCase.Name}) {GetMnemonic(m_initialState)}";
-        }
-
-        public static IEnumerable<SingleTest> LoadFromFile(FileInfo testJson)
-        {
-            var json = testJson.ReadAllText();
-            var testCases = JsonConvert.DeserializeObject<TestCaseDto[]>(json) ?? [];
-            return testCases.Select(testCase => new SingleTest(testCase));
+            m_name = testCase.Name;
         }
 
         public PreparedTest Prepare()
@@ -122,13 +175,13 @@ public class CpuTests : TestsBase
             registers.Cf = (flags & 0x10) != 0;
         }
 
-        private static string GetMnemonic(CpuStateDto initialState)
+        public string GetMnemonic()
         {
-            var pc = (ushort)initialState.Pc - 1;
-            var ram = initialState.Ram;
+            var pc = (ushort)m_initialState.Pc - 1;
+            var ram = m_initialState.Ram;
             var maxRamAddress = ram.Max(entry => entry[0]);
             var bytesToAllocate = maxRamAddress - pc + 1;
-            var mem = new Memory(bytesToAllocate);
+            var mem = new Bus(bytesToAllocate, attachDevices: false);
             foreach (var ramByte in ram)
             {
                 var addr = ramByte[0] - pc;
@@ -155,40 +208,6 @@ public class CpuTests : TestsBase
             public Registers FinalRegs { get; }
             public int[][] InitialMem { get; }
             public int[][] FinalMem { get; }
-        }
-
-        private sealed class TestCaseDto
-        {
-            [JsonProperty("name")] public string Name { get; set; } = string.Empty;
-
-            [JsonProperty("initial")] public CpuStateDto Initial { get; set; } = new CpuStateDto();
-
-            [JsonProperty("final")] public CpuStateDto Final { get; set; } = new CpuStateDto();
-        }
-
-        private sealed class CpuStateDto
-        {
-            [JsonProperty("a")] public int A { get; set; }
-
-            [JsonProperty("b")] public int B { get; set; }
-
-            [JsonProperty("c")] public int C { get; set; }
-
-            [JsonProperty("d")] public int D { get; set; }
-
-            [JsonProperty("e")] public int E { get; set; }
-
-            [JsonProperty("f")] public int F { get; set; }
-
-            [JsonProperty("h")] public int H { get; set; }
-
-            [JsonProperty("l")] public int L { get; set; }
-
-            [JsonProperty("pc")] public int Pc { get; set; }
-
-            [JsonProperty("sp")] public int Sp { get; set; }
-
-            [JsonProperty("ram")] public int[][] Ram { get; set; }
         }
     }
 }

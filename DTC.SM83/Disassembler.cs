@@ -16,7 +16,7 @@ namespace DTC.SM83;
 /// </summary>
 public static class Disassembler
 {
-    public static string GetMnemonic(Memory memory, ushort address)
+    public static string GetMnemonic(Bus memory, ushort address)
     {
         if (memory == null)
             throw new ArgumentNullException(nameof(memory));

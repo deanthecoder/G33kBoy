@@ -13,60 +13,57 @@ namespace DTC.SM83;
 public class Cpu
 {
     private byte m_fetchedOpcode;
-    private ulong m_fetchStartTime;
 
-    public Clock Clock { get; } = new Clock();
-    public Bus Ram { get; }
-    public Registers Reg { get; private set; }
+    /// <summary>
+    /// Reference to the system bus for memory and IO operations.
+    /// </summary>
+    public Bus Bus { get; }
+    public Registers Reg { get; } = new Registers();
     
     public bool IsHalted { get; set; }
     
     /// <summary>
-    /// Allows us to implement the delayed 'halt' bug. 
+    /// Allows implementation of the delayed HALT bug behavior.
     /// </summary>
+    /// <remarks>
+    /// When true, PC does not advance on next opcode fetch.
+    /// </remarks>
     public bool HaltBug { get; set; }
     
     /// <summary>
-    /// Whether interrupts are globally enabled.
+    /// Global interrupt enable flag.
     /// </summary>
     public bool IME { get; set; }
     
     /// <summary>
-    /// Whether interrupts are pending.
+    /// Indicates if interrupt enable is pending (delayed effect).
     /// </summary>
     /// <remarks>
-    /// Used to handle EI delay.
+    /// Used to implement EI instruction delay.
     /// </remarks>
     public bool PendingIME { get; set; }
-    
+
     /// <summary>
-    /// Interrupt enable mask.
+    /// Interrupt enable register value.
     /// </summary>
-    public byte IE => Read8(0xFFFF);
-    
+    /// <remarks>
+    /// Read from the interrupt device via the bus.
+    /// </remarks>
+    public byte IE => Bus.InterruptDevice?.Read8() ?? 0x00;
+
     /// <summary>
-    /// Interrupt request flags.
+    /// Interrupt flag register value.
     /// </summary>
+    /// <remarks>
+    /// Indicates which interrupts are requested.
+    /// </remarks>
     public byte IF => Read8(0xFF0F);
 
     public Cpu(Bus bus)
     {
-        Ram = bus ?? throw new ArgumentNullException(nameof(bus));
-        Reset();
-    }
-    
-    public void Reset()
-    {
-        Reg = new Registers();
-        Clock.Reset();
-        
-        IsHalted = false;
-        HaltBug = false;
-        IME = false;
-        PendingIME = false;
+        Bus = bus ?? throw new ArgumentNullException(nameof(bus));
 
         // Pre-load first opcode.
-        m_fetchStartTime = Clock.Ticks;
         Fetch8();
     }
 
@@ -78,14 +75,7 @@ public class Cpu
             throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
         
         // Execute instruction.
-        var expectedTickDuration = instruction.Execute(this);
-        var executeEndTime = Clock.Ticks;
-        var actualTickDuration = executeEndTime - m_fetchStartTime;
-        if (actualTickDuration != expectedTickDuration)
-        {
-            // todo - Remove this once all instructions are implemented correctly.
-            throw new InvalidOperationException($"Instruction {instruction.Mnemonic} expected duration of {expectedTickDuration} CPU cycles, but {actualTickDuration} CPU ticks actually elapsed.");
-        }
+        instruction.Execute(this);
 
         // Enable interrupts if necessary.
         if (PendingIME)
@@ -98,16 +88,18 @@ public class Cpu
         HandleInterrupts();
 
         // Fetch opcode.
-        m_fetchStartTime = Clock.Ticks;
         if (IsHalted)
-            Clock.AdvanceT(4); // Re-queue the HALT instruction. 
+            Bus.AdvanceT(4); // Re-queue the HALT instruction. 
         else
             Fetch8();
     }
     
     public void InternalWaitM(ulong m = 1) =>
-        Clock.AdvanceT(4 * m);
+        Bus.AdvanceT(4 * m);
 
+    /// <summary>
+    /// Check and service pending interrupts if enabled.
+    /// </summary>
     private void HandleInterrupts()
     {
         var ie = IE;
@@ -174,7 +166,7 @@ public class Cpu
             Reg.PC = vector;
             
             // Interrupt entry takes 5 M-cycles
-            Clock.AdvanceT(20);
+            Bus.AdvanceT(20);
         }
     }
     
@@ -211,14 +203,16 @@ public class Cpu
     /// </summary>
     public byte Read8(ushort addr)
     {
-        var value = Ram.Read8(addr);
-        Clock.AdvanceT(4);
+        var value = Bus.Read8(addr);
+        Bus.AdvanceT(4);
         return value;
     }
     
     /// <summary>
-    /// Read 16-bit word at address and advance the clock 4 + 4 ticks.
+    /// Read a 16-bit word from memory and advance clock by 8 ticks.
     /// </summary>
+    /// <param name="addr">Memory address to read.</param>
+    /// <returns>Word value read.</returns>
     public ushort Read16(ushort addr) =>
         (ushort)(Read8(addr) | (Read8((ushort)(addr + 1)) << 8));
     
@@ -227,8 +221,8 @@ public class Cpu
     /// </summary>
     public void Write8(ushort addr, byte value)
     {
-        Ram.Write8(addr, value);
-        Clock.AdvanceT(4);
+        Bus.Write8(addr, value);
+        Bus.AdvanceT(4);
     }
     
     /// <summary>

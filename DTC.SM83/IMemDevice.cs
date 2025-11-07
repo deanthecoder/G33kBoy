@@ -16,6 +16,9 @@ namespace DTC.SM83;
 /// </summary>
 public interface IMemDevice
 {
+    ushort FromAddr { get; }
+    ushort ToAddr { get; }
+    
     byte Read8(ushort addr);
     void Write8(ushort addr, byte value);
 }
