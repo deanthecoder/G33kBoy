@@ -10,31 +10,35 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 - Match the English style as reported below.
 - Prefer existing frameworks, tests, and naming conventions shown here.
 - Check Supported UI Languages when adding UI strings so required translations stay in sync.
-## Repositories (2)
+## Repositories (4)
 > **Agent note:** Sub-modules and sibling repositories often expose reusable libraries (e.g., extension methods, utilities). Cross-reference these before re-implementing.
 
   - https://github.com/adtennant/GameboyCPUTests (Submodule)  
     Test data for developers of Gameboy emulators.
   - https://github.com/deanthecoder/DTC.Core (Submodule)  
     Core C# library (used by many deanthecoder repos)
+  - https://github.com/retrio/gb-test-roms (Submodule)  
+    Collection of Game Boy test roms.
+  - https://github.com/mattcurrie/dmg-acid2 (Submodule)  
+    😀 The Acid2 test, now for the original Game Boy! 😀
 ## Stats
 > **Agent note:** Match the project’s English style for identifiers, comments, and documentation.
 > **Agent note:** Use the dominant language(s) and idioms when proposing code.
 
-* Files      : 581
+* Files      : 848
 * Languages  : C# (100%)
 * English    : American English
 ## Largest Source Files (8)
 > **Agent note:** Avoid ingesting very large files wholesale; focus on public types, key methods, and file headers to preserve tokens.
 
-* 132.54 KB    : `DTC.SM83/Instructions.cs`
-* 17.38 KB     : `DTC.Core/DTC.Core/UI/ShaderControl.cs`
-* 15.63 KB     : `DTC.Core/DTC.Core/Extensions/FastLinq.cs`
-* 14.68 KB     : `DTC.Core/DTC.Core/Markdown/ConsoleRenderer.cs`
-* 10.81 KB     : `DTC.Core/DTC.Core/Extensions/DirectoryInfoExtensions.cs`
-* 6.96 KB      : `UnitTests/CpuTests.cs`
-* 6.81 KB      : `DTC.Core/DTC.Core/Extensions/FileInfoExtensions.cs`
-* 6.50 KB      : `DTC.Core/DTC.Core/Markdown/ConsoleFormatter.cs`
+* 46.45 KB     : `DTC.SM83/Instructions.cs`
+* 44.18 KB     : `DTC.SM83/PrefixedInstructions.cs`
+* 17.37 KB     : `DTC.Core/DTC.Core/UI/ShaderControl.cs`
+* 15.61 KB     : `DTC.Core/DTC.Core/Extensions/FastLinq.cs`
+* 14.67 KB     : `DTC.Core/DTC.Core/Markdown/ConsoleRenderer.cs`
+* 10.79 KB     : `DTC.Core/DTC.Core/Extensions/DirectoryInfoExtensions.cs`
+* 7.21 KB      : `UnitTests/CpuTests.cs`
+* 6.79 KB      : `DTC.Core/DTC.Core/Extensions/FileInfoExtensions.cs`
 ## NuGet (14)
 > **Agent note:** Prefer solutions using the listed packages and frameworks; avoid introducing new technologies without justification.
 
@@ -67,7 +71,7 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 ### Internal
 * `DTC.Core.csproj` (net8.0) [refs:1]
 * `DTC.SM83.csproj` (net9.0) [refs:1]
-## READMEs (5)
+## READMEs (6)
 > **Agent note:** READMEs often contain background, design intent, and setup steps; consult them when modifying code or documentation.
 
 * `DTC.Core/README.md`
@@ -75,3 +79,4 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 * `external/GameboyCPUTests/README.md`
 * `external/GameboyCPUTests/v1/README.md`
 * `external/GameboyCPUTests/v2/README.md`
+* `external/dmg-acid2/README.md`
