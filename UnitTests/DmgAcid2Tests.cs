@@ -32,10 +32,10 @@ public class DmgAcid2Tests : TestsBase
         var romData = romFile.ReadAllBytes();
 
         using var bus = new Bus(0x10000);
-        var cpu = new Cpu(bus);
-
-        bus.Load(0x0000, romData);
-        cpu.SkipBootRom();
+        var cpu =
+            new Cpu(bus)
+                .LoadRom(romData)
+                .SkipBootRom();
 
         while (bus.ClockTicks < OneSecondTicks)
             cpu.Step();

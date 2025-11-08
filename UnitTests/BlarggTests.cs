@@ -26,19 +26,18 @@ public class BlarggTests : TestsBase
     public void RunCpuRoms([ValueSource(nameof(CpuTestRomFiles))] FileInfo romFile)
     {
         using var bus = new Bus(0x10000);
-        var cpu = new Cpu(bus)
-        {
-            Reg =
-            {
-                PC = 0x0100
-            }
-        };
+        var cpu =
+            new Cpu(bus)
+                {
+                    Reg =
+                    {
+                        PC = 0x0100
+                    }
+                }
+                .LoadRom(romFile.ReadAllBytes());
 
         var serialBus = new SerialDevice();
         bus.Attach(serialBus);
-        
-        var romData = romFile.ReadAllBytes();
-        bus.Load(0x0000, romData);
 
         while (true)
         {
@@ -47,7 +46,7 @@ public class BlarggTests : TestsBase
             if (cpu.Reg.PC == oldPC && (serialBus.Output.Contains("Passed") || serialBus.Output.Contains("Failed")))
                 break;
         }
-        
+
         Assert.That(serialBus.Output, Does.Contain("Passed"));
     }
 
