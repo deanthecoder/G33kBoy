@@ -11,7 +11,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace DTC.SM83;
+namespace DTC.SM83.Devices;
 
 /// <summary>
 /// The GameBoy timer, handling access to memory 0xFF04-0xFF07

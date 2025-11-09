@@ -10,6 +10,8 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Buffers;
+using System.Runtime.CompilerServices;
+using DTC.SM83.Devices;
 
 namespace DTC.SM83;
 
@@ -21,10 +23,12 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly byte[] m_ram;
     private readonly IMemDevice[] m_devices;
     private readonly TimerDevice m_timer;
+    private readonly IoDevice m_ioDevice;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
 
+    public PPU PPU { get; }
     public InterruptDevice InterruptDevice { get; }
 
     /// <summary>
@@ -32,36 +36,65 @@ public sealed class Bus : IMemDevice, IDisposable
     /// </summary>
     public ulong ClockTicks { get; private set; }
 
-    public Bus(int bytesToAllocate, bool attachDevices = true)
+    public Bus(int bytesToAllocate, bool attachInterruptDevice = true, bool attachGameBoyDevices = true)
     {
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_devices);
         m_ram = ArrayPool<byte>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_ram);
 
-        if (!attachDevices)
-            return;
+        if (attachInterruptDevice)
+        {
+            // Represents the interrupt mask at 0xFF0F.
+            InterruptDevice = new InterruptDevice();
+            Attach(InterruptDevice);
 
-        // Represents the interrupt mask at 0xFF0F.
-        InterruptDevice = new InterruptDevice();
-        Attach(InterruptDevice);
+            // The timer, firing interrupts when internal timers elapse.
+            m_timer = new TimerDevice(InterruptDevice);
+            Attach(m_timer);
+        }
+
+        if (!attachGameBoyDevices)
+            return;
         
-        // The GameBoy timer, firing interrupts when internal timers elapse.
-        m_timer = new TimerDevice(InterruptDevice);
-        Attach(m_timer);
+        // VRAM (0x8000 - 0x9FFF)
+        var vram = new VramDevice();
+        Attach(vram);
+
+        // OAM(/Sprites) (0xFE00 - 0xFE9F)
+        var oam = new OamDevice();
+        Attach(oam);
+
+        // IO (0xFF00 - 0xFF7F)
+        m_ioDevice = new IoDevice(this);
+        Attach(m_ioDevice);
+        
+        // Pixel Processing Unit
+        PPU = new PPU(m_ioDevice, vram, InterruptDevice);
     }
 
     /// <summary>
-    /// Attach a device to satisfy requests to a defined memort range.
+    /// Attach a device to satisfy requests to a defined memory range.
     /// </summary>
     /// <param name="device"></param>
     public void Attach(IMemDevice device) =>
-        Array.Fill(m_devices, device, device.FromAddr, device.ToAddr - device.FromAddr + 1);    
-    
+        Array.Fill(m_devices, device, device.FromAddr, device.ToAddr - device.FromAddr + 1);
+
     public byte Read8(ushort addr) =>
+        !BlockReadWrite(addr) ? UncheckedRead(addr) : (byte)0xFF;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public byte UncheckedRead(ushort addr) =>
         m_devices[addr]?.Read8(addr) ?? m_ram[addr];
-    
+
     public void Write8(ushort addr, byte value)
+    {
+        if (!BlockReadWrite(addr))
+            UncheckedWrite(addr, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void UncheckedWrite(ushort addr, byte value)
     {
         if (m_devices[addr] == null)
             m_ram[addr] = value;
@@ -70,12 +103,29 @@ public sealed class Bus : IMemDevice, IDisposable
     }
 
     /// <summary>
+    /// Read/writes to most addresses are blocked while a DMA transfer is active.
+    /// </summary>
+    /// <remarks>
+    /// Access to HRAM is always allowed.
+    /// </remarks>
+    private bool BlockReadWrite(ushort addr)
+    {
+        if (m_ioDevice?.IsDMATransferActive != true)
+            return false;
+        var isBlockedRegion = addr < 0xFF00; // 0xFF00: IO, HRAM, IE regions.
+        return isBlockedRegion;
+    }
+
+    /// <summary>
     /// Advance the clock by T cycles (4T = 1M).
     /// </summary>
     public void AdvanceT(ulong tCycles)
     {
         ClockTicks += tCycles;
+        
+        // Update the devices.
         m_timer?.AdvanceT(tCycles);
+        PPU?.AdvanceT(tCycles);
     }
 
     public void ResetClock() =>

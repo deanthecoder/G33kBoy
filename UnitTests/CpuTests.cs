@@ -12,6 +12,7 @@
 using DTC.Core.Extensions;
 using DTC.Core.UnitTesting;
 using DTC.SM83;
+using DTC.SM83.Devices;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 
@@ -30,7 +31,8 @@ public class CpuTests : TestsBase
             .ToArray();
 
     [Test]
-    public void RunTests([ValueSource(nameof(AllTests))] InstructionTests test) => test.Run();
+    public void RunTests([ValueSource(nameof(AllTests))] InstructionTests test) =>
+        test.Run();
 
     /// <summary>
     /// All all tests for a single instruction. 
@@ -58,7 +60,7 @@ public class CpuTests : TestsBase
         {
             foreach (var test in m_tests)
             {
-                using var bus = new Bus(0x10000, attachDevices: false);
+                using var bus = new Bus(0x10000, attachInterruptDevice: false, attachGameBoyDevices: false);
                 var cpu = new Cpu(bus);
         
                 var prepared = test.Prepare();
@@ -181,7 +183,7 @@ public class CpuTests : TestsBase
             var ram = m_initialState.Ram;
             var maxRamAddress = ram.Max(entry => entry[0]);
             var bytesToAllocate = maxRamAddress - pc + 1;
-            var mem = new Bus(bytesToAllocate, attachDevices: false);
+            var mem = new Bus(bytesToAllocate, attachInterruptDevice: false);
             foreach (var ramByte in ram)
             {
                 var addr = ramByte[0] - pc;

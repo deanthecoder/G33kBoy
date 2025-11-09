@@ -39,5 +39,7 @@ public class DmgAcid2Tests : TestsBase
 
         while (bus.ClockTicks < OneSecondTicks)
             cpu.Step();
+        
+        bus.PPU.Dump(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory).ToDir().GetFile("GB.ppm"));
     }
 }

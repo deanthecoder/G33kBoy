@@ -12,6 +12,7 @@ using System.Text;
 using DTC.Core.Extensions;
 using DTC.Core.UnitTesting;
 using DTC.SM83;
+using DTC.SM83.Devices;
 using DTC.SM83.Extensions;
 
 namespace UnitTests;
@@ -25,7 +26,7 @@ public class BlarggTests : TestsBase
     [Test, Sequential]
     public void RunCpuRoms([ValueSource(nameof(CpuTestRomFiles))] FileInfo romFile)
     {
-        using var bus = new Bus(0x10000);
+        using var bus = new Bus(0x10000, attachGameBoyDevices: false);
         var cpu =
             new Cpu(bus)
                 {

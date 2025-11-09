@@ -9,16 +9,27 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-namespace DTC.SM83;
+namespace DTC.SM83.Devices;
 
 /// <summary>
-/// Represents a memory device that can be read from and written to.
+/// Represents the device for VRAM.
 /// </summary>
-public interface IMemDevice
+public class VramDevice : IMemDevice
 {
-    ushort FromAddr { get; }
-    ushort ToAddr { get; }
+    private readonly byte[] m_data = new byte[0x2000];
     
-    byte Read8(ushort addr);
-    void Write8(ushort addr, byte value);
+    public ushort FromAddr => 0x8000;
+    public ushort ToAddr => 0x9FFF;
+
+    public byte Read8(ushort addr)
+    {
+        var idx = addr - FromAddr;
+        return m_data[idx];
+    }
+
+    public void Write8(ushort addr, byte value)
+    {
+        var idx = addr - FromAddr;
+        m_data[idx] = value;
+    }
 }

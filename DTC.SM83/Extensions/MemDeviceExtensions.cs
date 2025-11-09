@@ -8,6 +8,8 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Devices;
+
 namespace DTC.SM83.Extensions;
 
 public static class MemDeviceExtensions
@@ -20,4 +22,7 @@ public static class MemDeviceExtensions
         foreach (var b in data)
             bus.Write8(addr++, b);
     }
+    
+    public static ushort Read16(this IMemDevice bus, ushort addr) =>
+        (ushort)(bus.Read8(addr) | (bus.Read8((ushort)(addr + 1)) << 8));
 }

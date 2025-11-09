@@ -9,7 +9,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 using System.Runtime.CompilerServices;
 
-namespace DTC.SM83;
+namespace DTC.SM83.Devices;
 
 /// <summary>
 /// Represents the interrupt mask at 0xFF0F.
@@ -32,4 +32,16 @@ public class InterruptDevice : IMemDevice
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write8(byte value) => m_if = value;
+
+    public enum InterruptType
+    {
+        VBlank = 1 << 0,
+        Stat = 1 << 1,
+        Timer = 1 << 2,
+        Serial = 1 << 3,
+        Joypad = 1 << 4
+    }
+
+    public void Raise(InterruptType requested) =>
+        Write8((byte)(Read8() | (byte)requested));
 }
