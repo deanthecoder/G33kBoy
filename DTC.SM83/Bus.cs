@@ -65,6 +65,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Array.Clear(m_ram);
 
         VramDevice vram = null;
+        OamDevice oam = null;
         if (busType == BusType.GameBoy)
         {
             // VRAM (0x8000 - 0x9FFF)
@@ -72,7 +73,7 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(vram);
 
             // OAM(/Sprites) (0xFE00 - 0xFE9F)
-            var oam = new OamDevice();
+            oam = new OamDevice();
             Attach(oam);
 
             // IO (0xFF00 - 0xFF7F)
@@ -98,7 +99,7 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             // Pixel Processing Unit
-            PPU = new PPU(m_ioDevice, vram, InterruptDevice);
+            PPU = new PPU(m_ioDevice, vram, InterruptDevice, oam);
         }
     }
 
