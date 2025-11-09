@@ -49,7 +49,7 @@ public class Cpu
     /// <remarks>
     /// Read from the interrupt device via the bus.
     /// </remarks>
-    public byte IE => Bus.InterruptDevice?.Read8() ?? 0x00;
+    public byte IE => Bus.UncheckedRead(0xFFFF);
 
     /// <summary>
     /// Interrupt flag register value.
@@ -57,7 +57,7 @@ public class Cpu
     /// <remarks>
     /// Indicates which interrupts are requested.
     /// </remarks>
-    public byte IF => Read8(0xFF0F);
+    public byte IF => Bus.UncheckedRead(0xFF0F);
 
     public Cpu(Bus bus)
     {
