@@ -22,16 +22,10 @@ public class InterruptDevice : IMemDevice
     public ushort ToAddr => 0xFF0F;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte Read8(ushort addr) => Read8();
+    public byte Read8(ushort addr) => m_if;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write8(ushort addr, byte value) => Write8(value);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte Read8() => m_if;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write8(byte value) => m_if = value;
+    public void Write8(ushort addr, byte value) => m_if = value;
 
     public enum InterruptType
     {
@@ -43,5 +37,5 @@ public class InterruptDevice : IMemDevice
     }
 
     public void Raise(InterruptType requested) =>
-        Write8((byte)(Read8() | (byte)requested));
+        m_if |= (byte)requested;
 }
