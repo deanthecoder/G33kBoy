@@ -26,7 +26,7 @@ public class BlarggTests : TestsBase
     [Test, Sequential]
     public void RunCpuRoms([ValueSource(nameof(CpuTestRomFiles))] FileInfo romFile)
     {
-        using var bus = new Bus(0x10000, attachGameBoyDevices: false);
+        using var bus = new Bus(0x10000, Bus.BusType.Minimal);
         var cpu =
             new Cpu(bus)
                 {

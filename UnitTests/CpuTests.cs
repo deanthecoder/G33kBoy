@@ -60,7 +60,7 @@ public class CpuTests : TestsBase
         {
             foreach (var test in m_tests)
             {
-                using var bus = new Bus(0x10000, attachInterruptDevice: false, attachGameBoyDevices: false);
+                using var bus = new Bus(0x10000, Bus.BusType.Trivial);
                 var cpu = new Cpu(bus);
         
                 var prepared = test.Prepare();
@@ -183,7 +183,7 @@ public class CpuTests : TestsBase
             var ram = m_initialState.Ram;
             var maxRamAddress = ram.Max(entry => entry[0]);
             var bytesToAllocate = maxRamAddress - pc + 1;
-            var mem = new Bus(bytesToAllocate, attachInterruptDevice: false);
+            var mem = new Bus(bytesToAllocate, Bus.BusType.Trivial);
             foreach (var ramByte in ram)
             {
                 var addr = ramByte[0] - pc;

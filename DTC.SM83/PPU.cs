@@ -68,7 +68,7 @@ public class PPU
         m_interruptDevice = interruptDevice ?? throw new ArgumentNullException(nameof(interruptDevice));
 
         m_lcdc = new LcdcRegister(lcd);
-        m_stat = new StatRegister(lcd, interruptDevice);;
+        m_stat = new StatRegister(lcd, interruptDevice);
     }
     
     /// <summary>
@@ -100,7 +100,7 @@ public class PPU
         m_tCycles += tCycles;
 
         const int tCyclesPerScanline = 456;
-        ulong DrawStartCycle = 172;
+        const ulong drawStartCycle = 172;
         switch (CurrentState)
         {
             // Capture up to 10 sprites.
@@ -116,9 +116,9 @@ public class PPU
             
             // Build up a scanline of pixels.
             case FrameState.Drawing:
-                if (m_tCycles >= DrawStartCycle) // 172-289 T per scanline.
+                if (m_tCycles >= drawStartCycle) // 172-289 T per scanline.
                 {
-                    m_tCycles -= DrawStartCycle;
+                    m_tCycles -= drawStartCycle;
 
                     var bgEnabled = m_lcdc.BgWindowEnablePriority;
                     if (bgEnabled)
@@ -172,7 +172,7 @@ public class PPU
                     else
                     {
                         // Background off - Fill white.
-                        Array.Fill(m_frameBuffer, (byte)0xFF, m_lcd.LY * 160, 160);;
+                        Array.Fill(m_frameBuffer, m_greyMap[0], m_lcd.LY * 160, 160);
                     }
 
                     CurrentState = FrameState.HBlank;
@@ -182,7 +182,7 @@ public class PPU
             
             // Wait until end of scanline.
             case FrameState.HBlank:
-                var hblankLen = tCyclesPerScanline - DrawStartCycle - 80;
+                var hblankLen = tCyclesPerScanline - drawStartCycle - 80;
                 if (m_tCycles >= hblankLen)
                 {
                     m_tCycles -= hblankLen;

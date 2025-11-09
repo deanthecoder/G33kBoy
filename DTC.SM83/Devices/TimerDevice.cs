@@ -209,7 +209,7 @@ public class TimerDevice : IMemDevice
                 TIMA = TMA;
                 
                 // IF |= 0x04 (Timer): raise Timer interrupt after the 1 M-cycle reload delay.
-                m_interruptDevice.Raise(InterruptDevice.InterruptType.Timer);;
+                m_interruptDevice.Raise(InterruptDevice.InterruptType.Timer);
             }
         }
     }

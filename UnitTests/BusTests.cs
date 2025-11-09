@@ -19,7 +19,7 @@ public class BusTests : TestsBase
     [Test]
     public void CheckDefaultMemoryIsZeroed()
     {
-        using var memory = new Bus(0x2000, attachInterruptDevice: false, attachGameBoyDevices: false);;
+        using var memory = new Bus(0x2000, Bus.BusType.Trivial);
 
         Assert.That(memory.Read8(0x1234), Is.Zero);
     }
@@ -27,7 +27,7 @@ public class BusTests : TestsBase
     [Test]
     public void CheckIndexerReadsBackWrittenValue()
     {
-        using var memory = new Bus(0x4000, attachInterruptDevice: false, attachGameBoyDevices: false);
+        using var memory = new Bus(0x4000, Bus.BusType.Trivial);
         const ushort address = 0x2345;
         const byte value = 0x7A;
 

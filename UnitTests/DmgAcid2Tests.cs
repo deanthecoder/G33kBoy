@@ -31,7 +31,7 @@ public class DmgAcid2Tests : TestsBase
 
         var romData = romFile.ReadAllBytes();
 
-        using var bus = new Bus(0x10000);
+        using var bus = new Bus(0x10000, Bus.BusType.GameBoy);
         var cpu =
             new Cpu(bus)
                 .LoadRom(romData)

@@ -36,41 +36,70 @@ public sealed class Bus : IMemDevice, IDisposable
     /// </summary>
     public ulong ClockTicks { get; private set; }
 
-    public Bus(int bytesToAllocate, bool attachInterruptDevice = true, bool attachGameBoyDevices = true)
+    /// <summary>
+    /// The type of bus to create.
+    /// </summary>
+    public enum BusType
+    {
+        /// <summary>
+        /// Bare bones CPU implementation, useful only for disassembly in unit tests.
+        /// </summary>
+        Trivial,
+
+        /// <summary>
+        /// Has interrupt handling capabilities.
+        /// </summary>
+        Minimal,
+
+        /// <summary>
+        /// Full GameBoy implementation with all devices.
+        /// </summary>
+        GameBoy
+    }
+
+    public Bus(int bytesToAllocate, BusType busType)
     {
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_devices);
         m_ram = ArrayPool<byte>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_ram);
 
-        if (attachInterruptDevice)
+        VramDevice vram = null;
+        if (busType == BusType.GameBoy)
         {
-            // Represents the interrupt mask at 0xFF0F.
-            InterruptDevice = new InterruptDevice();
-            Attach(InterruptDevice);
+            // VRAM (0x8000 - 0x9FFF)
+            vram = new VramDevice();
+            Attach(vram);
 
-            // The timer, firing interrupts when internal timers elapse.
+            // OAM(/Sprites) (0xFE00 - 0xFE9F)
+            var oam = new OamDevice();
+            Attach(oam);
+
+            // IO (0xFF00 - 0xFF7F)
+            m_ioDevice = new IoDevice(this);
+            Attach(m_ioDevice);
+        }
+
+        if (busType != BusType.Trivial)
+        {
+            // The timer (0xFF04-0xFF07), firing interrupts when internal timers elapse.
+            // Note: This address range overrides a section of the IO device.
+            InterruptDevice = new InterruptDevice();
             m_timer = new TimerDevice(InterruptDevice);
             Attach(m_timer);
         }
 
-        if (!attachGameBoyDevices)
-            return;
-        
-        // VRAM (0x8000 - 0x9FFF)
-        var vram = new VramDevice();
-        Attach(vram);
+        if (busType != BusType.Trivial)
+        {
+            // Represents the interrupt mask at 0xFF0F.
+            Attach(InterruptDevice);
+        }
 
-        // OAM(/Sprites) (0xFE00 - 0xFE9F)
-        var oam = new OamDevice();
-        Attach(oam);
-
-        // IO (0xFF00 - 0xFF7F)
-        m_ioDevice = new IoDevice(this);
-        Attach(m_ioDevice);
-        
-        // Pixel Processing Unit
-        PPU = new PPU(m_ioDevice, vram, InterruptDevice);
+        if (busType == BusType.GameBoy)
+        {
+            // Pixel Processing Unit
+            PPU = new PPU(m_ioDevice, vram, InterruptDevice);
+        }
     }
 
     /// <summary>
