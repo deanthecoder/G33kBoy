@@ -20,14 +20,20 @@ namespace DTC.SM83;
 public class PPU
 {
     /// <summary>
+    /// Holds pixel color data for a single scanline.
+    /// </summary>
+    /// <remarks>
+    /// The lower two bits hold the color value (I.e. The actual color value found by taking a color index and looking-up
+    /// the color from the active palette.)
+    /// This will feed into the frame buffer when the scanline is complete, converted to (0x00 - 0xFF) greyscale value.
+    /// If the high bit (7) is set it means the pixel is opaque. 
+    /// </remarks>
+    private readonly byte[] m_scanlineBuffer = new byte[160];
+
+    /// <summary>
     /// Buffer of grey values (0x00 - 0xFF) for each pixel in the frame.
     /// </summary>
     private readonly byte[] m_frameBuffer = new byte[160 * 144];
-    
-    /// <summary>
-    /// Holds pixel index data for a single scanline.
-    /// </summary>
-    private readonly byte[] m_scanlineBuffer = new byte[160];
 
     private readonly byte[] m_greyMap = [0xE0, 0xA8, 0x58, 0x10];
     private readonly byte[] m_spriteIndices = new byte[10];
@@ -182,8 +188,17 @@ public class PPU
                             
                             // Get the 2-bit palette index.
                             var paletteIndex = (byte)(highBits << 1 | lowBits);
-                            var paletteValue = (byte)((m_lcd.BGP >> (2 * paletteIndex)) & 0x03);
-                            m_scanlineBuffer[screenX] = paletteValue;
+                            var isTransparent = paletteIndex == 0x00;
+                            
+                            // Look up the 2-bit color value.
+                            var palette = m_lcd.BGP;
+                            var colorValue = (byte)((palette >> (2 * paletteIndex)) & 0x03);
+                            
+                            // Encode the transparency.
+                            if (!isTransparent)
+                                colorValue |= 0x80;  // Opaque.
+                            
+                            m_scanlineBuffer[screenX] = colorValue;
                         }
                     }
                     else
@@ -261,19 +276,33 @@ public class PPU
 
                             // Get the 2-bit palette index.
                             var paletteIndex = (byte)(highBits << 1 | lowBits);
-                            if (paletteIndex != 0)
+                            var isTransparent = paletteIndex == 0x00;
+                            
+                            if (isTransparent)
+                                continue; // Skip transparent pixels.
+
+                            if (sprite.Value.Priority)
                             {
-                                var paletteValue = (byte)(((sprite.Value.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0) >> (2 * paletteIndex)) & 0x03);
-                                m_scanlineBuffer[x] = paletteValue;
+                                // Sprite is drawn behind non-transparent background., so only plot if background is transparent.
+                                var isBackgroundOpaque = m_scanlineBuffer[x].IsBitSet(7);
+                                if (isBackgroundOpaque)
+                                    continue; // Favour the background pixel.
                             }
+                            
+                            // Look up the 2-bit color value.
+                            var palette = sprite.Value.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0;
+                            var colorValue = (byte)((palette >> (2 * paletteIndex)) & 0x03);
+
+                            // Encode the transparency.
+                            colorValue |= 0x80;  // Opaque.
+
+                            m_scanlineBuffer[x] = colorValue;
                         }
                     }
 
                     // Update the frame buffer.
                     for (var i = 0; i < m_scanlineBuffer.Length; i++)
-                    {
-                        m_frameBuffer[m_lcd.LY * 160 + i] = m_greyMap[m_scanlineBuffer[i]];
-                    }
+                        m_frameBuffer[m_lcd.LY * 160 + i] = m_greyMap[m_scanlineBuffer[i] & 0x0F];
 
                     CurrentState = FrameState.HBlank;
                     // todo - Overlay sprites captured in Mode 2 (respect OBP0/OBP1, priority vs BG, and 8x16 sprite pairing rules).
