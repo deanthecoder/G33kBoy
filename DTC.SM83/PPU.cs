@@ -20,17 +20,6 @@ namespace DTC.SM83;
 public class PPU
 {
     /// <summary>
-    /// Holds pixel color data for a single scanline.
-    /// </summary>
-    /// <remarks>
-    /// The lower two bits hold the color value (I.e. The actual color value found by taking a color index and looking-up
-    /// the color from the active palette.)
-    /// This will feed into the frame buffer when the scanline is complete, converted to (0x00 - 0xFF) greyscale value.
-    /// If the high bit (7) is set it means the pixel is opaque. 
-    /// </remarks>
-    private readonly byte[] m_scanlineBuffer = new byte[160];
-
-    /// <summary>
     /// Buffer of grey values (0x00 - 0xFF) for each pixel in the frame.
     /// </summary>
     private readonly byte[] m_frameBuffer = new byte[160 * 144];
@@ -102,6 +91,7 @@ public class PPU
             CurrentState = FrameState.HBlank;
             m_tCycles = 0;
             m_lcdOff = true;
+            Array.Clear(m_frameBuffer);
             return;
         }
         
@@ -111,6 +101,7 @@ public class PPU
             m_lcdOff = false;
             SetLY(0);
             CurrentState = FrameState.HBlank;
+            Array.Clear(m_frameBuffer);
         }
         
         m_tCycles += tCycles;
@@ -149,163 +140,141 @@ public class PPU
                 {
                     m_tCycles -= drawStartCycle;
 
-                    var bgEnabled = m_lcdc.BgWindowEnablePriority;
-                    if (bgEnabled)
+                    for (var x = 0; x < 160; x++)
                     {
-                        var srcY = (m_lcd.SCY + m_lcd.LY) & 0xFF;
-
-                        for (var screenX = 0; screenX < 160; screenX++)
+                        // First we draw the background.
+                        byte bgColorIndex = 0x00;
+                        var bgEnabled = m_lcdc.BgWindowEnablePriority;
+                        if (bgEnabled)
                         {
-                            var srcX = (m_lcd.SCX + screenX) & 0xFF;
-                            
+                            var srcY = (m_lcd.SCY + m_lcd.LY) & 0xFF;
+                            var srcX = (m_lcd.SCX + x) & 0xFF;
+
                             // srcX, srcY are the tile coordinates.
                             // We need to convert these to the tile offset into the 32x32 tile map.
                             var tileColumn = srcX / 8;
                             var tileRow = srcY / 8;
                             var tileOffset = tileColumn + tileRow * 32;
-                            
+
                             // Get the tile index.
                             var bgTileMapAddr = m_lcdc.BgTileMapArea ? 0x9C00 : 0x9800; // todo - Pull out opf loop (and others)
                             var tileIndex = m_vram.Read8((ushort)(bgTileMapAddr + tileOffset));
-                            
+
                             // Get the start of the tile data. (One tile = (8 x 2) * 8 = 16 bytes)
                             int tileDataAddr;
                             if (m_lcdc.BgWindowTileDataArea)
                                 tileDataAddr = 0x8000 + tileIndex * 16;
                             else
                                 tileDataAddr = 0x9000 + (sbyte)tileIndex * 16;
-                            
+
                             // Offset into the correct tile Y.
                             tileDataAddr += (srcY % 8) * 2;
-                            
+
                             // Read the 8 pixel tile row.
                             var lowBits = m_vram.Read8((ushort)tileDataAddr);
                             var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
-                            
+
                             // Shift bits to the correct position for our screen X.
                             lowBits = (byte)((lowBits >> (7 - srcX % 8)) & 0x01);
                             highBits = (byte)((highBits >> (7 - srcX % 8)) & 0x01);
-                            
-                            // Get the 2-bit palette index.
-                            var paletteIndex = (byte)(highBits << 1 | lowBits);
-                            var isTransparent = paletteIndex == 0x00;
-                            
-                            // Look up the 2-bit color value.
-                            var palette = m_lcd.BGP;
-                            var colorValue = (byte)((palette >> (2 * paletteIndex)) & 0x03);
-                            
-                            // Encode the transparency.
-                            if (!isTransparent)
-                                colorValue |= 0x80;  // Opaque.
-                            
-                            m_scanlineBuffer[screenX] = colorValue;
-                        }
-                    }
-                    else
-                    {
-                        // Background off - Fill white.
-                        Array.Clear(m_scanlineBuffer);
-                    }
 
-                    if (m_lcdc.SpriteEnable)
-                    {
+                            // Get the 2-bit color index.
+                            bgColorIndex = (byte)(highBits << 1 | lowBits);
+                        }
+
                         // Now we draw the sprites.
-                        for (var x = 0; x < 160; x++)
+                        byte spriteColorIndex = 0x00;
+                        byte spritePalette = 0x00;
+                        if (m_lcdc.SpriteEnable)
                         {
-                            // Find the first sprite that starts on this X position.
-                            OamDevice.OamEntry? sprite = null;
-                            for (var i = 0; i < m_spriteCount; i++)
+                            // Find the sprites that starts on this X position.
+                            for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
                             {
-                                var oamEntry = m_oam.GetSprites()[m_spriteIndices[i]];
-                                var spriteX = oamEntry.X - 8;
-                                if (spriteX > x || spriteX + 8 <= x)
+                                var sprite = m_oam.GetSprites()[m_spriteIndices[i]];
+                                var spriteX = sprite.X - 8;
+                                if (spriteX > x || spriteX + 7 < x)
                                     continue; // Sprite doesn't cover this X position.
 
-                                // Get in - We found one!
-                                sprite = oamEntry;
-                                break;
+                                // Draw the sprite.
+                                var spriteLeft = sprite.X - 8;
+                                var spriteTop = sprite.Y - 16;
+                                var pixelOffsetX = x - spriteLeft;
+
+                                int tileDataAddr;
+                                if (m_lcdc.SpriteSize == 8)
+                                {
+                                    // Normal tile index.
+                                    tileDataAddr = 0x8000 + sprite.Tile * 16;
+                                }
+                                else
+                                {
+                                    // Find the first address of the two 8x8 tiles.
+                                    tileDataAddr = 0x8000 + (sprite.Tile & 0xFE) * 16;
+                                }
+
+                                // Offset into the correct tile Y.
+                                var spriteHeight = m_lcdc.SpriteSize;
+                                var y = m_lcd.LY - spriteTop;
+                                if (sprite.YFlip)
+                                    y = spriteHeight - 1 - y;
+                                if (spriteHeight == 16 && y >= 8)
+                                {
+                                    tileDataAddr += 16;
+                                    y -= 8;
+                                }
+                                tileDataAddr += y * 2;
+
+                                // Read the 8 pixel tile row.
+                                var lowBits = m_vram.Read8((ushort)tileDataAddr);
+                                var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
+
+                                // Mirror on X if required.
+                                if (sprite.XFlip)
+                                {
+                                    lowBits = lowBits.Mirror();
+                                    highBits = highBits.Mirror();
+                                }
+
+                                // Shift bits to the correct position for our screen X.
+                                var bitShift = 7 - pixelOffsetX;
+                                lowBits = (byte)((lowBits >> bitShift) & 0x01);
+                                highBits = (byte)((highBits >> bitShift) & 0x01);
+
+                                // Get the 2-bit color index.
+                                var colorIndex = (byte)(highBits << 1 | lowBits);
+                                if (colorIndex == 0x00)
+                                    continue; // Skip transparent pixels.
+
+                                if (sprite.Priority)
+                                {
+                                    // Sprite is drawn behind non-transparent background, so only plot if background is transparent.
+                                    var isBackgroundOpaque = bgColorIndex != 0x00;
+                                    if (isBackgroundOpaque)
+                                        continue; // Favor the background pixel.
+                                }
+
+                                spritePalette = sprite.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0;
+                                spriteColorIndex = colorIndex;
                             }
-
-                            if (sprite == null)
-                                continue; // No sprites at this position.
-
-                            // Draw the sprite.
-                            var spriteLeft = sprite.Value.X - 8;
-                            var spriteTop = sprite.Value.Y - 16;
-                            var pixelOffsetX = x - spriteLeft;
-
-                            int tileDataAddr;
-                            if (m_lcdc.SpriteSize == 8)
-                            {
-                                // Normal tile index.
-                                tileDataAddr = 0x8000 + sprite.Value.Tile * 16;
-                            }
-                            else
-                            {
-                                // Find the first address of the two 8x8 tiles.
-                                tileDataAddr = 0x8000 + (sprite.Value.Tile & 0xFE) * 16;
-                            }
-
-                            // Offset into the correct tile Y.
-                            var spriteHeight = m_lcdc.SpriteSize;
-                            var y = m_lcd.LY - spriteTop;
-                            if (sprite.Value.YFlip)
-                                y = spriteHeight - 1 - y;
-                            if (spriteHeight == 16 && y >= 8)
-                            {
-                                tileDataAddr += 16;
-                                y -= 8;
-                            }
-                            tileDataAddr += y * 2;
-
-                            // Read the 8 pixel tile row.
-                            var lowBits = m_vram.Read8((ushort)tileDataAddr);
-                            var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
-
-                            // Mirror on X if required.
-                            if (sprite.Value.XFlip)
-                            {
-                                lowBits = lowBits.Mirror();
-                                highBits = highBits.Mirror();
-                            }
-
-                            // Shift bits to the correct position for our screen X.
-                            var bitShift = 7 - pixelOffsetX;
-                            lowBits = (byte)((lowBits >> bitShift) & 0x01);
-                            highBits = (byte)((highBits >> bitShift) & 0x01);
-
-                            // Get the 2-bit palette index.
-                            var paletteIndex = (byte)(highBits << 1 | lowBits);
-                            var isTransparent = paletteIndex == 0x00;
-                            
-                            if (isTransparent)
-                                continue; // Skip transparent pixels.
-
-                            if (sprite.Value.Priority)
-                            {
-                                // Sprite is drawn behind non-transparent background., so only plot if background is transparent.
-                                var isBackgroundOpaque = m_scanlineBuffer[x].IsBitSet(7);
-                                if (isBackgroundOpaque)
-                                    continue; // Favour the background pixel.
-                            }
-                            
-                            // Look up the 2-bit color value.
-                            var palette = sprite.Value.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0;
-                            var colorValue = (byte)((palette >> (2 * paletteIndex)) & 0x03);
-
-                            // Encode the transparency.
-                            colorValue |= 0x80;  // Opaque.
-
-                            m_scanlineBuffer[x] = colorValue;
                         }
+
+                        // Update the frame buffer.
+                        byte colorValue = 0x00;
+                        if (spriteColorIndex != 0x00)
+                        {
+                            // Sprite is drawn, so use the sprite palette.
+                            colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
+                        }
+                        else if (bgColorIndex != 0x00)
+                        {
+                            // No sprite, so use the background palette.
+                            colorValue = (byte)((m_lcd.BGP >> (2 * bgColorIndex)) & 0x03);
+                        }
+                        
+                        m_frameBuffer[m_lcd.LY * 160 + x] = m_greyMap[colorValue];
+
+                        CurrentState = FrameState.HBlank;
                     }
-
-                    // Update the frame buffer.
-                    for (var i = 0; i < m_scanlineBuffer.Length; i++)
-                        m_frameBuffer[m_lcd.LY * 160 + i] = m_greyMap[m_scanlineBuffer[i] & 0x0F];
-
-                    CurrentState = FrameState.HBlank;
-                    // todo - Overlay sprites captured in Mode 2 (respect OBP0/OBP1, priority vs BG, and 8x16 sprite pairing rules).
                 }
                 break;
             
