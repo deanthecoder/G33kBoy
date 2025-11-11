@@ -115,7 +115,7 @@ public class PPU
                 if (m_tCycles >= 80)
                 {
                     m_tCycles -= 80;
-                    
+
                     // Capture up to 10 sprites for this LY in OAM order.
                     m_spriteCount = 0;
                     var sprites = m_oam.GetSprites();
@@ -125,11 +125,26 @@ public class PPU
                         var spriteY = sprite.Y - 16;
                         if (spriteY > m_lcd.LY || spriteY + m_lcdc.SpriteSize - 1 < m_lcd.LY)
                             continue; // Sprite not visible on this scanline.
-                        
+
                         // Sprite is visible on this scanline.
                         m_spriteIndices[m_spriteCount++] = i;
                     }
-                    
+
+                    // Sort sprite indices based on their X position (smallest first).
+                    for (var i = 1; i < m_spriteCount; i++)
+                    {
+                        var key = m_spriteIndices[i];
+                        var keyX = sprites[key].X;
+                        var j = i - 1;
+
+                        while (j >= 0 && sprites[m_spriteIndices[j]].X > keyX)
+                        {
+                            m_spriteIndices[j + 1] = m_spriteIndices[j];
+                            j--;
+                        }
+                        m_spriteIndices[j + 1] = key;
+                    }
+                        
                     CurrentState = FrameState.Drawing;
                 }
                 break;
