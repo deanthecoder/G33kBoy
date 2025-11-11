@@ -22,7 +22,7 @@ public class PPU
     /// <summary>
     /// Buffer of grey values (0x00 - 0xFF) for each pixel in the frame.
     /// </summary>
-    private readonly byte[] m_frameBuffer = new byte[160 * 144];
+    public byte[] FrameBuffer { get; } = new byte[160 * 144];
 
     private readonly byte[] m_greyMap = [0xE0, 0xA8, 0x58, 0x10];
     private readonly byte[] m_spriteIndices = new byte[10];
@@ -35,6 +35,8 @@ public class PPU
     private ulong m_tCycles;
     private bool m_lcdOff;
     private int m_spriteCount;
+    private int m_windowLine;
+    private bool m_windowLineUsedThisScanline;
 
     private enum FrameState
     {
@@ -87,11 +89,11 @@ public class PPU
         // Turn off the display?
         if (!m_lcdc.LcdEnable)
         {
-            SetLY(0);
+            UpdateLineIndex(false);
             CurrentState = FrameState.HBlank;
             m_tCycles = 0;
             m_lcdOff = true;
-            Array.Clear(m_frameBuffer);
+            Array.Clear(FrameBuffer);
             return;
         }
         
@@ -99,9 +101,9 @@ public class PPU
         if (m_lcdOff && m_lcdc.LcdEnable)
         {
             m_lcdOff = false;
-            SetLY(0);
+            UpdateLineIndex(false);
             CurrentState = FrameState.HBlank;
-            Array.Clear(m_frameBuffer);
+            Array.Clear(FrameBuffer);
         }
         
         m_tCycles += tCycles;
@@ -154,6 +156,7 @@ public class PPU
                 if (m_tCycles >= drawStartCycle) // 172-289 T per scanline.
                 {
                     m_tCycles -= drawStartCycle;
+                    m_windowLineUsedThisScanline = false;
 
                     for (var x = 0; x < 160; x++)
                     {
@@ -162,17 +165,32 @@ public class PPU
                         var bgEnabled = m_lcdc.BgWindowEnablePriority;
                         if (bgEnabled)
                         {
+                            var isWindow = false;
+                            if (m_lcdc.BgWindowEnablePriority && m_lcdc.WindowEnable)
+                            {
+                                if (x >= m_lcd.WX - 7 && m_lcd.LY >= m_lcd.WY)
+                                    isWindow = true;
+                            }
+                            
                             var srcY = (m_lcd.SCY + m_lcd.LY) & 0xFF;
                             var srcX = (m_lcd.SCX + x) & 0xFF;
 
+                            if (isWindow)
+                            {
+                                srcY = m_windowLine;
+                                srcX = x - (m_lcd.WX - 7);
+                                m_windowLineUsedThisScanline = true;
+                            }
+                            
                             // srcX, srcY are the tile coordinates.
                             // We need to convert these to the tile offset into the 32x32 tile map.
                             var tileColumn = srcX / 8;
                             var tileRow = srcY / 8;
                             var tileOffset = tileColumn + tileRow * 32;
 
-                            // Get the tile index.
-                            var bgTileMapAddr = m_lcdc.BgTileMapArea ? 0x9C00 : 0x9800; // todo - Pull out opf loop (and others)
+                            // Get the tile index (Window or background).
+                            var tileMapSelector = isWindow ? m_lcdc.WindowTileMapArea : m_lcdc.BgTileMapArea;
+                            var bgTileMapAddr = tileMapSelector ? 0x9C00 : 0x9800;
                             var tileIndex = m_vram.Read8((ushort)(bgTileMapAddr + tileOffset));
 
                             // Get the start of the tile data. (One tile = (8 x 2) * 8 = 16 bytes)
@@ -286,7 +304,7 @@ public class PPU
                             colorValue = (byte)((m_lcd.BGP >> (2 * bgColorIndex)) & 0x03);
                         }
                         
-                        m_frameBuffer[m_lcd.LY * 160 + x] = m_greyMap[colorValue];
+                        FrameBuffer[m_lcd.LY * 160 + x] = m_greyMap[colorValue];
 
                         CurrentState = FrameState.HBlank;
                     }
@@ -299,7 +317,7 @@ public class PPU
                 if (m_tCycles >= hblankLen)
                 {
                     m_tCycles -= hblankLen;
-                    SetLY((byte)(m_lcd.LY + 1));
+                    UpdateLineIndex(true);
                     
                     if (m_lcd.LY == 144)
                     {
@@ -322,13 +340,13 @@ public class PPU
                     if (m_lcd.LY + 1 == 154)
                     {
                         // Reached the bottom of the frame - Start a new one.
-                        SetLY(0);
+                        UpdateLineIndex(false);
                         CurrentState = FrameState.OAMScan;
                     }
                     else
                     {
                         // Not at the bottom of the frame - Continue the current one.
-                        SetLY((byte)(m_lcd.LY + 1));
+                        UpdateLineIndex(true);
                     }
                 }
                 break;
@@ -338,11 +356,24 @@ public class PPU
         }
     }
 
-    private void SetLY(byte newLy)
+    private void UpdateLineIndex(bool inc)
     {
-        if (newLy == m_lcd.LY)
-            return;
-        m_lcd.LY = newLy;
+        if (inc)
+        {
+            if (m_windowLineUsedThisScanline)
+            {
+                m_windowLine++;
+                m_windowLineUsedThisScanline = false;
+            }
+            m_lcd.LY++;
+        }
+        else
+        {
+            // Reset the values.
+            m_lcd.LY = 0;
+            m_windowLine = 0;
+            m_windowLineUsedThisScanline = false;
+        }
         UpdateLycAndMaybeStatIrq();
     }
 
@@ -362,7 +393,7 @@ public class PPU
     /// Dump the frame buffer to disk (.ppm)
     /// </summary>
     public void Dump(FileInfo ppmFile) =>
-        PpmWriter.Write(ppmFile, m_frameBuffer, 160, 144, 1);
+        PpmWriter.Write(ppmFile, FrameBuffer, 160, 144, 1);
 
     /// <summary>
     /// Represents the LCDC (LCD Control) register at 0xFF40.

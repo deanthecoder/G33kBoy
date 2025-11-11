@@ -40,6 +40,6 @@ public class DmgAcid2Tests : TestsBase
         while (bus.ClockTicks < OneSecondTicks)
             cpu.Step();
         
-        bus.PPU.Dump(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory).ToDir().GetFile("GB.ppm"));
+        Assert.That(bus.PPU.FrameBuffer.GetMd5Hex(), Is.EqualTo("027FB2C36D84347E3EA71BC4301D7B1E"));
     }
 }
