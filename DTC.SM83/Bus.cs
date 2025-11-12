@@ -28,6 +28,7 @@ public sealed class Bus : IMemDevice, IDisposable
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
 
+    public BootRom BootRom { get; }
     public PPU PPU { get; }
     public InterruptDevice InterruptDevice { get; }
 
@@ -68,6 +69,10 @@ public sealed class Bus : IMemDevice, IDisposable
         OamDevice oam = null;
         if (busType == BusType.GameBoy)
         {
+            // The GameBoy boot ROM.
+            BootRom = new BootRom();
+            Attach(BootRom);
+            
             // VRAM (0x8000 - 0x9FFF)
             vram = new VramDevice();
             Attach(vram);
@@ -77,7 +82,7 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(oam);
 
             // IO (0xFF00 - 0xFF7F)
-            m_ioDevice = new IoDevice(this);
+            m_ioDevice = new IoDevice(this, BootRom);
             Attach(m_ioDevice);
         }
 
@@ -106,7 +111,6 @@ public sealed class Bus : IMemDevice, IDisposable
     /// <summary>
     /// Attach a device to satisfy requests to a defined memory range.
     /// </summary>
-    /// <param name="device"></param>
     public void Attach(IMemDevice device) =>
         Array.Fill(m_devices, device, device.FromAddr, device.ToAddr - device.FromAddr + 1);
 

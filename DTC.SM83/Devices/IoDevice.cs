@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using JetBrains.Annotations;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
@@ -18,10 +20,12 @@ public class IoDevice : IMemDevice, ILcd
 {
     private readonly byte[] m_data = new byte[0x80];
     private readonly Bus m_bus;
-    
-    public IoDevice(Bus bus)
+    private readonly BootRom m_bootRom;
+
+    public IoDevice(Bus bus, [NotNull] BootRom bootRom)
     {
         m_bus = bus ?? throw new ArgumentNullException(nameof(bus));
+        m_bootRom = bootRom ?? throw new ArgumentNullException(nameof(bootRom));
     }
 
     public ushort FromAddr => 0xFF00;
@@ -75,6 +79,11 @@ public class IoDevice : IMemDevice, ILcd
                 m_bus.AdvanceT(4); // One cycle for each byte.
             }
             IsDMATransferActive = false;
+            return;
         }
+        
+        // Boot Disable (Unload the boot ROM).
+        if (idx == 0x50)
+            m_bootRom.Unload();
     }
 }
