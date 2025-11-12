@@ -24,7 +24,7 @@ public class DmgAcid2Tests : TestsBase
         ProjectDir.GetFile("../external/dmg-acid2.gb");
 
     [Test]
-    public void RunForOneSecond()
+    public void Run()
     {
         var romFile = RomFile;
         Assert.That(romFile, Does.Exist, $"Missing dmg-acid2 ROM at {romFile.FullName}");
@@ -37,9 +37,13 @@ public class DmgAcid2Tests : TestsBase
                 .LoadRom(romData)
                 .SkipBootRom();
 
-        while (bus.ClockTicks < OneSecondTicks)
+        string bufferHash = null;
+        bus.PPU.FrameRendered += (_, frameBuffer) => bufferHash = frameBuffer.GetMd5Hex();
+
+        while (bufferHash != "027FB2C36D84347E3EA71BC4301D7B1E" && bus.ClockTicks < OneSecondTicks)
             cpu.Step();
-        
-        Assert.That(bus.PPU.FrameBuffer.GetMd5Hex(), Is.EqualTo("027FB2C36D84347E3EA71BC4301D7B1E"));
+
+        Assert.That(bufferHash, Is.Not.Null, $"No frame rendered within {OneSecondTicks} T ticks.");
+        Assert.That(bufferHash, Is.EqualTo("027FB2C36D84347E3EA71BC4301D7B1E"));
     }
 }

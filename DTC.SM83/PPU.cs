@@ -7,6 +7,7 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+
 using DTC.Core.Extensions;
 using DTC.Core.Image;
 using DTC.SM83.Devices;
@@ -19,13 +20,17 @@ namespace DTC.SM83;
 /// </summary>
 public class PPU
 {
+    private const int FrameWidth = 160;
+    private const int FrameHeight = 144;
+
     /// <summary>
     /// Buffer of grey values (0x00 - 0xFF) for each pixel in the frame.
     /// </summary>
-    public byte[] FrameBuffer { get; } = new byte[160 * 144];
+    private readonly byte[] m_frameBuffer = new byte[FrameWidth * FrameHeight];
 
     private readonly byte[] m_greyMap = [0xE0, 0xA8, 0x58, 0x10];
     private readonly byte[] m_spriteIndices = new byte[10];
+    private readonly bool[] m_spritePixelCoverage = new bool[FrameWidth];
     private readonly ILcd m_lcd;
     private readonly VramDevice m_vram;
     private readonly InterruptDevice m_interruptDevice;
@@ -61,6 +66,11 @@ public class PPU
         Drawing
     }
 
+    /// <summary>
+    /// Raised whenever a full frame (160x144) has been rendered to the frame buffer.
+    /// </summary>
+    public event EventHandler<byte[]> FrameRendered;
+
     private FrameState CurrentState
     {
         get => (FrameState)m_stat.Mode;
@@ -93,7 +103,7 @@ public class PPU
             CurrentState = FrameState.HBlank;
             m_tCycles = 0;
             m_lcdOff = true;
-            Array.Clear(FrameBuffer);
+            Array.Clear(m_frameBuffer);
             return;
         }
         
@@ -103,7 +113,7 @@ public class PPU
             m_lcdOff = false;
             UpdateLineIndex(false);
             CurrentState = FrameState.HBlank;
-            Array.Clear(FrameBuffer);
+            Array.Clear(m_frameBuffer);
         }
         
         m_tCycles += tCycles;
@@ -117,36 +127,7 @@ public class PPU
                 if (m_tCycles >= 80)
                 {
                     m_tCycles -= 80;
-
-                    // Capture up to 10 sprites for this LY in OAM order.
-                    m_spriteCount = 0;
-                    var sprites = m_oam.GetSprites();
-                    for (byte i = 0; i < 40 && m_spriteCount < 10; i++)
-                    {
-                        var sprite = sprites[i];
-                        var spriteY = sprite.Y - 16;
-                        if (spriteY > m_lcd.LY || spriteY + m_lcdc.SpriteSize - 1 < m_lcd.LY)
-                            continue; // Sprite not visible on this scanline.
-
-                        // Sprite is visible on this scanline.
-                        m_spriteIndices[m_spriteCount++] = i;
-                    }
-
-                    // Sort sprite indices based on their X position (smallest first).
-                    for (var i = 1; i < m_spriteCount; i++)
-                    {
-                        var key = m_spriteIndices[i];
-                        var keyX = sprites[key].X;
-                        var j = i - 1;
-
-                        while (j >= 0 && sprites[m_spriteIndices[j]].X > keyX)
-                        {
-                            m_spriteIndices[j + 1] = m_spriteIndices[j];
-                            j--;
-                        }
-                        m_spriteIndices[j + 1] = key;
-                    }
-                        
+                    CaptureVisibleSprites();
                     CurrentState = FrameState.Drawing;
                 }
                 break;
@@ -156,158 +137,8 @@ public class PPU
                 if (m_tCycles >= drawStartCycle) // 172-289 T per scanline.
                 {
                     m_tCycles -= drawStartCycle;
-                    m_windowLineUsedThisScanline = false;
-
-                    for (var x = 0; x < 160; x++)
-                    {
-                        // First we draw the background.
-                        byte bgColorIndex = 0x00;
-                        var bgEnabled = m_lcdc.BgWindowEnablePriority;
-                        if (bgEnabled)
-                        {
-                            var isWindow = false;
-                            if (m_lcdc.BgWindowEnablePriority && m_lcdc.WindowEnable)
-                            {
-                                if (x >= m_lcd.WX - 7 && m_lcd.LY >= m_lcd.WY)
-                                    isWindow = true;
-                            }
-                            
-                            var srcY = (m_lcd.SCY + m_lcd.LY) & 0xFF;
-                            var srcX = (m_lcd.SCX + x) & 0xFF;
-
-                            if (isWindow)
-                            {
-                                srcY = m_windowLine;
-                                srcX = x - (m_lcd.WX - 7);
-                                m_windowLineUsedThisScanline = true;
-                            }
-                            
-                            // srcX, srcY are the tile coordinates.
-                            // We need to convert these to the tile offset into the 32x32 tile map.
-                            var tileColumn = srcX / 8;
-                            var tileRow = srcY / 8;
-                            var tileOffset = tileColumn + tileRow * 32;
-
-                            // Get the tile index (Window or background).
-                            var tileMapSelector = isWindow ? m_lcdc.WindowTileMapArea : m_lcdc.BgTileMapArea;
-                            var bgTileMapAddr = tileMapSelector ? 0x9C00 : 0x9800;
-                            var tileIndex = m_vram.Read8((ushort)(bgTileMapAddr + tileOffset));
-
-                            // Get the start of the tile data. (One tile = (8 x 2) * 8 = 16 bytes)
-                            int tileDataAddr;
-                            if (m_lcdc.BgWindowTileDataArea)
-                                tileDataAddr = 0x8000 + tileIndex * 16;
-                            else
-                                tileDataAddr = 0x9000 + (sbyte)tileIndex * 16;
-
-                            // Offset into the correct tile Y.
-                            tileDataAddr += (srcY % 8) * 2;
-
-                            // Read the 8 pixel tile row.
-                            var lowBits = m_vram.Read8((ushort)tileDataAddr);
-                            var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
-
-                            // Shift bits to the correct position for our screen X.
-                            lowBits = (byte)((lowBits >> (7 - srcX % 8)) & 0x01);
-                            highBits = (byte)((highBits >> (7 - srcX % 8)) & 0x01);
-
-                            // Get the 2-bit color index.
-                            bgColorIndex = (byte)(highBits << 1 | lowBits);
-                        }
-
-                        // Now we draw the sprites.
-                        byte spriteColorIndex = 0x00;
-                        byte spritePalette = 0x00;
-                        if (m_lcdc.SpriteEnable)
-                        {
-                            // Find the sprites that starts on this X position.
-                            for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
-                            {
-                                var sprite = m_oam.GetSprites()[m_spriteIndices[i]];
-                                var spriteX = sprite.X - 8;
-                                if (spriteX > x || spriteX + 7 < x)
-                                    continue; // Sprite doesn't cover this X position.
-
-                                // Draw the sprite.
-                                var spriteLeft = sprite.X - 8;
-                                var spriteTop = sprite.Y - 16;
-                                var pixelOffsetX = x - spriteLeft;
-
-                                int tileDataAddr;
-                                if (m_lcdc.SpriteSize == 8)
-                                {
-                                    // Normal tile index.
-                                    tileDataAddr = 0x8000 + sprite.Tile * 16;
-                                }
-                                else
-                                {
-                                    // Find the first address of the two 8x8 tiles.
-                                    tileDataAddr = 0x8000 + (sprite.Tile & 0xFE) * 16;
-                                }
-
-                                // Offset into the correct tile Y.
-                                var spriteHeight = m_lcdc.SpriteSize;
-                                var y = m_lcd.LY - spriteTop;
-                                if (sprite.YFlip)
-                                    y = spriteHeight - 1 - y;
-                                if (spriteHeight == 16 && y >= 8)
-                                {
-                                    tileDataAddr += 16;
-                                    y -= 8;
-                                }
-                                tileDataAddr += y * 2;
-
-                                // Read the 8 pixel tile row.
-                                var lowBits = m_vram.Read8((ushort)tileDataAddr);
-                                var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
-
-                                // Mirror on X if required.
-                                if (sprite.XFlip)
-                                {
-                                    lowBits = lowBits.Mirror();
-                                    highBits = highBits.Mirror();
-                                }
-
-                                // Shift bits to the correct position for our screen X.
-                                var bitShift = 7 - pixelOffsetX;
-                                lowBits = (byte)((lowBits >> bitShift) & 0x01);
-                                highBits = (byte)((highBits >> bitShift) & 0x01);
-
-                                // Get the 2-bit color index.
-                                var colorIndex = (byte)(highBits << 1 | lowBits);
-                                if (colorIndex == 0x00)
-                                    continue; // Skip transparent pixels.
-
-                                if (sprite.Priority)
-                                {
-                                    // Sprite is drawn behind non-transparent background, so only plot if background is transparent.
-                                    var isBackgroundOpaque = bgColorIndex != 0x00;
-                                    if (isBackgroundOpaque)
-                                        continue; // Favor the background pixel.
-                                }
-
-                                spritePalette = sprite.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0;
-                                spriteColorIndex = colorIndex;
-                            }
-                        }
-
-                        // Update the frame buffer.
-                        byte colorValue = 0x00;
-                        if (spriteColorIndex != 0x00)
-                        {
-                            // Sprite is drawn, so use the sprite palette.
-                            colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
-                        }
-                        else if (bgColorIndex != 0x00)
-                        {
-                            // No sprite, so use the background palette.
-                            colorValue = (byte)((m_lcd.BGP >> (2 * bgColorIndex)) & 0x03);
-                        }
-                        
-                        FrameBuffer[m_lcd.LY * 160 + x] = m_greyMap[colorValue];
-
-                        CurrentState = FrameState.HBlank;
-                    }
+                    RenderScanline();
+                    CurrentState = FrameState.HBlank;
                 }
                 break;
             
@@ -319,9 +150,10 @@ public class PPU
                     m_tCycles -= hblankLen;
                     UpdateLineIndex(true);
                     
-                    if (m_lcd.LY == 144)
+                    if (m_lcd.LY == FrameHeight)
                     {
                         CurrentState = FrameState.FrameWait;
+                        FrameRendered?.Invoke(this, m_frameBuffer);
                         m_interruptDevice.Raise(InterruptDevice.InterruptType.VBlank);
                     }
                     else
@@ -356,6 +188,220 @@ public class PPU
         }
     }
 
+    private void CaptureVisibleSprites()
+    {
+        m_spriteCount = 0;
+        if (!m_lcdc.SpriteEnable)
+            return; // No sprite drawing required.
+        
+        // Capture up to 10 sprites for this LY in OAM order.
+        var sprites = m_oam.GetSprites();
+        for (byte i = 0; i < 40 && m_spriteCount < 10; i++)
+        {
+            var sprite = sprites[i];
+            var spriteY = sprite.Y - 16;
+            if (spriteY > m_lcd.LY || spriteY + m_lcdc.SpriteSize - 1 < m_lcd.LY)
+                continue; // Sprite not visible on this scanline.
+
+            // Sprite is visible on this scanline.
+            m_spriteIndices[m_spriteCount++] = i;
+        }
+
+        // Sort sprite indices based on their X position (smallest first).
+        for (var i = 1; i < m_spriteCount; i++)
+        {
+            var key = m_spriteIndices[i];
+            var keyX = sprites[key].X;
+            var j = i - 1;
+
+            while (j >= 0 && sprites[m_spriteIndices[j]].X > keyX)
+            {
+                m_spriteIndices[j + 1] = m_spriteIndices[j];
+                j--;
+            }
+
+            m_spriteIndices[j + 1] = key;
+        }
+
+        // Build a lookup table of which screen X positions have sprite coverage.
+        Array.Clear(m_spritePixelCoverage);
+        for (var i = 0; i < m_spriteCount; i++)
+        {
+            var spriteX = sprites[m_spriteIndices[i]].X - 8;
+            for (var x = Math.Max(0, spriteX); x <= Math.Min(159, spriteX + 7); x++)
+                m_spritePixelCoverage[x] = true;
+        }
+    }
+
+    private void RenderScanline()
+    {
+        m_windowLineUsedThisScanline = false;
+        
+        var lcdLy = m_lcd.LY;
+        var lcdSCY = m_lcd.SCY;
+        var lcdSCX = m_lcd.SCX;
+        var lcdBGP = m_lcd.BGP;
+        var lcdWX = m_lcd.WX;
+
+        var bgEnabled = m_lcdc.BgWindowEnablePriority;
+        var windowEnabled =
+            bgEnabled &&
+            m_lcdc.WindowEnable &&
+            lcdLy >= m_lcd.WY;
+        
+        var bgWindowTileDataArea = m_lcdc.BgWindowTileDataArea;
+        var windowTileMapArea = m_lcdc.WindowTileMapArea;
+        var bgTileMapArea = m_lcdc.BgTileMapArea;
+        
+        var sprites = m_oam.GetSprites();
+        var spriteHeight = m_lcdc.SpriteSize;
+        
+        for (var x = 0; x < FrameWidth; x++)
+        {
+            // First we draw the background.
+            byte bgColorIndex = 0x00;
+            if (bgEnabled)
+            {
+                var isWindow = windowEnabled && x >= lcdWX - 7;
+
+                int srcY;
+                int srcX;
+                bool tileMapSelector;
+                if (isWindow)
+                {
+                    srcY = m_windowLine;
+                    srcX = x - (lcdWX - 7);
+                    m_windowLineUsedThisScanline = true;
+                    tileMapSelector = windowTileMapArea;
+                }
+                else
+                {
+                    srcY = (lcdSCY + lcdLy) & 0xFF;
+                    srcX = (lcdSCX + x) & 0xFF;
+                    tileMapSelector = bgTileMapArea;
+                }
+                            
+                // srcX, srcY are the tile coordinates.
+                // We need to convert these to the tile offset into the 32x32 tile map.
+                var tileColumn = srcX / 8;
+                var tileRow = srcY / 8;
+                var tileOffset = tileColumn + tileRow * 32;
+
+                // Get the tile index (Window or background).
+                var bgTileMapAddr = tileMapSelector ? 0x9C00 : 0x9800;
+                var tileIndex = m_vram.Read8((ushort)(bgTileMapAddr + tileOffset));
+
+                // Get the start of the tile data. (One tile = (8 x 2) * 8 = 16 bytes)
+                int tileDataAddr;
+                if (bgWindowTileDataArea)
+                    tileDataAddr = 0x8000 + tileIndex * 16;
+                else
+                    tileDataAddr = 0x9000 + (sbyte)tileIndex * 16;
+
+                // Offset into the correct tile Y.
+                tileDataAddr += srcY % 8 * 2;
+
+                // Read the 8 pixel tile row.
+                var lowBits = m_vram.Read8((ushort)tileDataAddr);
+                var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
+
+                // Shift bits to the correct position for our screen X.
+                lowBits = (byte)((lowBits >> (7 - srcX % 8)) & 0x01);
+                highBits = (byte)((highBits >> (7 - srcX % 8)) & 0x01);
+
+                // Get the 2-bit color index.
+                bgColorIndex = (byte)(highBits << 1 | lowBits);
+            }
+
+            // Now we draw the sprites.
+            byte spriteColorIndex = 0x00;
+            byte spritePalette = 0x00;
+            if (m_spritePixelCoverage[x])
+            {
+                for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
+                {
+                    var sprite = sprites[m_spriteIndices[i]];
+                    var spriteX = sprite.X - 8;
+                    if (spriteX > x || spriteX + 7 < x)
+                        continue; // Sprite doesn't cover this X position.
+
+                    if (sprite.Priority)
+                    {
+                        // Sprite is drawn behind non-transparent background, so only plot if background is transparent.
+                        var isBackgroundOpaque = bgColorIndex != 0x00;
+                        if (isBackgroundOpaque)
+                            continue; // Favor the background pixel.
+                    }
+
+                    // Find the sprite tile address.
+                    var tileDataAddr = 0x8000;
+                    if (spriteHeight == 8)
+                    {
+                        // Normal tile index.
+                        tileDataAddr += sprite.Tile * 16;
+                    }
+                    else
+                    {
+                        // Find the first address of the two 8x8 tiles.
+                        tileDataAddr += (sprite.Tile & 0xFE) * 16;
+                    }
+
+                    // Offset into the correct tile Y.
+                    var spriteTop = sprite.Y - 16;
+                    var y = lcdLy - spriteTop;
+                    if (sprite.YFlip)
+                        y = spriteHeight - 1 - y;
+                    if (spriteHeight == 16 && y >= 8)
+                    {
+                        tileDataAddr += 16;
+                        y -= 8;
+                    }
+                    tileDataAddr += y * 2;
+
+                    // Read the 8 pixel tile row.
+                    var lowBits = m_vram.Read8((ushort)tileDataAddr);
+                    var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
+
+                    // Mirror on X if required.
+                    if (sprite.XFlip)
+                    {
+                        lowBits = lowBits.Mirror();
+                        highBits = highBits.Mirror();
+                    }
+
+                    // Shift bits to the correct position for our screen X.
+                    var pixelOffsetX = x - spriteX;
+                    var bitShift = 7 - pixelOffsetX;
+                    lowBits = (byte)((lowBits >> bitShift) & 0x01);
+                    highBits = (byte)((highBits >> bitShift) & 0x01);
+
+                    // Get the 2-bit color index.
+                    var colorIndex = (byte)(highBits << 1 | lowBits);
+                    if (colorIndex == 0x00)
+                        continue; // Skip transparent pixels.
+
+                    spritePalette = sprite.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0;
+                    spriteColorIndex = colorIndex;
+                }
+            }
+
+            // Update the frame buffer.
+            byte colorValue = 0x00;
+            if (spriteColorIndex != 0x00)
+            {
+                // Sprite is drawn, so use the sprite palette.
+                colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
+            }
+            else if (bgColorIndex != 0x00)
+            {
+                // No sprite, so use the background palette.
+                colorValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
+            }
+                        
+            m_frameBuffer[lcdLy * FrameWidth + x] = m_greyMap[colorValue];
+        }
+    }
+
     private void UpdateLineIndex(bool inc)
     {
         if (inc)
@@ -383,7 +429,7 @@ public class PPU
     private void UpdateLycAndMaybeStatIrq()
     {
         var coincidence = m_lcd.LY == m_lcd.LYC;
-        m_stat.CoincidenceFlag = coincidence;
+        m_stat.SetCoincidenceFlag(coincidence);
 
         if (coincidence && m_stat.CoincidenceInterruptEnabled)
             m_interruptDevice.Raise(InterruptDevice.InterruptType.Stat);
@@ -393,7 +439,7 @@ public class PPU
     /// Dump the frame buffer to disk (.ppm)
     /// </summary>
     public void Dump(FileInfo ppmFile) =>
-        PpmWriter.Write(ppmFile, FrameBuffer, 160, 144, 1);
+        PpmWriter.Write(ppmFile, m_frameBuffer, FrameWidth, FrameHeight, 1);
 
     /// <summary>
     /// Represents the LCDC (LCD Control) register at 0xFF40.
@@ -426,7 +472,7 @@ public class PPU
         /// <summary>
         /// Bit 4 - BG/Window Tile Data Area (0=8800-97FF, 1=8000-8FFF)
         /// </summary>
-        public bool BgWindowTileDataArea => m_lcd.LCDC.IsBitSet(4); // todo - Make the BgWindowTileDataArea property return the address? And BgTileMapArea.
+        public bool BgWindowTileDataArea => m_lcd.LCDC.IsBitSet(4);
 
         /// <summary>
         /// Bit 3 - BG Tile Map Area (0=9800-9BFF, 1=9C00-9FFF)
@@ -472,26 +518,22 @@ public class PPU
         /// <summary>
         /// Bit 5 - Mode 2 OAM Interrupt (0=Off, 1=On)
         /// </summary>
-        public bool OamInterruptEnabled => (m_lcd.STAT & 0x20) != 0;
+        private bool OamInterruptEnabled => (m_lcd.STAT & 0x20) != 0;
 
         /// <summary>
         /// Bit 4 - Mode 1 V-Blank Interrupt (0=Off, 1=On)
         /// </summary>
-        public bool VBlankInterruptEnabled => (m_lcd.STAT & 0x10) != 0;
+        private bool VBlankInterruptEnabled => (m_lcd.STAT & 0x10) != 0;
 
         /// <summary>
         /// Bit 3 - Mode 0 H-Blank Interrupt (0=Off, 1=On)
         /// </summary>
-        public bool HBlankInterruptEnabled => (m_lcd.STAT & 0x08) != 0;
+        private bool HBlankInterruptEnabled => (m_lcd.STAT & 0x08) != 0;
 
         /// <summary>
         /// Bit 2 - LYC==LY Coincidence Flag (0=Different, 1=Equal)
         /// </summary>
-        public bool CoincidenceFlag
-        {
-            get => (m_lcd.STAT & 0x04) != 0;
-            set => m_lcd.STAT = (byte)(m_lcd.STAT & 0xF3 | (value ? 0x04 : 0x00));
-        }
+        public void SetCoincidenceFlag(bool value) => m_lcd.STAT = (byte) (m_lcd.STAT & 0xF3 | (value ? 0x04 : 0x00));
 
         /// <summary>
         /// Bits 1-0 - Mode Flag (0-3)

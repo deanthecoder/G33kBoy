@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System.Runtime.CompilerServices;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
@@ -21,15 +23,17 @@ public class VramDevice : IMemDevice
     public ushort FromAddr => 0x8000;
     public ushort ToAddr => 0x9FFF;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte Read8(ushort addr)
     {
-        var idx = addr - FromAddr;
+        var idx = addr - 0x8000;
         return m_data[idx];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write8(ushort addr, byte value)
     {
-        var idx = addr - FromAddr;
+        var idx = addr - 0x8000;
         m_data[idx] = value;
     }
 }
