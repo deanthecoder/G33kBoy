@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DTC.Core", "DTC.Core\DTC.Core\DTC.Core.csproj", "{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "G33kBoy", "G33kBoy\G33kBoy.csproj", "{FAF2FCCF-08D9-44B0-A5E6-48C9E5DD4B04}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C74E8190-CC15-4956-BD5E-B1CAF6ECDD8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAF2FCCF-08D9-44B0-A5E6-48C9E5DD4B04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAF2FCCF-08D9-44B0-A5E6-48C9E5DD4B04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAF2FCCF-08D9-44B0-A5E6-48C9E5DD4B04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAF2FCCF-08D9-44B0-A5E6-48C9E5DD4B04}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
