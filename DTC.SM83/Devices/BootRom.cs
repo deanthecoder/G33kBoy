@@ -50,6 +50,12 @@ public class BootRom : IMemDevice
         m_realMem = new byte[m_bootROM.Length];
     }
     
+    /// <summary>
+    /// Install the boot ROM, overriding memory I/O until unloaded.
+    /// </summary>
+    public void Load() =>
+        m_isLoaded = true;
+    
     public void Unload() =>
         m_isLoaded = false;
 

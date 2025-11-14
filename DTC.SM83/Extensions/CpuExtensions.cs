@@ -108,6 +108,7 @@ public static class CpuExtensions
     public static Cpu LoadRom(this Cpu cpu, byte[] rom)
     {
         cpu.Bus.Load(0x0000, rom);
+        cpu.Bus.BootRom.Load();
         return cpu;
     }
 }

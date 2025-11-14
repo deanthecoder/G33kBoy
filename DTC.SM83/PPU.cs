@@ -20,13 +20,13 @@ namespace DTC.SM83;
 /// </summary>
 public class PPU
 {
-    private const int FrameWidth = 160;
-    private const int FrameHeight = 144;
+    public const int FrameWidth = 160;
+    public const int FrameHeight = 144;
 
     /// <summary>
-    /// Buffer of grey values (0x00 - 0xFF) for each pixel in the frame.
+    /// Buffer of RGBA values (0x00 - 0xFF) for each pixel in the frame.
     /// </summary>
-    private readonly byte[] m_frameBuffer = new byte[FrameWidth * FrameHeight];
+    private readonly byte[] m_frameBuffer = new byte[FrameWidth * FrameHeight * 4];
 
     private readonly byte[] m_greyMap = [0xE0, 0xA8, 0x58, 0x10];
     private readonly byte[] m_spriteIndices = new byte[10];
@@ -397,8 +397,12 @@ public class PPU
                 // No sprite, so use the background palette.
                 colorValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
             }
-                        
-            m_frameBuffer[lcdLy * FrameWidth + x] = m_greyMap[colorValue];
+
+            var frameOffset = (lcdLy * FrameWidth + x) * 4;
+            m_frameBuffer[frameOffset] = m_greyMap[colorValue];     // R
+            m_frameBuffer[frameOffset + 1] = m_greyMap[colorValue]; // G
+            m_frameBuffer[frameOffset + 2] = m_greyMap[colorValue]; // B
+            m_frameBuffer[frameOffset + 3] = 0xFF;                  // A
         }
     }
 
@@ -439,7 +443,7 @@ public class PPU
     /// Dump the frame buffer to disk (.ppm)
     /// </summary>
     public void Dump(FileInfo ppmFile) =>
-        PpmWriter.Write(ppmFile, m_frameBuffer, FrameWidth, FrameHeight, 1);
+        PpmWriter.Write(ppmFile, m_frameBuffer, FrameWidth, FrameHeight, 3);
 
     /// <summary>
     /// Represents the LCDC (LCD Control) register at 0xFF40.

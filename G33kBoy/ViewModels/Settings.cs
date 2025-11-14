@@ -18,9 +18,22 @@ namespace G33kBoy.ViewModels;
 public class Settings : UserSettingsBase
 {
     public static Settings Instance { get; } = new Settings();
+    
+    public bool IsSoundEnabled
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
+    public bool IsAmbientBlurred
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
 
     protected override void ApplyDefaults()
     {
-        // Init default settings here.
+        IsAmbientBlurred = true;
+        IsSoundEnabled = true;
     }
 }

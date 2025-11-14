@@ -2,8 +2,133 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:G33kBoy.ViewModels"
+        xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+        xmlns:views="clr-namespace:G33kBoy.Views"
+        xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="G33kBoy.Views.MainWindow"
+        x:DataType="viewModels:MainWindowViewModel"
+        Width="1066" Height="768"
+        MinWidth="520" MinHeight="320"
+        Icon="/Assets/app.ico"
         Title="G33kBoy">
-    Welcome to Avalonia!
+    <Design.DataContext>
+        <viewModels:MainWindowViewModel />
+    </Design.DataContext>
+    
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style Selector="Image">
+            <Setter Property="IsHitTestVisible" Value="False"/>
+        </Style>
+    </Window.Styles>
+
+    <dialogHostAvalonia:DialogHost x:Name="Host" OverlayBackground="Black">
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <Menu>
+                    <MenuItem Header="File">
+                        <MenuItem Header="_Open..." Command="{Binding LoadGameRom}"
+                                  InputGesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
+                        <Separator />
+                        <MenuItem Header="_Exit" Command="{Binding CloseCommand}" />
+                    </MenuItem>
+
+                    <MenuItem Header="Hardware">
+                            <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
+                                <MenuItem.Effect>
+                                    <BlurEffect Radius="2"/>
+                                </MenuItem.Effect>
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsAmbientBlurred}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                    </MenuItem>
+
+                    <MenuItem Header="Extras">
+                        <MenuItem Header="Save Screenshot..." Command="{Binding SaveScreenshot}" />
+                    </MenuItem>
+
+                    <MenuItem Header="Help">
+                        <MenuItem Header="_Open Project Page..." Command="{Binding OpenProjectPage}" />
+                        <MenuItem Header="_About..."
+                                  Command="{Binding OpenDialogCommand, ElementName=Host}">
+                            <MenuItem.CommandParameter>
+                                <views:AboutDialogContent PointerPressed="OnAboutDialogClicked" />
+                            </MenuItem.CommandParameter>
+                        </MenuItem>
+                    </MenuItem>
+                </Menu>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <StackPanel.Styles>
+                        <Style Selector="TextBlock">
+                            <Setter Property="FontWeight" Value="Normal"/>
+                        </Style>
+                    </StackPanel.Styles>
+                    
+                    <ToggleButton IsChecked="{Binding Settings.IsSoundEnabled}"
+                                  ToolTip.Tip="Toggle Sound">
+                        <avalonia:MaterialIcon Width="24" Height="24"
+                                               Tag="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}">
+                            <avalonia:MaterialIcon.Styles>
+                                <Style Selector="avalonia|MaterialIcon[Tag=True]">
+                                    <Setter Property="Kind" Value="VolumeHigh" />
+                                </Style>
+                                <Style Selector="avalonia|MaterialIcon[Tag=False]">
+                                    <Setter Property="Kind" Value="VolumeOff" />
+                                </Style>
+                            </avalonia:MaterialIcon.Styles>
+                        </avalonia:MaterialIcon>
+                    </ToggleButton>
+                    
+                    <Button Command="{Binding RotateEmulationSpeed}"
+                            Theme="{DynamicResource MaterialFlatButton}"
+                            Foreground="White"
+                            Tag="{Binding EmulationSpeed}">
+                        <ToolTip.Tip>
+                            <StackPanel>
+                                <TextBlock Text="Emulation Speed" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding GameBoy.RelativeSpeed, StringFormat={}(Current: x{0:N2})}" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </ToolTip.Tip>
+                        <avalonia:MaterialIcon Width="24" Height="24"
+                                               Tag="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}">
+                            <avalonia:MaterialIcon.Styles>
+                                <Style Selector="avalonia|MaterialIcon[Tag=Actual]">
+                                    <Setter Property="Kind" Value="Walk" />
+                                </Style>
+                                <Style Selector="avalonia|MaterialIcon[Tag=Fast]">
+                                    <Setter Property="Kind" Value="Run" />
+                                </Style>
+                                <Style Selector="avalonia|MaterialIcon[Tag=Maximum]">
+                                    <Setter Property="Kind" Value="RunFast" />
+                                </Style>
+                                <Style Selector="avalonia|MaterialIcon[Tag=Pause]">
+                                    <Setter Property="Kind" Value="Pause" />
+                                </Style>
+                            </avalonia:MaterialIcon.Styles>
+                        </avalonia:MaterialIcon>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <Image Grid.Row="1" Grid.Column="0" 
+                   x:Name="AmbientDisplay"
+                   Source="{Binding GameBoy.Display}"
+                   Margin="-200,0"
+                   Stretch="UniformToFill"
+                   Opacity="0.6"
+                   IsVisible="{Binding Settings.IsAmbientBlurred}">
+                <Image.Effect>
+                    <BlurEffect Radius="200" />
+                </Image.Effect>
+            </Image>
+
+            <Image x:Name="MainDisplay" Grid.Row="1" Grid.Column="0" Source="{Binding GameBoy.Display}" />
+        </Grid>
+    </dialogHostAvalonia:DialogHost>
 </Window>

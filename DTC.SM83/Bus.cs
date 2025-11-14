@@ -104,7 +104,7 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             // Pixel Processing Unit
-            PPU = new PPU(m_ioDevice, vram, InterruptDevice, oam);
+            PPU = new PPU(m_ioDevice, vram, InterruptDevice, oam!);
         }
     }
 

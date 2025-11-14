@@ -9,10 +9,11 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using System.Diagnostics;
+using System;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Input;
+using DTC.Core.Extensions;
 
 namespace G33kBoy.Views;
 
@@ -25,12 +26,6 @@ public partial class AboutDialogContent : UserControl
         AppVersion.Text = $"Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
     }
 
-    private void OnGitHubLinkPressed(object sender, PointerPressedEventArgs e)
-    {
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "https://github.com/deanthecoder",
-            UseShellExecute = true
-        });
-    }
+    private void OnGitHubLinkPressed(object sender, PointerPressedEventArgs e) =>
+        new Uri("https://github.com/deanthecoder").Open();
 }

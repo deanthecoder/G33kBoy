@@ -16,7 +16,7 @@ using G33kBoy.ViewModels;
 
 namespace G33kBoy.Views;
 
-public partial class App : Application
+public class App : Application
 {
     public App()
     {
@@ -32,11 +32,21 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            var viewModel = new MainWindowViewModel();
+            desktop.MainWindow = new MainWindow
+            {
+                DataContext = viewModel
+            };
 
             if (!Design.IsDesignMode)
             {
-                desktop.MainWindow.Closed += (_, _) => Settings.Instance.Dispose();
+                viewModel.GameBoy.PowerOnAsync();
+
+                desktop.MainWindow.Closed += (_, _) =>
+                {
+                    viewModel.Dispose();
+                    Settings.Instance.Dispose();
+                };
             }
         }
 
