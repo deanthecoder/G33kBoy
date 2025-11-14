@@ -29,13 +29,8 @@ public class BlarggTests : TestsBase
         using var bus = new Bus(0x10000, Bus.BusType.Minimal);
         var cpu =
             new Cpu(bus)
-                {
-                    Reg =
-                    {
-                        PC = 0x0100
-                    }
-                }
-                .LoadRom(romFile.ReadAllBytes());
+                .LoadRom(romFile.ReadAllBytes())
+                .SkipBootRom();
 
         var serialBus = new SerialDevice();
         bus.Attach(serialBus);

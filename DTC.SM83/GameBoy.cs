@@ -31,7 +31,7 @@ public sealed class GameBoy : IDisposable
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private double m_relativeSpeed;
 
-    public EventHandler DisplayUpdated;
+    public event EventHandler DisplayUpdated;
 
     public WriteableBitmap Display { get; }
 
