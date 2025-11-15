@@ -40,7 +40,7 @@ public sealed class GameBoy : IDisposable
     public GameBoy()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy);
-        m_cpu = new Cpu(m_bus);
+        m_cpu = new Cpu(m_bus) { DebugMode = true };
         Display = new WriteableBitmap(new PixelSize(PPU.FrameWidth, PPU.FrameHeight), new Vector(96, 96), PixelFormat.Rgba8888);
 
         m_bus.PPU.FrameRendered += OnFrameRendered;

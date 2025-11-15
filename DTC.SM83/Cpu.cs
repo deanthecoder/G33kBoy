@@ -8,20 +8,36 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+using DTC.Core;
+using DTC.Core.Extensions;
+
 namespace DTC.SM83;
 
 public class Cpu
 {
+    private readonly CircularBuffer<string> m_instructionLog = new(2400);
+    private string m_instructionState;
     private byte m_fetchedOpcode;
+    private bool m_isHalted;
 
     /// <summary>
     /// Reference to the system bus for memory and IO operations.
     /// </summary>
     public Bus Bus { get; }
     public Registers Reg { get; } = new Registers();
-    
-    public bool IsHalted { get; set; }
-    
+
+    public bool IsHalted
+    {
+        get => m_isHalted;
+        set
+        {
+            if (m_isHalted == value)
+                return;
+            m_isHalted = value;
+            m_instructionLog.Write(value ? "HALT" : "Resuming from HALT");
+        }
+    }
+
     /// <summary>
     /// Allows implementation of the delayed HALT bug behavior.
     /// </summary>
@@ -59,6 +75,11 @@ public class Cpu
     /// </remarks>
     public byte IF => Bus.UncheckedRead(0xFF0F);
 
+    /// <summary>
+    /// Captures the state of the CPU for debugging purposes.
+    /// </summary>
+    public bool DebugMode { get; set; }
+
     public Cpu(Bus bus)
     {
         Bus = bus ?? throw new ArgumentNullException(nameof(bus));
@@ -67,7 +88,7 @@ public class Cpu
         Fetch8();
     }
 
-    public void Step(StreamWriter write = null)
+    public void Step()
     {
         if (!IsHalted)
         {
@@ -76,6 +97,9 @@ public class Cpu
             if (instruction == null)
                 throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
 
+            if (DebugMode && m_instructionState != null)
+                m_instructionLog.Write(m_instructionState.Replace("xxx", $"{instruction,-12}"));
+            
             // Execute instruction.
             try
             {
@@ -83,7 +107,8 @@ public class Cpu
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"CPU Exception: {ex.Message}");
+                m_instructionLog.Write($"Exception: {ex.Message}");
+                m_instructionLog.ForEach(o => Console.WriteLine(o));;
                 IsHalted = true;
             }
         }
@@ -100,9 +125,14 @@ public class Cpu
 
         // Fetch opcode.
         if (IsHalted)
-            Bus.AdvanceT(4); // Re-queue the HALT instruction. 
-        else
-            Fetch8();
+        {
+            Bus.AdvanceT(4); // Re-queue the HALT instruction.
+            return;
+        }
+
+        if (DebugMode)
+            m_instructionState = $"{Reg.PC:X4}│ xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2} │ {Reg,-32} │ Tick: {Bus.ClockTicks}";
+        Fetch8();
     }
     
     public void InternalWaitM(ulong m = 1) =>
