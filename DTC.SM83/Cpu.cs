@@ -108,7 +108,7 @@ public class Cpu
             catch (Exception ex)
             {
                 m_instructionLog.Write($"Exception: {ex.Message}");
-                m_instructionLog.ForEach(o => Console.WriteLine(o));;
+                m_instructionLog.ForEach(o => Console.WriteLine(o));
                 IsHalted = true;
             }
         }

@@ -55,8 +55,19 @@ public class IoDevice : IMemDevice, ILcd
 
     public byte Read8(ushort addr)
     {
-        var idx = addr - FromAddr;
-        return m_data[idx];
+        switch (addr)
+        {
+            // CGB-specific registers
+            case 0xFF4C or 0xFF4D:        // KEY0 and KEY1 - CGB speed switching registers
+                return 0xFF;
+            
+            default:
+            {
+                var idx = addr - FromAddr;
+                return m_data[idx];
+            }
+        }
+
     }
 
     public void Write8(ushort addr, byte value)
