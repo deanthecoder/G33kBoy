@@ -67,15 +67,26 @@ public class Cpu
         Fetch8();
     }
 
-    public void Step()
+    public void Step(StreamWriter write = null)
     {
-        // Decode instruction.
-        var instruction = m_fetchedOpcode == 0xCB ? PrefixedInstructions.Table[Fetch8()] : Instructions.Table[m_fetchedOpcode];
-        if (instruction == null)
-            throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
-        
-        // Execute instruction.
-        instruction.Execute(this);
+        if (!IsHalted)
+        {
+            // Decode instruction.
+            var instruction = m_fetchedOpcode == 0xCB ? PrefixedInstructions.Table[Fetch8()] : Instructions.Table[m_fetchedOpcode];
+            if (instruction == null)
+                throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
+
+            // Execute instruction.
+            try
+            {
+                instruction.Execute(this);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"CPU Exception: {ex.Message}");
+                IsHalted = true;
+            }
+        }
 
         // Enable interrupts if necessary.
         if (PendingIME)

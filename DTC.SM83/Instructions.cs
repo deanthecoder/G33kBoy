@@ -119,7 +119,7 @@ public static class Instructions
         ),
         new Instruction(
             "STOP nn", // 0x10 nn
-            static _ => { }),
+            static _ => throw new NotImplementedException("Unsupported instruction - STOP")),
         new Instruction(
             "LD DE,nn", // 0x11 nn nn
             static cpu =>

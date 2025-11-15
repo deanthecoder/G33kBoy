@@ -34,6 +34,7 @@ public class BlarggTests : TestsBase
 
         var serialBus = new SerialDevice();
         bus.Attach(serialBus);
+        cpu.Reg.PC = 0x0100;
 
         while (true)
         {

@@ -40,10 +40,10 @@ public class DmgAcid2Tests : TestsBase
         string bufferHash = null;
         bus.PPU.FrameRendered += (_, frameBuffer) => bufferHash = frameBuffer.GetMd5Hex();
 
-        while (bufferHash != "027FB2C36D84347E3EA71BC4301D7B1E" && bus.ClockTicks < OneSecondTicks)
+        while (bufferHash != "7307162C0CCB34631E3B2F9DF80F3B03" && bus.ClockTicks < OneSecondTicks)
             cpu.Step();
-
+        
         Assert.That(bufferHash, Is.Not.Null, $"No frame rendered within {OneSecondTicks} T ticks.");
-        Assert.That(bufferHash, Is.EqualTo("027FB2C36D84347E3EA71BC4301D7B1E"));
+        Assert.That(bufferHash, Is.EqualTo("7307162C0CCB34631E3B2F9DF80F3B03"));
     }
 }

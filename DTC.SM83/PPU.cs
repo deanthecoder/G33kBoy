@@ -440,10 +440,10 @@ public class PPU
     }
     
     /// <summary>
-    /// Dump the frame buffer to disk (.ppm)
+    /// Dump the frame buffer to disk (.tga)
     /// </summary>
-    public void Dump(FileInfo ppmFile) =>
-        PpmWriter.Write(ppmFile, m_frameBuffer, FrameWidth, FrameHeight, 3);
+    public void Dump(FileInfo tgaFile) =>
+        TgaWriter.Write(tgaFile, m_frameBuffer, FrameWidth, FrameHeight, 4);
 
     /// <summary>
     /// Represents the LCDC (LCD Control) register at 0xFF40.

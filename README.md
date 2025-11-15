@@ -27,12 +27,17 @@ My [ZX Spectrum emulator](https://github.com/deanthecoder/ZXSpeculator) taught m
 - ☐ GameBoy Color support
 
 ## External resources
-- `external/GameboyCPUTests/` – CPU tests for regression validation  
+- `external/GameboyCPUTests/` – CPU tests for regression validation
   https://github.com/adtennant/GameboyCPUTests
-- `external/blargg-test-roms/` – Blargg test ROMs to verify accuracy.  
+- `external/blargg-test-roms/` – Blargg test ROMs to verify accuracy.
   https://github.com/retrio/gb-test-roms
-- `external/dmg-acid2.gb` – The Acid2 test ported to the DMG; useful for visual and timing verification.  
+- `external/dmg-acid2.gb` – The Acid2 test ported to the DMG; useful for visual and timing verification.
   https://github.com/mattcurrie/dmg-acid2
+
+## Useful links
+- [Pan Docs](https://gbdev.io/pandocs/)
+- [Game Boy Doctor](https://github.com/robert/gameboy-doctor/)
+- [Game Boy Opcode Generator](https://meganesu.github.io/generate-gb-opcodes/)
 
 ## Special thanks
 - Quality, feedback, and testing – Lavanya
