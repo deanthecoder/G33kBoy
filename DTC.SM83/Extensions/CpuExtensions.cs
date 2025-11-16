@@ -110,10 +110,13 @@ public static class CpuExtensions
         var cartridge = new Cartridge(rom);
         Console.WriteLine(cartridge);
         
-        if (cartridge.CartridgeType != CartridgeType.RomOnly)
-            throw new NotSupportedException($"Cartridge type {cartridge.CartridgeType} is not supported.");
+        const int MaxSimpleRomSizeBytes = 32 * 1024;
+        if (rom.Length > MaxSimpleRomSizeBytes)
+            throw new NotSupportedException("Cartridges larger than 32KB (requiring bank controllers) are not supported yet.");
         if (cartridge.IsCgbOnly)
             throw new NotSupportedException("CGB-only cartridges are not supported.");
+        if (cartridge.CartridgeType != CartridgeType.RomOnly)
+            Console.WriteLine($"Treating {cartridge.CartridgeType} as ROM-only because the image is {rom.Length / 1024}KB.");
 
         // Simple 32 KiB mapping.
         cpu.Bus.Load(0x0000, rom);
