@@ -51,4 +51,7 @@ public abstract class RamDeviceBase : IMemDevice
         var idx = addr - FromAddr;
         m_data[idx] = value;
     }
+    
+    public bool Contains(ushort addr) =>
+        addr >= FromAddr && addr <= ToAddr;
 }

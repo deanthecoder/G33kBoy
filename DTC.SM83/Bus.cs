@@ -25,6 +25,7 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly TimerDevice m_timer;
     private readonly IoDevice m_ioDevice;
     private readonly InterruptDevice m_interruptDevice;
+    private readonly HramDevice m_hramDevice;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
@@ -97,6 +98,10 @@ public sealed class Bus : IMemDevice, IDisposable
             // IO (0xFF00 - 0xFF7F)
             m_ioDevice = new IoDevice(this, BootRom, joypad);
             Attach(m_ioDevice);
+
+            // High RAM (0xFF80 - 0xFFFE)
+            m_hramDevice = new HramDevice();
+            Attach(m_hramDevice);
         }
 
         if (busType != BusType.Trivial)
@@ -131,7 +136,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Array.Fill(m_devices, device, device.FromAddr, device.ToAddr - device.FromAddr + 1);
 
     public byte Read8(ushort addr) =>
-        !BlockReadWrite(addr) ? UncheckedRead(addr) : (byte)0xFF;
+        BlockReadWrite(addr) ? (byte)0xFF : UncheckedRead(addr);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte UncheckedRead(ushort addr) =>
@@ -161,9 +166,9 @@ public sealed class Bus : IMemDevice, IDisposable
     private bool BlockReadWrite(ushort addr)
     {
         if (m_ioDevice?.IsDMATransferActive != true)
-            return false;
-        var isBlockedRegion = addr < 0xFF00; // 0xFF00: IO, HRAM, IE regions.
-        return isBlockedRegion;
+            return false; // Don't block.
+        var isSafeRegion = m_hramDevice.Contains(addr);
+        return !isSafeRegion;
     }
 
     /// <summary>

@@ -17,8 +17,8 @@ public static class CpuExtensions
     /// </summary>
     private static readonly Registers BootState = new Registers
     {
-        A = 0x01,
-        BC = 0x0013,
+        A = 0x01,     // 0x01 => DMG
+        BC = 0x0013,  // C = 0x13 => DMG
         DE = 0x00D8,
         HL = 0x014D,
         SP = 0xFFFE,
