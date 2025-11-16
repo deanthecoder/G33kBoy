@@ -107,4 +107,7 @@ public sealed class Registers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetHfForDec(byte value, byte dec = 1) =>
         Hf = (value & 0x0F) < (dec & 0x0F);
+    
+    public string FlagsAsString() =>
+        $"{(Zf ? "Z" : "z")}{(Nf ? "N" : "n")}{(Hf ? "H" : "h")}{(Cf ? "C" : "c")}";
 }

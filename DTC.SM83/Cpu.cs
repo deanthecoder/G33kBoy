@@ -132,7 +132,7 @@ public class Cpu
         }
 
         if (DebugMode)
-            m_instructionState = $"{Reg.PC:X4}│ xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2} │ {Reg,-32} │ Tick: {Bus.ClockTicks}";
+            m_instructionState = $"{Reg.PC:X4}│ xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2} │ {Reg,-32} │ {Reg.FlagsAsString()} │ Tick: {Bus.ClockTicks}";
         Fetch8();
     }
     
