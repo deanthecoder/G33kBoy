@@ -36,7 +36,7 @@ public abstract class RamDeviceBase : IMemDevice
     public byte Read8(ushort addr)
     {
         if (!m_isUsable)
-            throw new InvalidOperationException($"Cannot read from unusable RAM at address 0x{addr:X4}");
+            return 0xFF; // Ignore reads from unusable RAM.
 
         var idx = addr - FromAddr;
         return m_data[idx];
@@ -46,7 +46,7 @@ public abstract class RamDeviceBase : IMemDevice
     public void Write8(ushort addr, byte value)
     {
         if (!m_isUsable)
-            throw new InvalidOperationException($"Cannot write to unusable RAM at address 0x{addr:X4}");
+            return; // Ignore writes to unusable RAM.
 
         var idx = addr - FromAddr;
         m_data[idx] = value;
