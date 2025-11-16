@@ -451,6 +451,51 @@ public class PPU
         TgaWriter.Write(tgaFile, m_frameBuffer, FrameWidth, FrameHeight, 4);
 
     /// <summary>
+    /// Export all tiles from 0x8000-0x97FF (384 tiles) as a 16x24 tile map.
+    /// </summary>
+    public void DumpTileMap(FileInfo tgaFile)
+    {
+        if (tgaFile == null)
+            throw new ArgumentNullException(nameof(tgaFile));
+
+        const int tilesPerRow = 16;
+        const int tileRows = 24;
+        const int tileWidth = 8;
+        const int tileHeight = 8;
+        const int tileBytes = 16;
+        const int tileDataStart = 0x8000;
+        const int totalTiles = tilesPerRow * tileRows;
+        var width = tilesPerRow * tileWidth;
+        var height = tileRows * tileHeight;
+        var buffer = new byte[width * height];
+
+        for (var tile = 0; tile < totalTiles; tile++)
+        {
+            var tileX = (tile % tilesPerRow) * tileWidth;
+            var tileY = (tile / tilesPerRow) * tileHeight;
+            var tileAddr = tileDataStart + tile * tileBytes;
+
+            for (var row = 0; row < tileHeight; row++)
+            {
+                var rowAddr = tileAddr + row * 2;
+                var lowBits = m_vram.Read8((ushort)rowAddr);
+                var highBits = m_vram.Read8((ushort)(rowAddr + 1));
+
+                for (var col = 0; col < tileWidth; col++)
+                {
+                    var shift = 7 - col;
+                    var colorIndex = (byte)(((highBits >> shift) & 0x01) << 1 | ((lowBits >> shift) & 0x01));
+                    var destX = tileX + col;
+                    var destY = tileY + row;
+                    buffer[destY * width + destX] = m_greyMap[colorIndex];
+                }
+            }
+        }
+
+        TgaWriter.Write(tgaFile, buffer, width, height, 1);
+    }
+
+    /// <summary>
     /// Represents the LCDC (LCD Control) register at 0xFF40.
     /// Provides convenient access to individual control bits.
     /// </summary>

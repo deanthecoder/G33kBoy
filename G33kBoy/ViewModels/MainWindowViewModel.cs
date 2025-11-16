@@ -78,6 +78,13 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void OpenProjectPage() =>
         new Uri("https://github.com/deanthecoder/G33kBoy").Open();
 
+    public void ExportTileMap()
+    {
+        var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory).ToDir();
+        var file = desktopPath.GetFile("TileMap.tga");
+        GameBoy.ExportTileMap(file);
+    }
+
     public void Dispose() =>
         GameBoy.Dispose();
 }

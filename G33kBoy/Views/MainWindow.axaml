@@ -50,6 +50,7 @@
 
                     <MenuItem Header="Extras">
                         <MenuItem Header="Save Screenshot..." Command="{Binding SaveScreenshot}" />
+                        <MenuItem Header="Export TileMap..." Command="{Binding ExportTileMap}" />
                     </MenuItem>
 
                     <MenuItem Header="Help">

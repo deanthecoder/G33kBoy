@@ -112,4 +112,11 @@ public sealed class GameBoy : IDisposable
 
     public void SetSpeed(ClockSync.Speed speed) =>
         m_clockSync.SetSpeed(speed);
+
+    public void ExportTileMap(FileInfo tgaFile)
+    {
+        if (tgaFile == null)
+            throw new ArgumentNullException(nameof(tgaFile));
+        m_bus.PPU.DumpTileMap(tgaFile);
+    }
 }
