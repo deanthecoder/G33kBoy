@@ -8,6 +8,7 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -18,6 +19,8 @@ namespace G33kBoy.Views;
 
 public class App : Application
 {
+    private IDisposable m_keyBlocker;
+
     public App()
     {
         DataContext = new AppViewModel();
@@ -38,12 +41,22 @@ public class App : Application
                 DataContext = viewModel
             };
 
+            desktop.MainWindow.Deactivated += (_, _) =>
+                m_keyBlocker = viewModel.GameBoy.Joypad.CreatePressBlocker();
+            desktop.MainWindow.Activated += (_, _) =>
+            {
+                m_keyBlocker?.Dispose();
+                m_keyBlocker = null;
+            };
+
             if (!Design.IsDesignMode)
             {
                 viewModel.GameBoy.PowerOnAsync();
 
                 desktop.MainWindow.Closed += (_, _) =>
                 {
+                    m_keyBlocker?.Dispose();
+                    m_keyBlocker = null;
                     viewModel.Dispose();
                     Settings.Instance.Dispose();
                 };

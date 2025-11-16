@@ -25,6 +25,7 @@ public sealed class GameBoy : IDisposable
     private readonly Bus m_bus;
     private readonly Cpu m_cpu;
     private readonly ClockSync m_clockSync;
+    private readonly Joypad m_joypad;
 
     private Thread m_cpuThread;
     private bool m_shutdownRequested;
@@ -36,10 +37,12 @@ public sealed class GameBoy : IDisposable
     public WriteableBitmap Display { get; }
 
     public double RelativeSpeed => m_relativeSpeed;
+    public Joypad Joypad => m_joypad;
 
     public GameBoy()
     {
-        m_bus = new Bus(0x10000, Bus.BusType.GameBoy);
+        m_joypad = new Joypad();
+        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, m_joypad);
         m_cpu = new Cpu(m_bus) { DebugMode = true };
         Display = new WriteableBitmap(new PixelSize(PPU.FrameWidth, PPU.FrameHeight), new Vector(96, 96), PixelFormat.Rgba8888);
 
@@ -108,6 +111,7 @@ public sealed class GameBoy : IDisposable
         m_cpuThread.Join();
         
         m_bus.Dispose();
+        m_joypad.Dispose();
     }
 
     public void SetSpeed(ClockSync.Speed speed) =>

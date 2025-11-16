@@ -22,11 +22,13 @@ public class IoDevice : IMemDevice, ILcd
     private readonly Bus m_bus;
     private readonly BootRom m_bootRom;
     private byte m_joypSelect = 0x30;
+    private readonly Joypad m_joypad;
 
-    public IoDevice(Bus bus, [NotNull] BootRom bootRom)
+    public IoDevice(Bus bus, [NotNull] BootRom bootRom, Joypad joypad)
     {
         m_bus = bus ?? throw new ArgumentNullException(nameof(bus));
         m_bootRom = bootRom ?? throw new ArgumentNullException(nameof(bootRom));
+        m_joypad = joypad;
     }
 
     public ushort FromAddr => 0xFF00;
@@ -119,25 +121,29 @@ public class IoDevice : IMemDevice, ILcd
 
     private byte ReadJoyp()
     {
-        var result = (byte)0xCF;
+        var result = (byte)(0xC0 | m_joypSelect | 0x0F);
+        if (m_joypad == null)
+            return result;
+
+        var state = m_joypad.GetPressedButtons();
 
         // P14 low = d-pad selected.
-        // if ((m_joypSelect & 0x10) == 0)
-        // {
-        //     if (m_rightPressed) result &= 0b1110;
-        //     if (m_leftPressed) result &= 0b1101;
-        //     if (m_upPressed) result &= 0b1011;
-        //     if (m_downPressed) result &= 0b0111;
-        // }
+        if ((m_joypSelect & 0x10) == 0)
+        {
+            if ((state & Joypad.JoypadButtons.Right) != 0) result &= 0b1110;
+            if ((state & Joypad.JoypadButtons.Left) != 0) result &= 0b1101;
+            if ((state & Joypad.JoypadButtons.Up) != 0) result &= 0b1011;
+            if ((state & Joypad.JoypadButtons.Down) != 0) result &= 0b0111;
+        }
 
         // P15 low = buttons selected.
-        // if ((m_joypSelect & 0x20) == 0)
-        // {
-        //     if (m_aPressed) result &= 0b1110;
-        //     if (m_bPressed) result &= 0b1101;
-        //     if (m_selectPressed) result &= 0b1011;
-        //     if (m_startPressed) result &= 0b0111;
-        // }
+        if ((m_joypSelect & 0x20) == 0)
+        {
+            if ((state & Joypad.JoypadButtons.A) != 0) result &= 0b1110;
+            if ((state & Joypad.JoypadButtons.B) != 0) result &= 0b1101;
+            if ((state & Joypad.JoypadButtons.Select) != 0) result &= 0b1011;
+            if ((state & Joypad.JoypadButtons.Start) != 0) result &= 0b0111;
+        }
 
         return result;
     }

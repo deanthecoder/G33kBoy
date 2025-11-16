@@ -58,7 +58,7 @@ public sealed class Bus : IMemDevice, IDisposable
         GameBoy
     }
 
-    public Bus(int bytesToAllocate, BusType busType)
+    public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null)
     {
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_devices);
@@ -95,7 +95,7 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(new UnusableRamDevice());
 
             // IO (0xFF00 - 0xFF7F)
-            m_ioDevice = new IoDevice(this, BootRom);
+            m_ioDevice = new IoDevice(this, BootRom, joypad);
             Attach(m_ioDevice);
         }
 

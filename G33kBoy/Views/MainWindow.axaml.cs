@@ -6,7 +6,7 @@
 // and consider contributing back to the repository or letting us know
 // about your modifications. Your contributions are valued!
 //
-// THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.using Avalonia.Controls;
+// THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System;
 using System.Threading.Tasks;
@@ -23,11 +23,12 @@ public partial class MainWindow : Window
 {
     private bool m_isLoaded;
 
-    private MainWindowViewModel ViewModel => (MainWindowViewModel) DataContext;
+    private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext;
 
     public MainWindow()
     {
         InitializeComponent();
+        AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
     }
 
     private void OnAboutDialogClicked(object sender, PointerPressedEventArgs e) =>
@@ -61,4 +62,18 @@ public partial class MainWindow : Window
             }
         };
     }
+
+    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!IsDirectionalKey(e.Key))
+            return;
+
+        if (e.Source is MenuItem)
+            return;
+
+        e.Handled = true;
+    }
+
+    private static bool IsDirectionalKey(Key key) =>
+        key is Key.Left or Key.Right or Key.Up or Key.Down;
 }
