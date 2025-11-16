@@ -243,6 +243,9 @@ public class PPU
         m_windowLineUsedThisScanline = false;
         
         var lcdLy = m_lcd.LY;
+        if (lcdLy >= FrameHeight)
+            throw new InvalidOperationException("Cannot render a scanline past the end of the frame."); 
+        
         var lcdSCY = m_lcd.SCY;
         var lcdSCX = m_lcd.SCX;
         var lcdBGP = m_lcd.BGP;

@@ -77,9 +77,10 @@ public sealed class GameBoy : IDisposable
                 m_cpu.Step();
             }
         }
-        catch
+        catch (Exception e)
         {
             // Shut down gracefully.
+            Logger.Instance.Error($"Stopping CPU loop due to exception: {e.Message}");
         }
         
         Logger.Instance.Info("CPU loop stopped.");
