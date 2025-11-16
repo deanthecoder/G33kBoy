@@ -24,13 +24,13 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly IMemDevice[] m_devices;
     private readonly TimerDevice m_timer;
     private readonly IoDevice m_ioDevice;
+    private readonly InterruptDevice m_interruptDevice;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
 
     public BootRom BootRom { get; }
     public PPU PPU { get; }
-    public InterruptDevice InterruptDevice { get; }
 
     /// <summary>
     /// The number of T cycles elapsed since boot. (4T = 1M)
@@ -69,17 +69,30 @@ public sealed class Bus : IMemDevice, IDisposable
         OamDevice oam = null;
         if (busType == BusType.GameBoy)
         {
-            // The GameBoy boot ROM.
+            // The GameBoy boot ROM (0x0000 - 0x00FF).
             BootRom = new BootRom();
             Attach(BootRom);
             
-            // VRAM (0x8000 - 0x9FFF)
+            // V(ideo)RAM (0x8000 - 0x9FFF)
             vram = new VramDevice();
             Attach(vram);
+            
+            // Cartridge RAM (0xA000 - 0xBFFF)
+            Attach(new CartRamDevice());
+            
+            // Ram bank 0 (0xC000 - 0xDFFF)
+            var wram = new WorkRamDevice();
+            Attach(wram);
+            
+            // Echo of WRAM (0xE000 - 0xFDFF)
+            Attach(new EchoRamDevice(wram));
 
             // OAM(/Sprites) (0xFE00 - 0xFE9F)
             oam = new OamDevice();
             Attach(oam);
+            
+            // Unusable/Reserved RAM (0xFEA0 - 0xFEFF)
+            Attach(new UnusableRamDevice());
 
             // IO (0xFF00 - 0xFF7F)
             m_ioDevice = new IoDevice(this, BootRom);
@@ -90,21 +103,24 @@ public sealed class Bus : IMemDevice, IDisposable
         {
             // The timer (0xFF04-0xFF07), firing interrupts when internal timers elapse.
             // Note: This address range overrides a section of the IO device.
-            InterruptDevice = new InterruptDevice();
-            m_timer = new TimerDevice(InterruptDevice);
+            m_interruptDevice = new InterruptDevice();
+            m_timer = new TimerDevice(m_interruptDevice);
             Attach(m_timer);
         }
 
         if (busType != BusType.Trivial)
         {
             // Represents the interrupt mask at 0xFF0F.
-            Attach(InterruptDevice);
+            Attach(m_interruptDevice);
+            
+            // Interrupt Enable device (0xFFFF).
+            Attach(new InterruptEnableDevice());
         }
 
         if (busType == BusType.GameBoy)
         {
             // Pixel Processing Unit
-            PPU = new PPU(m_ioDevice, vram, InterruptDevice, oam!);
+            PPU = new PPU(m_ioDevice, vram, m_interruptDevice, oam!);
         }
     }
 

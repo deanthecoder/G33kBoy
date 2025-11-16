@@ -12,11 +12,11 @@
 namespace DTC.SM83.Devices;
 
 /// <summary>
-/// Represents the video RAM device (0x8000 - 0x9FFF).
+/// Represents the cartridge RAM device (0xA000 - 0xBFFF).
 /// </summary>
-public class VramDevice : RamDeviceBase
+public class CartRamDevice : RamDeviceBase
 {
-    public VramDevice() : base(0x8000, 0x9FFF, isUsable: true)
+    public CartRamDevice() : base(0xA000, 0xBFFF, isUsable: true)
     {
     }
 }

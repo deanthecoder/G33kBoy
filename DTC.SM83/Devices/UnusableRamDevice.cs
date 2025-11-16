@@ -12,11 +12,11 @@
 namespace DTC.SM83.Devices;
 
 /// <summary>
-/// Represents the video RAM device (0x8000 - 0x9FFF).
+/// Represents the unusable/reserved RAM region (0xFEA0 - 0xFEFF).
 /// </summary>
-public class VramDevice : RamDeviceBase
+public class UnusableRamDevice : RamDeviceBase
 {
-    public VramDevice() : base(0x8000, 0x9FFF, isUsable: true)
+    public UnusableRamDevice() : base(0xFEA0, 0xFEFF, isUsable: false)
     {
     }
 }

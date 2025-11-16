@@ -19,23 +19,10 @@ namespace DTC.SM83.Devices;
 /// <remarks>
 /// Holds data for 40 sprites (x4 bytes each).
 /// </remarks>
-public class OamDevice : IMemDevice
+public class OamDevice : RamDeviceBase
 {
-    private readonly byte[] m_data = new byte[0xA0];
-    
-    public ushort FromAddr => 0xFE00;
-    public ushort ToAddr => 0xFE9F;
-
-    public byte Read8(ushort addr)
+    public OamDevice() : base(0xFE00, 0xFE9F, isUsable: true)
     {
-        var idx = addr - FromAddr;
-        return m_data[idx];
-    }
-
-    public void Write8(ushort addr, byte value)
-    {
-        var idx = addr - FromAddr;
-        m_data[idx] = value;
     }
     
     /// <summary>

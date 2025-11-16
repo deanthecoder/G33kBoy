@@ -12,11 +12,11 @@
 namespace DTC.SM83.Devices;
 
 /// <summary>
-/// Represents the video RAM device (0x8000 - 0x9FFF).
+/// Represents the working RAM device (0xC000 - 0xDFFF).
 /// </summary>
-public class VramDevice : RamDeviceBase
+public class WorkRamDevice : RamDeviceBase
 {
-    public VramDevice() : base(0x8000, 0x9FFF, isUsable: true)
+    public WorkRamDevice() : base(0xC000, 0xDFFF, isUsable: true)
     {
     }
 }
