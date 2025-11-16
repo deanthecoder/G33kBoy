@@ -110,6 +110,7 @@ public class Cpu
                 m_instructionLog.Write($"Exception: {ex.Message} (Halting...)");
                 m_instructionLog.ForEach(o => Console.WriteLine(o));
                 IsHalted = true;
+                throw;
             }
         }
 

@@ -64,12 +64,19 @@ public sealed class GameBoy : IDisposable
         
         Logger.Instance.Info("CPU loop started.");
 
-        while (!m_shutdownRequested)
+        try
         {
-            // Sync the clock speed.
-            m_clockSync.SyncWithRealTime();
+            while (!m_shutdownRequested)
+            {
+                // Sync the clock speed.
+                m_clockSync.SyncWithRealTime();
             
-            m_cpu.Step();
+                m_cpu.Step();
+            }
+        }
+        catch
+        {
+            // Shut down gracefully.
         }
         
         Logger.Instance.Info("CPU loop stopped.");
