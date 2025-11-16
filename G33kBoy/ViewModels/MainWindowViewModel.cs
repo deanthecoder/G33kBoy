@@ -9,6 +9,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System;
+using System.IO;
 using Avalonia;
 using DTC.Core.Extensions;
 using DTC.Core.ViewModels;
@@ -72,7 +73,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void SaveScreenshot()
     {
-        // todo
+        var desktopPath = GetDesktopDirectory();
+        var fileName = $"G33kBoy-Screenshot-{DateTime.Now:yyyyMMdd-HHmmss}.tga";
+        var file = desktopPath.GetFile(fileName);
+        GameBoy.SaveScreenshot(file);
     }
     
     public void OpenProjectPage() =>
@@ -80,9 +84,28 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void ExportTileMap()
     {
-        var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory).ToDir();
+        var desktopPath = GetDesktopDirectory();
         var file = desktopPath.GetFile("TileMap.tga");
         GameBoy.ExportTileMap(file);
+    }
+
+    private static DirectoryInfo GetDesktopDirectory()
+    {
+        var candidates = new[]
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            Environment.CurrentDirectory
+        };
+
+        foreach (var candidate in candidates)
+        {
+            if (!string.IsNullOrWhiteSpace(candidate))
+                return candidate.ToDir();
+        }
+
+        throw new InvalidOperationException("Unable to resolve a desktop directory.");
     }
 
     public void Dispose() =>
