@@ -170,9 +170,8 @@ public sealed class Cartridge
 
         m_romData = romData;
 
-        Title = ReadAscii(0x0134, 16).TrimEnd('\0', ' ');
-
         CgbFlag = (CgbFlag)m_romData[0x0143];
+        Title = ReadTitle();
         NewLicenseeCode = ReadAscii(0x0144, 2);
         SgbFlag = (SgbFlag)m_romData[0x0146];
         CartridgeType = (CartridgeType)m_romData[0x0147];
@@ -279,6 +278,13 @@ public sealed class Cartridge
 
     private string ReadAscii(int offset, int length) =>
         Encoding.ASCII.GetString(m_romData, offset, length);
+
+    private string ReadTitle()
+    {
+        var usesCgbLayout = (CgbFlag & CgbFlag.CgbSupported) != 0;
+        var titleLength = usesCgbLayout ? 11 : 16;
+        return ReadAscii(0x0134, titleLength).TrimEnd('\0', ' ');
+    }
 
     private static int CalculateRomBankCount(RomSize size) =>
         size switch
