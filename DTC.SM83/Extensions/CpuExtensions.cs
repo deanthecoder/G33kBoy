@@ -107,6 +107,15 @@ public static class CpuExtensions
     /// </summary>
     public static Cpu LoadRom(this Cpu cpu, byte[] rom)
     {
+        var cartridge = new Cartridge(rom);
+        Console.WriteLine(cartridge);
+        
+        if (cartridge.CartridgeType != CartridgeType.RomOnly)
+            throw new NotSupportedException($"Cartridge type {cartridge.CartridgeType} is not supported.");
+        if (cartridge.IsCgbOnly)
+            throw new NotSupportedException("CGB-only cartridges are not supported.");
+
+        // Simple 32 KiB mapping.
         cpu.Bus.Load(0x0000, rom);
         cpu.Bus.BootRom?.Load();
         return cpu;

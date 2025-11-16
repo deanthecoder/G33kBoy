@@ -107,7 +107,7 @@ public class Cpu
             }
             catch (Exception ex)
             {
-                m_instructionLog.Write($"Exception: {ex.Message}");
+                m_instructionLog.Write($"Exception: {ex.Message} (Halting...)");
                 m_instructionLog.ForEach(o => Console.WriteLine(o));
                 IsHalted = true;
             }
@@ -213,8 +213,9 @@ public class Cpu
     
     public void PushPC()
     {
-        Write8(--Reg.SP, (byte)(Reg.PC >> 8));
-        Write8(--Reg.SP, (byte)(Reg.PC & 0xFF));
+        Write8((ushort)(Reg.SP - 1), (byte)(Reg.PC >> 8));
+        Write8((ushort)(Reg.SP - 2), (byte)(Reg.PC & 0xFF));
+        Reg.SP -= 2;
     }
 
     /// <summary>
