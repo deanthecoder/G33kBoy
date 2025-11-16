@@ -21,6 +21,7 @@ public class IoDevice : IMemDevice, ILcd
     private readonly byte[] m_data = new byte[0x80];
     private readonly Bus m_bus;
     private readonly BootRom m_bootRom;
+    private byte m_joypSelect = 0x30;
 
     public IoDevice(Bus bus, [NotNull] BootRom bootRom)
     {
@@ -57,6 +58,10 @@ public class IoDevice : IMemDevice, ILcd
     {
         switch (addr)
         {
+            // Joypad input.
+            case 0xFF00:
+                return ReadJoyp();
+            
             // CGB-specific registers
             case 0xFF4C or 0xFF4D:        // KEY0 and KEY1 - CGB speed switching registers
                 return 0xFF;
@@ -74,6 +79,13 @@ public class IoDevice : IMemDevice, ILcd
     {
         var idx = addr - FromAddr;
         m_data[idx] = value;
+        
+        // Joypad
+        if (idx == 0x00)
+        {
+            WriteJoyp(value);
+            return;
+        }
 
         // OAM DMA Transfer request?
         if (idx == 0x46)
@@ -96,5 +108,37 @@ public class IoDevice : IMemDevice, ILcd
         // Boot Disable (Unload the boot ROM).
         if (idx == 0x50)
             m_bootRom.Unload();
+    }
+
+    private void WriteJoyp(byte value)
+    {
+        // Only bits 4–5 are writable. Bits 0–3 are button inputs (read-only).
+        // Bits 6–7 read as 1.
+        m_joypSelect = (byte)((m_joypSelect & 0xCF) | (value & 0x30));
+    }
+
+    private byte ReadJoyp()
+    {
+        var result = (byte)0xCF;
+
+        // P14 low = d-pad selected.
+        // if ((m_joypSelect & 0x10) == 0)
+        // {
+        //     if (m_rightPressed) result &= 0b1110;
+        //     if (m_leftPressed) result &= 0b1101;
+        //     if (m_upPressed) result &= 0b1011;
+        //     if (m_downPressed) result &= 0b0111;
+        // }
+
+        // P15 low = buttons selected.
+        // if ((m_joypSelect & 0x20) == 0)
+        // {
+        //     if (m_aPressed) result &= 0b1110;
+        //     if (m_bPressed) result &= 0b1101;
+        //     if (m_selectPressed) result &= 0b1011;
+        //     if (m_startPressed) result &= 0b0111;
+        // }
+
+        return result;
     }
 }
