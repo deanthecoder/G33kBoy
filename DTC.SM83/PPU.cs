@@ -97,25 +97,30 @@ public class PPU
     public void AdvanceT(ulong tCycles)
     {
         // Turn off the display?
-        if (!m_lcdc.LcdEnable)
+        if (!m_lcdOff && !m_lcdc.LcdEnable)
         {
-            UpdateLineIndex(false);
-            CurrentState = FrameState.HBlank;
-            m_tCycles = 0;
             m_lcdOff = true;
+
+            // Hardware: LY becomes 0, mode 0, timing reset.
+            UpdateLineIndex(false);           // LY = 0, windowLine reset.
+            CurrentState = FrameState.HBlank; // Mode 0.
+            m_tCycles = 0;
+
             Array.Clear(m_frameBuffer);
-            return;
+            return; // Stop PPU while LCD is off.
         }
-        
+
         // Turn on the display?
         if (m_lcdOff && m_lcdc.LcdEnable)
         {
             m_lcdOff = false;
-            UpdateLineIndex(false);
-            CurrentState = FrameState.HBlank;
-            Array.Clear(m_frameBuffer);
+
+            // Start a fresh frame from LY=0, mode 2, dot=0.
+            // LY is already 0 from the disable, so don't bump it again.
+            m_tCycles = 0;
+            CurrentState = FrameState.OAMScan; // Mode 2 at start of scanline 0.
         }
-        
+
         m_tCycles += tCycles;
 
         const int tCyclesPerScanline = 456;

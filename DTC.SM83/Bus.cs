@@ -43,7 +43,7 @@ public sealed class Bus : IMemDevice, IDisposable
     public enum BusType
     {
         /// <summary>
-        /// Bare bones CPU implementation, useful only for disassembly in unit tests.
+        /// Bare-bones CPU implementation, useful only for disassembly in unit tests.
         /// </summary>
         Trivial,
 
