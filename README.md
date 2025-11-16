@@ -41,7 +41,7 @@ My [ZX Spectrum emulator](https://github.com/deanthecoder/ZXSpeculator) taught m
 
 ## Special thanks
 - Quality, feedback, and testing – Lavanya
-- Artistic input and advice – Sam
+- Artistic input and advice – Sam (aka Doobie)
 
 ## License
 Licensed under the MIT License. See [LICENSE](LICENSE) for details.
