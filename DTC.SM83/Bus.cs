@@ -26,6 +26,7 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly IoDevice m_ioDevice;
     private readonly InterruptDevice m_interruptDevice;
     private readonly HramDevice m_hramDevice;
+    private readonly OamDevice m_oam;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
@@ -59,6 +60,13 @@ public sealed class Bus : IMemDevice, IDisposable
         GameBoy
     }
 
+    private enum MemoryAccess
+    {
+        Allow,
+        Block
+    }
+    
+
     public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null)
     {
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
@@ -67,7 +75,6 @@ public sealed class Bus : IMemDevice, IDisposable
         Array.Clear(m_ram);
 
         VramDevice vram = null;
-        OamDevice oam = null;
         if (busType == BusType.GameBoy)
         {
             // The GameBoy boot ROM (0x0000 - 0x00FF).
@@ -89,8 +96,8 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(new EchoRamDevice(wram));
 
             // OAM(/Sprites) (0xFE00 - 0xFE9F)
-            oam = new OamDevice();
-            Attach(oam);
+            m_oam = new OamDevice();
+            Attach(m_oam);
             
             // Unusable/Reserved RAM (0xFEA0 - 0xFEFF)
             Attach(new UnusableRamDevice());
@@ -125,7 +132,7 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             // Pixel Processing Unit
-            PPU = new PPU(m_ioDevice, vram, m_interruptDevice, oam!);
+            PPU = new PPU(m_ioDevice, vram, m_interruptDevice, m_oam!);
         }
     }
 
@@ -136,7 +143,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Array.Fill(m_devices, device, device.FromAddr, device.ToAddr - device.FromAddr + 1);
 
     public byte Read8(ushort addr) =>
-        BlockReadWrite(addr) ? (byte)0xFF : UncheckedRead(addr);
+        GetMemoryAccess(addr) == MemoryAccess.Allow ? UncheckedRead(addr) : (byte)0xFF;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte UncheckedRead(ushort addr) =>
@@ -144,7 +151,7 @@ public sealed class Bus : IMemDevice, IDisposable
 
     public void Write8(ushort addr, byte value)
     {
-        if (!BlockReadWrite(addr))
+        if (GetMemoryAccess(addr) == MemoryAccess.Allow)
             UncheckedWrite(addr, value);
     }
 
@@ -163,12 +170,18 @@ public sealed class Bus : IMemDevice, IDisposable
     /// <remarks>
     /// Access to HRAM is always allowed.
     /// </remarks>
-    private bool BlockReadWrite(ushort addr)
+    private MemoryAccess GetMemoryAccess(ushort addr)
     {
-        if (m_ioDevice?.IsDMATransferActive != true)
-            return false; // Don't block.
-        var isSafeRegion = m_hramDevice.Contains(addr);
-        return !isSafeRegion;
+        if (m_ioDevice?.IsDMATransferActive == true)
+        {
+            var isSafeRegion = m_hramDevice?.Contains(addr) == true;
+            if (!isSafeRegion)
+                return MemoryAccess.Block;
+        }
+
+        // Sprite memory is blocked during certain cycles.
+        var isOam = m_oam?.Contains(addr) == true;
+        return isOam && PPU is {CanAccessOam: false} ? MemoryAccess.Block : MemoryAccess.Allow;
     }
 
     /// <summary>

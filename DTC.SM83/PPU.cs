@@ -71,6 +71,14 @@ public class PPU
     /// </summary>
     public event EventHandler<byte[]> FrameRendered;
 
+    /// <summary>
+    /// True when the CPU is allowed to read/write OAM (LCD disabled, HBlank or VBlank).
+    /// </summary>
+    public bool CanAccessOam =>
+        !m_lcdc.LcdEnable ||
+        CurrentState == FrameState.HBlank ||
+        CurrentState == FrameState.FrameWait;
+
     private FrameState CurrentState
     {
         get => (FrameState)m_stat.Mode;
