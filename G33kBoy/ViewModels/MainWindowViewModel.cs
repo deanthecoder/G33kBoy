@@ -38,10 +38,23 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     
     public void ToggleAmbientBlur() =>
         Settings.IsAmbientBlurred = !Settings.IsAmbientBlurred;
+    
+    public void ToggleBackgroundVisibility()
+    {
+        Settings.IsBackgroundVisible = !Settings.IsBackgroundVisible;
+        ApplyDisplayVisibilitySettings();
+    }
+
+    public void ToggleSpriteVisibility()
+    {
+        Settings.AreSpritesVisible = !Settings.AreSpritesVisible;
+        ApplyDisplayVisibilitySettings();
+    }
 
     public MainWindowViewModel()
     {
         GameBoy = new GameBoy();
+        ApplyDisplayVisibilitySettings();
     }
 
     public void LoadGameRom()
@@ -87,6 +100,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         var desktopPath = GetDesktopDirectory();
         var file = desktopPath.GetFile("TileMap.tga");
         GameBoy.ExportTileMap(file);
+    }
+
+    private void ApplyDisplayVisibilitySettings()
+    {
+        GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
+        GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
     }
 
     private static DirectoryInfo GetDesktopDirectory()

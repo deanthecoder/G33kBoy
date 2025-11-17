@@ -31,9 +31,23 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
 
+    public bool IsBackgroundVisible
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
+    public bool AreSpritesVisible
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     protected override void ApplyDefaults()
     {
         IsAmbientBlurred = true;
         IsSoundEnabled = true;
+        IsBackgroundVisible = true;
+        AreSpritesVisible = true;
     }
 }

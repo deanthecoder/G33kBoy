@@ -71,6 +71,9 @@ public class PPU
     /// </summary>
     public event EventHandler<byte[]> FrameRendered;
 
+    public bool BackgroundVisible { get; set; } = true;
+    public bool SpritesVisible { get; set; } = true;
+
     /// <summary>
     /// True when the CPU is allowed to read/write OAM (LCD disabled, HBlank or VBlank).
     /// </summary>
@@ -204,7 +207,8 @@ public class PPU
     private void CaptureVisibleSprites()
     {
         m_spriteCount = 0;
-        if (!m_lcdc.SpriteEnable)
+        Array.Clear(m_spritePixelCoverage);
+        if (!m_lcdc.SpriteEnable || !SpritesVisible)
             return; // No sprite drawing required.
         
         // Capture up to 10 sprites for this LY in OAM order.
@@ -237,7 +241,6 @@ public class PPU
         }
 
         // Build a lookup table of which screen X positions have sprite coverage.
-        Array.Clear(m_spritePixelCoverage);
         for (var i = 0; i < m_spriteCount; i++)
         {
             var spriteX = sprites[m_spriteIndices[i]].X - 8;
@@ -259,7 +262,7 @@ public class PPU
         var lcdBGP = m_lcd.BGP;
         var lcdWX = m_lcd.WX;
 
-        var bgEnabled = m_lcdc.BgWindowEnablePriority;
+        var bgEnabled = m_lcdc.BgWindowEnablePriority && BackgroundVisible;
         var windowEnabled =
             bgEnabled &&
             m_lcdc.WindowEnable &&
@@ -332,7 +335,7 @@ public class PPU
             // Now we draw the sprites.
             byte spriteColorIndex = 0x00;
             byte spritePalette = 0x00;
-            if (m_spritePixelCoverage[x])
+            if (SpritesVisible && m_spritePixelCoverage[x])
             {
                 for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
                 {
@@ -402,15 +405,15 @@ public class PPU
             }
 
             // Update the frame buffer.
-            byte colorValue = 0x00;
+            byte colorValue;
             if (spriteColorIndex != 0x00)
             {
                 // Sprite is drawn, so use the sprite palette.
                 colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
             }
-            else if (bgColorIndex != 0x00)
+            else
             {
-                // No sprite, so use the background palette.
+                // Background (including color 0) uses the background palette.
                 colorValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
             }
 

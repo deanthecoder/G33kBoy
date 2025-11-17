@@ -38,14 +38,27 @@
                     </MenuItem>
 
                     <MenuItem Header="Hardware">
-                            <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
-                                <MenuItem.Effect>
-                                    <BlurEffect Radius="2"/>
-                                </MenuItem.Effect>
+                        <MenuItem Header="Display">
+                            <MenuItem Header="Background Tiles" Command="{Binding ToggleBackgroundVisibility}">
                                 <MenuItem.Icon>
-                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsAmbientBlurred}" />
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsBackgroundVisible}" />
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <MenuItem Header="Sprites" Command="{Binding ToggleSpriteVisibility}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.AreSpritesVisible}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
+                            <MenuItem.Effect>
+                                <BlurEffect Radius="2"/>
+                            </MenuItem.Effect>
+                            <MenuItem.Icon>
+                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsAmbientBlurred}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
 
                     <MenuItem Header="Extras">
