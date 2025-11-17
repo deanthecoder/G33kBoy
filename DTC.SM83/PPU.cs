@@ -81,8 +81,8 @@ public class PPU
 
     private FrameState CurrentState
     {
-        get => (FrameState)m_stat.Mode;
-        set => m_stat.Mode = (byte)value;
+        get => (FrameState)m_stat.GetMode();
+        set => m_stat.SetMode((byte)value, m_lcdc.LcdEnable);
     }
 
     public PPU(ILcd lcd, VramDevice vram, InterruptDevice interruptDevice, [NotNull] OamDevice oam)
@@ -167,7 +167,7 @@ public class PPU
                     {
                         CurrentState = FrameState.FrameWait;
                         FrameRendered?.Invoke(this, m_frameBuffer);
-                        m_interruptDevice.Raise(InterruptDevice.InterruptType.VBlank);
+                        RaiseInterrupt(InterruptDevice.InterruptType.VBlank);
                     }
                     else
                     {
@@ -252,7 +252,7 @@ public class PPU
         
         var lcdLy = m_lcd.LY;
         if (lcdLy >= FrameHeight)
-            throw new InvalidOperationException("Cannot render a scanline past the end of the frame."); 
+            return; 
         
         var lcdSCY = m_lcd.SCY;
         var lcdSCX = m_lcd.SCX;
@@ -440,8 +440,12 @@ public class PPU
             m_windowLine = 0;
             m_windowLineUsedThisScanline = false;
         }
+        
         UpdateLycAndMaybeStatIrq();
     }
+
+    public void ResetLyCounter() =>
+        UpdateLineIndex(false);
 
     /// <summary>
     /// Compare LY vs LYC; set STAT.coincidence + IF STAT if enabled.
@@ -451,10 +455,17 @@ public class PPU
         var coincidence = m_lcd.LY == m_lcd.LYC;
         m_stat.SetCoincidenceFlag(coincidence);
 
+        // Coincidence interrupt is edge-triggered: only when it becomes true.
         if (coincidence && m_stat.CoincidenceInterruptEnabled)
-            m_interruptDevice.Raise(InterruptDevice.InterruptType.Stat);
+            RaiseInterrupt(InterruptDevice.InterruptType.Stat);
     }
-    
+
+    private void RaiseInterrupt(InterruptDevice.InterruptType type)
+    {
+        if (m_lcdc.LcdEnable)
+            m_interruptDevice.Raise(type);
+    }
+
     /// <summary>
     /// Dump the frame buffer to disk (.tga)
     /// </summary>
@@ -578,47 +589,49 @@ public class PPU
         /// <summary>
         /// Bit 6 - LYC=LY Coincidence Interrupt (0=Off, 1=On)
         /// </summary>
-        public bool CoincidenceInterruptEnabled => (m_lcd.STAT & 0x40) != 0;
+        public bool CoincidenceInterruptEnabled => m_lcd.STAT.IsBitSet(6);
 
         /// <summary>
         /// Bit 5 - Mode 2 OAM Interrupt (0=Off, 1=On)
         /// </summary>
-        private bool OamInterruptEnabled => (m_lcd.STAT & 0x20) != 0;
+        private bool OamInterruptEnabled => m_lcd.STAT.IsBitSet(5);
 
         /// <summary>
         /// Bit 4 - Mode 1 V-Blank Interrupt (0=Off, 1=On)
         /// </summary>
-        private bool VBlankInterruptEnabled => (m_lcd.STAT & 0x10) != 0;
+        private bool VBlankInterruptEnabled => m_lcd.STAT.IsBitSet(4);
 
         /// <summary>
         /// Bit 3 - Mode 0 H-Blank Interrupt (0=Off, 1=On)
         /// </summary>
-        private bool HBlankInterruptEnabled => (m_lcd.STAT & 0x08) != 0;
-
+        private bool HBlankInterruptEnabled => m_lcd.STAT.IsBitSet(3);
+        
         /// <summary>
         /// Bit 2 - LYC==LY Coincidence Flag (0=Different, 1=Equal)
         /// </summary>
-        public void SetCoincidenceFlag(bool value) => m_lcd.STAT = (byte) (m_lcd.STAT & 0xF3 | (value ? 0x04 : 0x00));
+        public void SetCoincidenceFlag(bool value) => m_lcd.STAT = value ? m_lcd.STAT.SetBit(2) : m_lcd.STAT.ResetBit(2);
 
         /// <summary>
         /// Bits 1-0 - Mode Flag (0-3)
         /// </summary>
-        public byte Mode
-        {
-            get => (byte)(m_lcd.STAT & 0x03);
-            set
-            {
-                var newValue = (byte)(m_lcd.STAT & 0xFC | (value & 0x03));
-                if (m_lcd.STAT == newValue)
-                    return;
-                m_lcd.STAT = newValue;
+        public byte GetMode() => (byte) (m_lcd.STAT & 0x03);
 
-                if ((value == (int)FrameState.OAMScan && OamInterruptEnabled) ||
-                    (value == (int)FrameState.HBlank && HBlankInterruptEnabled) ||
-                    (value == (int)FrameState.FrameWait && VBlankInterruptEnabled))
-                {
+        /// <summary>
+        /// Bits 1-0 - Mode Flag (0-3)
+        /// </summary>
+        public void SetMode(byte value, bool isLcdEnabled)
+        {
+            var newValue = (byte) (m_lcd.STAT & 0xFC | (value & 0x03));
+            if (m_lcd.STAT == newValue)
+                return;
+            m_lcd.STAT = newValue;
+
+            if ((value == (int) FrameState.OAMScan && OamInterruptEnabled) ||
+                (value == (int) FrameState.HBlank && HBlankInterruptEnabled) ||
+                (value == (int) FrameState.FrameWait && VBlankInterruptEnabled))
+            {
+                if (isLcdEnabled)
                     m_interruptDevice.Raise(InterruptDevice.InterruptType.Stat);
-                }
             }
         }
     }

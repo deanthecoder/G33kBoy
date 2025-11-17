@@ -89,6 +89,13 @@ public class IoDevice : IMemDevice, ILcd
             return;
         }
 
+        // Writing to LY resets the counter, but is otherwise ignored.
+        if (idx == 0x44)
+        {
+            m_bus.PPU?.ResetLyCounter();
+            return;
+        }
+
         // OAM DMA Transfer request?
         if (idx == 0x46)
         {
