@@ -12,6 +12,7 @@ using DTC.Core.Extensions;
 using DTC.Core.Image;
 using DTC.SM83.Devices;
 using JetBrains.Annotations;
+using System.Diagnostics;
 
 namespace DTC.SM83;
 
@@ -70,9 +71,6 @@ public class PPU
     /// Raised whenever a full frame (160x144) has been rendered to the frame buffer.
     /// </summary>
     public event EventHandler<byte[]> FrameRendered;
-
-    public bool BackgroundVisible { get; set; } = true;
-    public bool SpritesVisible { get; set; } = true;
 
     /// <summary>
     /// True when the CPU is allowed to read/write OAM (LCD disabled, HBlank or VBlank).
@@ -207,12 +205,22 @@ public class PPU
     private void CaptureVisibleSprites()
     {
         m_spriteCount = 0;
-        Array.Clear(m_spritePixelCoverage);
-        if (!m_lcdc.SpriteEnable || !SpritesVisible)
+        if (!m_lcdc.SpriteEnable)
             return; // No sprite drawing required.
         
         // Capture up to 10 sprites for this LY in OAM order.
         var sprites = m_oam.GetSprites();
+
+        if (m_lcd.LY == 0)
+        {
+            for (var i = 0; i < 10; i++)
+            {
+                var s = sprites[i];
+                Debug.WriteLine(
+                    $"OAM[{i}] Y={s.Y} X={s.X} Tile={s.Tile} UseObp1={s.UseObp1} Priority={s.Priority} XFlip={s.XFlip} YFlip={s.YFlip}");
+            }
+        }
+        
         for (byte i = 0; i < 40 && m_spriteCount < 10; i++)
         {
             var sprite = sprites[i];
@@ -241,6 +249,7 @@ public class PPU
         }
 
         // Build a lookup table of which screen X positions have sprite coverage.
+        Array.Clear(m_spritePixelCoverage);
         for (var i = 0; i < m_spriteCount; i++)
         {
             var spriteX = sprites[m_spriteIndices[i]].X - 8;
@@ -262,7 +271,14 @@ public class PPU
         var lcdBGP = m_lcd.BGP;
         var lcdWX = m_lcd.WX;
 
-        var bgEnabled = m_lcdc.BgWindowEnablePriority && BackgroundVisible;
+        if (lcdLy == 0)
+        {
+            Debug.WriteLine(
+                $"PPU: LY={lcdLy} SCX={lcdSCX} SCY={lcdSCY} WX={lcdWX} WY={m_lcd.WY} " +
+                $"BGP=0x{lcdBGP:X2} OBP0=0x{m_lcd.OBP0:X2} OBP1=0x{m_lcd.OBP1:X2}");
+        }
+
+        var bgEnabled = m_lcdc.BgWindowEnablePriority;
         var windowEnabled =
             bgEnabled &&
             m_lcdc.WindowEnable &&
@@ -317,8 +333,26 @@ public class PPU
                 else
                     tileDataAddr = 0x9000 + (sbyte)tileIndex * 16;
 
+                // Sanity check BG tile base address is within the expected pattern table range.
+                if (bgWindowTileDataArea)
+                {
+                    if (tileDataAddr < 0x8000 || tileDataAddr >= 0x9000)
+                    {
+                        throw new InvalidOperationException(
+                            $"BG tile (unsigned) out of pattern range: 0x{tileDataAddr:X4} (index={tileIndex})");
+                    }
+                }
+                else
+                {
+                    if (tileDataAddr < 0x8800 || tileDataAddr >= 0x9800)
+                    {
+                        throw new InvalidOperationException(
+                            $"BG tile (signed) out of pattern range: 0x{tileDataAddr:X4} (index={tileIndex})");
+                    }
+                }
                 // Offset into the correct tile Y.
                 tileDataAddr += srcY % 8 * 2;
+                ValidateVramRange(tileDataAddr, 2, "BG tile row");
 
                 // Read the 8 pixel tile row.
                 var lowBits = m_vram.Read8((ushort)tileDataAddr);
@@ -335,7 +369,7 @@ public class PPU
             // Now we draw the sprites.
             byte spriteColorIndex = 0x00;
             byte spritePalette = 0x00;
-            if (SpritesVisible && m_spritePixelCoverage[x])
+            if (m_spritePixelCoverage[x])
             {
                 for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
                 {
@@ -365,6 +399,13 @@ public class PPU
                         tileDataAddr += (sprite.Tile & 0xFE) * 16;
                     }
 
+                    // Sanity check sprite tile base address is within the expected pattern table range.
+                    if (tileDataAddr < 0x8000 || tileDataAddr >= 0x9000)
+                    {
+                        throw new InvalidOperationException(
+                            $"Sprite tile out of pattern range: 0x{tileDataAddr:X4} (tile={sprite.Tile}, height={spriteHeight})");
+                    }
+
                     // Offset into the correct tile Y.
                     var spriteTop = sprite.Y - 16;
                     var y = lcdLy - spriteTop;
@@ -376,7 +417,7 @@ public class PPU
                         y -= 8;
                     }
                     tileDataAddr += y * 2;
-
+                    ValidateVramRange(tileDataAddr, 2, "sprite tile row");
                     // Read the 8 pixel tile row.
                     var lowBits = m_vram.Read8((ushort)tileDataAddr);
                     var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
@@ -405,15 +446,15 @@ public class PPU
             }
 
             // Update the frame buffer.
-            byte colorValue;
+            byte colorValue = 0x00;
             if (spriteColorIndex != 0x00)
             {
                 // Sprite is drawn, so use the sprite palette.
                 colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
             }
-            else
+            else if (bgColorIndex != 0x00)
             {
-                // Background (including color 0) uses the background palette.
+                // No sprite, so use the background palette.
                 colorValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
             }
 
@@ -503,6 +544,7 @@ public class PPU
             for (var row = 0; row < tileHeight; row++)
             {
                 var rowAddr = tileAddr + row * 2;
+                ValidateVramRange(rowAddr, 2, "DumpTileMap row");
                 var lowBits = m_vram.Read8((ushort)rowAddr);
                 var highBits = m_vram.Read8((ushort)(rowAddr + 1));
 
@@ -518,6 +560,18 @@ public class PPU
         }
 
         TgaWriter.Write(tgaFile, buffer, width, height, 1);
+    }
+
+    [Conditional("DEBUG")]
+    private static void ValidateVramRange(int startAddr, int length, string context)
+    {
+        const int vramStart = 0x8000;
+        const int vramEndExclusive = 0xA000;
+        if (startAddr < vramStart || startAddr + length > vramEndExclusive)
+        {
+            throw new InvalidOperationException(
+                $"PPU VRAM out of range in {context}: 0x{startAddr:X4}..0x{startAddr + length - 1:X4}");
+        }
     }
 
     /// <summary>

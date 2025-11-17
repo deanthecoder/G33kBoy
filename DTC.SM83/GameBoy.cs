@@ -53,7 +53,7 @@ public sealed class GameBoy : IDisposable
 
     public void PowerOnAsync()
     {
-        var romFile = new FileInfo(@"external\blargg-test-roms\cpu_instrs\cpu_instrs.gb");
+        var romFile = new FileInfo("/Users/dean/Downloads/Tetris (World) (Rev 1).gb");
         if (romFile.Exists)
             m_cpu.LoadRom(romFile.ReadAllBytes());
         
@@ -117,6 +117,18 @@ public sealed class GameBoy : IDisposable
 
     public void SetSpeed(ClockSync.Speed speed) =>
         m_clockSync.SetSpeed(speed);
+
+    public void SetBackgroundVisibility(bool isVisible)
+    {
+        // if (m_bus?.PPU != null)
+        //     m_bus.PPU.BackgroundVisible = isVisible;
+    }
+
+    public void SetSpriteVisibility(bool isVisible)
+    {
+        // if (m_bus?.PPU != null)
+        //     m_bus.PPU.SpritesVisible = isVisible;
+    }
 
     public void SaveScreenshot(FileInfo tgaFile)
     {

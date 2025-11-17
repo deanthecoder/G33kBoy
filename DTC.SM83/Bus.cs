@@ -39,6 +39,8 @@ public sealed class Bus : IMemDevice, IDisposable
     /// </summary>
     public ulong ClockTicks { get; private set; }
 
+    public bool LockCart { get; set; }
+
     /// <summary>
     /// The type of bus to create.
     /// </summary>
@@ -151,6 +153,9 @@ public sealed class Bus : IMemDevice, IDisposable
 
     public void Write8(ushort addr, byte value)
     {
+        if (LockCart && addr < 0x8000)
+            return;
+        
         if (GetMemoryAccess(addr) == MemoryAccess.Allow)
             UncheckedWrite(addr, value);
     }

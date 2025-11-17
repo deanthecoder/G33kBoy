@@ -120,6 +120,7 @@ public static class CpuExtensions
 
         // Simple 32 KiB mapping.
         cpu.Bus.Load(0x0000, rom);
+        cpu.Bus.LockCart = true;
         cpu.Bus.BootRom?.Load();
         return cpu;
     }

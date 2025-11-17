@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using JetBrains.Annotations;
+using System.Diagnostics;
 
 namespace DTC.SM83.Devices;
 
@@ -99,16 +100,20 @@ public class IoDevice : IMemDevice, ILcd
         // OAM DMA Transfer request?
         if (idx == 0x46)
         {
-            if (value > 0xDF)
-                return; // Ignorable.
+            var src = (ushort)(value << 8);
+
+#if DEBUG
+            Debug.WriteLine($"DMA: FF46=0x{value:X2}, src=0x{src:X4}");
+#endif
 
             IsDMATransferActive = true;
-            var src = (ushort)(value << 8);
+            const int oamSize = 0xA0; // 160 bytes.
             var dest = 0xFE00;
-            for (var i = 0; i <= 0x9F; i++)
+            for (var i = 0; i < oamSize; i++)
             {
-                m_bus.UncheckedWrite((ushort)dest++, m_bus.UncheckedRead(src++));
-                m_bus.AdvanceT(4); // One cycle for each byte.
+                var b = m_bus.UncheckedRead(src++);
+                m_bus.UncheckedWrite((ushort)dest++, b);
+                m_bus.AdvanceT(4); // Four T-cycles per byte.
             }
             IsDMATransferActive = false;
             return;
