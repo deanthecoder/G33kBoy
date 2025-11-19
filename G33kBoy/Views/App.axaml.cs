@@ -13,6 +13,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using G33kBoy.ViewModels;
 
 namespace G33kBoy.Views;
@@ -51,7 +52,7 @@ public class App : Application
 
             if (!Design.IsDesignMode)
             {
-                viewModel.GameBoy.PowerOnAsync();
+                Dispatcher.UIThread.Post(viewModel.LoadGameRom);
 
                 desktop.MainWindow.Closed += (_, _) =>
                 {

@@ -15,6 +15,7 @@ using DTC.Core;
 using DTC.Core.Extensions;
 using DTC.Core.Settings;
 using DTC.SM83;
+using JetBrains.Annotations;
 
 namespace G33kBoy.ViewModels;
 
@@ -52,6 +53,7 @@ public class Settings : UserSettingsBase, IGameDataStore
     /// <summary>
     /// Serialized game data entries (<c>FileName|Payload</c>).
     /// </summary>
+    [UsedImplicitly]
     public string[] GameDataStates
     {
         get => Get<string[]>();

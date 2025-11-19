@@ -22,12 +22,13 @@ namespace DTC.SM83;
 
 public sealed class GameBoy : IDisposable
 {
-    private readonly Bus m_bus;
-    private readonly Cpu m_cpu;
+    private static readonly TimeSpan CartRamPersistInterval = TimeSpan.FromSeconds(5);
     private readonly ClockSync m_clockSync;
     private readonly IGameDataStore m_gameDataStore;
     private readonly Stopwatch m_ramPersistStopwatch = new();
-    private static readonly TimeSpan CartRamPersistInterval = TimeSpan.FromSeconds(5);
+    private Bus m_bus;
+    private Cpu m_cpu;
+    private readonly Joypad m_joypad;
 
     private Thread m_cpuThread;
     private bool m_shutdownRequested;
@@ -41,38 +42,41 @@ public sealed class GameBoy : IDisposable
 
     public double RelativeSpeed { get; private set; }
 
-    public Joypad Joypad { get; }
+    public Joypad Joypad => m_joypad;
 
     public GameBoy(IGameDataStore gameDataStore = null)
     {
         m_gameDataStore = gameDataStore;
-        Joypad = new Joypad();
-        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad);
-        m_cpu = new Cpu(m_bus) { DebugMode = true };
+        m_joypad = new Joypad();
+        CreateHardware();
         Display = new WriteableBitmap(new PixelSize(PPU.FrameWidth, PPU.FrameHeight), new Vector(96, 96), PixelFormat.Rgba8888);
 
-        m_bus.PPU.FrameRendered += OnFrameRendered;
-
-        m_clockSync = new ClockSync(4194304, () => (long)m_bus.ClockTicks, () => 0);
+        m_clockSync = new ClockSync(4194304, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
     }
 
-    public void PowerOnAsync(FileInfo romFile = null)
+    public void PowerOnAsync(FileInfo romFile)
     {
-        var fileToLoad = romFile ?? new FileInfo("/Users/dean/Desktop/GBROMS/Tetris (World) (Rev 1).gb");
-        if (!fileToLoad.Exists)
+        if (romFile == null)
+            throw new ArgumentNullException(nameof(romFile));
+
+        if (!romFile.Exists)
         {
-            Logger.Instance.Warn($"ROM file '{fileToLoad.FullName}' not found. Unable to power on.");
+            Logger.Instance.Warn($"ROM file '{romFile.FullName}' not found. Unable to power on.");
             return;
         }
 
-        var romData = fileToLoad.ReadAllBytes();
-        if (romData == null)
+        var romData = romFile.ReadAllBytes();
+        if (romData == null || romData.Length == 0)
         {
-            Logger.Instance.Warn($"Failed to read ROM '{fileToLoad.FullName}'.");
+            Logger.Instance.Warn($"Failed to read ROM '{romFile.FullName}'.");
             return;
         }
 
-        m_cartridgeKey = fileToLoad.Name;
+        ShutdownCpuThread();
+        RecreateHardware();
+        m_clockSync.Reset();
+
+        m_cartridgeKey = romFile.Name;
         m_loadedCartridge = new Cartridge(romData);
         m_cpu.LoadRom(m_loadedCartridge);
 
@@ -88,6 +92,7 @@ public sealed class GameBoy : IDisposable
         m_shutdownRequested = false;
         
         Logger.Instance.Info("CPU loop started.");
+        var canPersistGameData = CanPersistGameData;
 
         try
         {
@@ -97,7 +102,7 @@ public sealed class GameBoy : IDisposable
                 m_clockSync.SyncWithRealTime();
             
                 m_cpu.Step();
-                PersistCartRamIfDue();
+                PersistCartRamIfDue(canPersistGameData);
             }
         }
         catch (Exception e)
@@ -131,11 +136,9 @@ public sealed class GameBoy : IDisposable
 
     public void Dispose()
     {
-        m_shutdownRequested = true;
-        m_cpuThread?.Join();
-        
-        m_bus.Dispose();
-        Joypad.Dispose();
+        ShutdownCpuThread();
+        DisposeHardware();
+        m_joypad.Dispose();
     }
 
     public void SetSpeed(ClockSync.Speed speed) =>
@@ -159,19 +162,21 @@ public sealed class GameBoy : IDisposable
     {
         if (tgaFile == null)
             throw new ArgumentNullException(nameof(tgaFile));
-        m_bus.PPU.Dump(tgaFile);
+        var ppu = m_bus?.PPU ?? throw new InvalidOperationException("Game Boy hardware is not initialized.");
+        ppu.Dump(tgaFile);
     }
 
     public void ExportTileMap(FileInfo tgaFile)
     {
         if (tgaFile == null)
             throw new ArgumentNullException(nameof(tgaFile));
-        m_bus.PPU.DumpTileMap(tgaFile);
+        var ppu = m_bus?.PPU ?? throw new InvalidOperationException("Game Boy hardware is not initialized.");
+        ppu.DumpTileMap(tgaFile);
     }
 
     public void ClearGameData()
     {
-        m_bus.CartRam?.Clear();
+        m_bus?.CartRam?.Clear();
         if (!string.IsNullOrEmpty(m_cartridgeKey))
             m_gameDataStore?.ClearGameData(m_cartridgeKey);
     }
@@ -180,11 +185,11 @@ public sealed class GameBoy : IDisposable
         m_gameDataStore != null &&
         m_loadedCartridge?.SupportsBattery == true &&
         !string.IsNullOrEmpty(m_cartridgeKey) &&
-        m_bus.CartRam != null;
+        m_bus?.CartRam != null;
 
-    private void PersistCartRamIfDue()
+    private void PersistCartRamIfDue(bool canPersistGameData)
     {
-        if (!CanPersistGameData)
+        if (!canPersistGameData)
             return;
 
         if (!m_ramPersistStopwatch.IsRunning)
@@ -201,7 +206,11 @@ public sealed class GameBoy : IDisposable
     {
         try
         {
-            var snapshot = m_bus.CartRam.GetSnapshot();
+            var cartRam = m_bus?.CartRam;
+            if (cartRam == null)
+                return;
+
+            var snapshot = cartRam.GetSnapshot();
             m_gameDataStore?.SaveGameData(m_cartridgeKey, snapshot);
         }
         catch (Exception ex)
@@ -221,12 +230,53 @@ public sealed class GameBoy : IDisposable
 
         try
         {
-            m_bus.CartRam.LoadSnapshot(snapshot);
+            var cartRam = m_bus?.CartRam;
+            if (cartRam == null)
+                return;
+
+            cartRam.LoadSnapshot(snapshot);
             Logger.Instance.Info($"Restored {snapshot.Length} bytes of cartridge RAM for '{m_cartridgeKey}'.");
         }
         catch (Exception ex)
         {
             Logger.Instance.Warn($"Failed to restore cartridge RAM: {ex.Message}");
         }
+    }
+
+    private void ShutdownCpuThread()
+    {
+        m_shutdownRequested = true;
+        m_cpuThread?.Join();
+        m_cpuThread = null;
+        m_shutdownRequested = false;
+    }
+
+    private void RecreateHardware()
+    {
+        DisposeHardware();
+        CreateHardware();
+    }
+
+    private void CreateHardware()
+    {
+        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, m_joypad);
+        m_cpu = new Cpu(m_bus) { DebugMode = true };
+        m_bus.PPU.FrameRendered += OnFrameRendered;
+    }
+
+    private void DisposeHardware()
+    {
+        if (m_bus?.PPU != null)
+            m_bus.PPU.FrameRendered -= OnFrameRendered;
+
+        m_bus?.Dispose();
+        m_bus = null;
+        m_cpu = null;
+    }
+
+    private long ResetBusClock()
+    {
+        m_bus?.ResetClock();
+        return 0;
     }
 }

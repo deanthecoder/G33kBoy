@@ -11,6 +11,7 @@
 using System;
 using System.IO;
 using Avalonia;
+using DTC.Core.Commands;
 using DTC.Core.Extensions;
 using DTC.Core.ViewModels;
 using DTC.SM83;
@@ -59,7 +60,21 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void LoadGameRom()
     {
-        // todo
+        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
+        var command = new FileOpenCommand("Load Game Boy ROM", "Game Boy ROMs", ["*.gb"]);
+        command.FileSelected += (_, info) =>
+        {
+            try
+            {
+                GameBoy.PowerOnAsync(info);
+            }
+            finally
+            {
+                keyBlocker.Dispose();
+            }
+        };
+        command.Cancelled += (_, _) => keyBlocker.Dispose();
+        command.Execute(null);
     }
     
     public void RotateEmulationSpeed()
