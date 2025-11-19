@@ -7,8 +7,6 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
-using JetBrains.Annotations;
-
 namespace DTC.SM83.Devices;
 
 public class HramDevice : RamDeviceBase

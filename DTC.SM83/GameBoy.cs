@@ -9,7 +9,9 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -25,24 +27,29 @@ public sealed class GameBoy : IDisposable
     private readonly Bus m_bus;
     private readonly Cpu m_cpu;
     private readonly ClockSync m_clockSync;
-    private readonly Joypad m_joypad;
+    private readonly IGameDataStore m_gameDataStore;
+    private readonly Stopwatch m_ramPersistStopwatch = new();
+    private static readonly TimeSpan CartRamPersistInterval = TimeSpan.FromSeconds(5);
 
     private Thread m_cpuThread;
     private bool m_shutdownRequested;
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
-    private double m_relativeSpeed;
+    private Cartridge m_loadedCartridge;
+    private string m_cartridgeKey;
 
     public event EventHandler DisplayUpdated;
 
     public WriteableBitmap Display { get; }
 
-    public double RelativeSpeed => m_relativeSpeed;
-    public Joypad Joypad => m_joypad;
+    public double RelativeSpeed { get; private set; }
 
-    public GameBoy()
+    public Joypad Joypad { get; }
+
+    public GameBoy(IGameDataStore gameDataStore = null)
     {
-        m_joypad = new Joypad();
-        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, m_joypad);
+        m_gameDataStore = gameDataStore;
+        Joypad = new Joypad();
+        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad);
         m_cpu = new Cpu(m_bus) { DebugMode = true };
         Display = new WriteableBitmap(new PixelSize(PPU.FrameWidth, PPU.FrameHeight), new Vector(96, 96), PixelFormat.Rgba8888);
 
@@ -51,12 +58,29 @@ public sealed class GameBoy : IDisposable
         m_clockSync = new ClockSync(4194304, () => (long)m_bus.ClockTicks, () => 0);
     }
 
-    public void PowerOnAsync()
+    public void PowerOnAsync(FileInfo romFile = null)
     {
-        var romFile = new FileInfo("/Users/dean/Downloads/Tetris (World) (Rev 1).gb");
-        if (romFile.Exists)
-            m_cpu.LoadRom(romFile.ReadAllBytes());
+        var fileToLoad = romFile ?? new FileInfo("/Users/dean/Downloads/Tetris (World) (Rev 1).gb");
+        if (!fileToLoad.Exists)
+        {
+            Logger.Instance.Warn($"ROM file '{fileToLoad.FullName}' not found. Unable to power on.");
+            return;
+        }
+
+        var romData = fileToLoad.ReadAllBytes();
+        if (romData == null)
+        {
+            Logger.Instance.Warn($"Failed to read ROM '{fileToLoad.FullName}'.");
+            return;
+        }
+
+        m_cartridgeKey = fileToLoad.Name;
+        m_loadedCartridge = new Cartridge(romData);
+        m_cpu.LoadRom(m_loadedCartridge);
+
+        RestoreSavedGameData();
         
+        m_ramPersistStopwatch.Restart();
         m_cpuThread = new Thread(RunLoop) { Name = "GameBoy CPU" };
         m_cpuThread.Start();
     }
@@ -75,6 +99,7 @@ public sealed class GameBoy : IDisposable
                 m_clockSync.SyncWithRealTime();
             
                 m_cpu.Step();
+                PersistCartRamIfDue();
             }
         }
         catch (Exception e)
@@ -99,7 +124,7 @@ public sealed class GameBoy : IDisposable
             var speedPercentage = currentFrequency / 60.0;
 
             // Apply filtering to smooth out the value
-            m_relativeSpeed = Math.Round(speedPercentage / 0.2) * 0.2;
+            RelativeSpeed = Math.Round(speedPercentage / 0.2) * 0.2;
         }
         m_frameStopwatch.Restart();
 
@@ -109,10 +134,10 @@ public sealed class GameBoy : IDisposable
     public void Dispose()
     {
         m_shutdownRequested = true;
-        m_cpuThread.Join();
+        m_cpuThread?.Join();
         
         m_bus.Dispose();
-        m_joypad.Dispose();
+        Joypad.Dispose();
     }
 
     public void SetSpeed(ClockSync.Speed speed) =>
@@ -142,5 +167,66 @@ public sealed class GameBoy : IDisposable
         if (tgaFile == null)
             throw new ArgumentNullException(nameof(tgaFile));
         m_bus.PPU.DumpTileMap(tgaFile);
+    }
+
+    public void ClearGameData()
+    {
+        m_bus.CartRam?.Clear();
+        if (!string.IsNullOrEmpty(m_cartridgeKey))
+            m_gameDataStore?.ClearGameData(m_cartridgeKey);
+    }
+
+    private bool CanPersistGameData =>
+        m_gameDataStore != null &&
+        m_loadedCartridge?.SupportsBattery == true &&
+        !string.IsNullOrEmpty(m_cartridgeKey) &&
+        m_bus.CartRam != null;
+
+    private void PersistCartRamIfDue()
+    {
+        if (!CanPersistGameData)
+            return;
+
+        if (!m_ramPersistStopwatch.IsRunning)
+            m_ramPersistStopwatch.Start();
+
+        if (m_ramPersistStopwatch.Elapsed < CartRamPersistInterval)
+            return;
+
+        m_ramPersistStopwatch.Restart();
+        SaveCartRamState();
+    }
+
+    private void SaveCartRamState()
+    {
+        try
+        {
+            var snapshot = m_bus.CartRam.GetSnapshot();
+            m_gameDataStore?.SaveGameData(m_cartridgeKey, snapshot);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Warn($"Failed to persist cartridge RAM: {ex.Message}");
+        }
+    }
+
+    private void RestoreSavedGameData()
+    {
+        if (!CanPersistGameData)
+            return;
+
+        var snapshot = m_gameDataStore?.LoadGameData(m_cartridgeKey);
+        if (snapshot == null || snapshot.Length == 0)
+            return;
+
+        try
+        {
+            m_bus.CartRam.LoadSnapshot(snapshot);
+            Logger.Instance.Info($"Restored {snapshot.Length} bytes of cartridge RAM for '{m_cartridgeKey}'.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Warn($"Failed to restore cartridge RAM: {ex.Message}");
+        }
     }
 }

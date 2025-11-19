@@ -155,8 +155,6 @@ public sealed class Cartridge
         [0x9C] = "Imagineer"
     };
 
-    private readonly byte[] m_romData;
-
     /// <summary>
     /// Creates a new Game Boy cartridge from raw ROM data.
     /// </summary>
@@ -168,21 +166,22 @@ public sealed class Cartridge
         if (romData.Length < 0x150)
             throw new ArgumentException("ROM is too small to contain a valid Game Boy header.", nameof(romData));
 
-        m_romData = romData;
+        RomData = romData;
 
-        CgbFlag = (CgbFlag)m_romData[0x0143];
+        CgbFlag = (CgbFlag)RomData[0x0143];
         Title = ReadTitle();
         NewLicenseeCode = ReadAscii(0x0144, 2);
-        SgbFlag = (SgbFlag)m_romData[0x0146];
-        CartridgeType = (CartridgeType)m_romData[0x0147];
+        SgbFlag = (SgbFlag)RomData[0x0146];
+        CartridgeType = (CartridgeType)RomData[0x0147];
+        SupportsBattery = DetermineBatterySupport(CartridgeType);
 
-        RomSizeCode = (RomSize)m_romData[0x0148];
-        RamSizeCode = (RamSize)m_romData[0x0149];
+        RomSizeCode = (RomSize)RomData[0x0148];
+        RamSizeCode = (RamSize)RomData[0x0149];
 
-        OldLicenseeCode = m_romData[0x014B];
+        OldLicenseeCode = RomData[0x014B];
 
         RomBankCount = CalculateRomBankCount(RomSizeCode);
-        RomSizeBytes = CalculateRomSizeBytes(RomSizeCode, m_romData.Length);
+        RomSizeBytes = CalculateRomSizeBytes(RomSizeCode, RomData.Length);
 
         RamBankCount = CalculateRamBankCount(RamSizeCode);
         RamSizeBytes = CalculateRamSizeBytes(RamSizeCode);
@@ -204,7 +203,7 @@ public sealed class Cartridge
     /// <summary>
     /// Raw ROM data for this cartridge, starting at address 0x0000.
     /// </summary>
-    public byte[] RomData => m_romData;
+    public byte[] RomData { get; }
 
     /// <summary>
     /// Game title from 0x0134-0x0143, trimmed of trailing zeros and spaces.
@@ -230,6 +229,11 @@ public sealed class Cartridge
     /// Cartridge hardware type (mapper and extras) stored at 0x0147.
     /// </summary>
     public CartridgeType CartridgeType { get; }
+
+    /// <summary>
+    /// True if the cartridge header indicates battery-backed capabilities.
+    /// </summary>
+    public bool SupportsBattery { get; }
 
     /// <summary>
     /// Encoded ROM size value from 0x0148.
@@ -277,7 +281,7 @@ public sealed class Cartridge
     public bool IsCgbOnly => CgbFlag == CgbFlag.CgbOnly;
 
     private string ReadAscii(int offset, int length) =>
-        Encoding.ASCII.GetString(m_romData, offset, length);
+        Encoding.ASCII.GetString(RomData, offset, length);
 
     private string ReadTitle()
     {
@@ -324,6 +328,23 @@ public sealed class Cartridge
 
     private static int CalculateRamSizeBytes(RamSize size) =>
         CalculateRamBankCount(size) * 8 * 1024;
+
+    private static bool DetermineBatterySupport(CartridgeType type) =>
+        type switch
+        {
+            CartridgeType.Mbc1RamBattery or
+            CartridgeType.Mbc2Battery or
+            CartridgeType.RomRamBattery or
+            CartridgeType.Mmm01RamBattery or
+            CartridgeType.Mbc3TimerBattery or
+            CartridgeType.Mbc3TimerRamBattery or
+            CartridgeType.Mbc3RamBattery or
+            CartridgeType.Mbc5RamBattery or
+            CartridgeType.Mbc5RumbleRamBattery or
+            CartridgeType.Mbc7SensorRumbleRamBattery or
+            CartridgeType.HuC1RamBattery => true,
+            _ => false
+        };
 }
 
 public enum CartridgeType : byte

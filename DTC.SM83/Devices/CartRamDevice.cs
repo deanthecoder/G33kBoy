@@ -19,4 +19,25 @@ public class CartRamDevice : RamDeviceBase
     public CartRamDevice() : base(0xA000, 0xBFFF, isUsable: true)
     {
     }
+
+    /// <summary>
+    /// Clone the current RAM contents so the caller can serialize them safely.
+    /// </summary>
+    public byte[] GetSnapshot() =>
+        (byte[])m_data.Clone();
+
+    /// <summary>
+    /// Load RAM contents from the supplied snapshot. Pads with zeros if <paramref name="data"/> is shorter.
+    /// </summary>
+    public void LoadSnapshot(ReadOnlySpan<byte> data)
+    {
+        var destination = m_data.AsSpan();
+        var bytesToCopy = Math.Min(data.Length, destination.Length);
+        data[..bytesToCopy].CopyTo(destination);
+        if (bytesToCopy < destination.Length)
+            destination[bytesToCopy..].Clear();
+    }
+
+    public void Clear() =>
+        Array.Clear(m_data);
 }

@@ -105,9 +105,14 @@ public static class CpuExtensions
     /// <summary>
     /// Load a ROM into the CPU's memory.
     /// </summary>
-    public static Cpu LoadRom(this Cpu cpu, byte[] rom)
+    public static Cpu LoadRom(this Cpu cpu, Cartridge cartridge)
     {
-        var cartridge = new Cartridge(rom);
+        if (cpu == null)
+            throw new ArgumentNullException(nameof(cpu));
+        if (cartridge == null)
+            throw new ArgumentNullException(nameof(cartridge));
+
+        var rom = cartridge.RomData;
         Console.WriteLine(cartridge);
         
         const int MaxSimpleRomSizeBytes = 32 * 1024;
@@ -123,5 +128,12 @@ public static class CpuExtensions
         cpu.Bus.LockCart = true;
         cpu.Bus.BootRom?.Load();
         return cpu;
+    }
+
+    public static Cpu LoadRom(this Cpu cpu, byte[] rom)
+    {
+        if (rom == null)
+            throw new ArgumentNullException(nameof(rom));
+        return cpu.LoadRom(new Cartridge(rom));
     }
 }

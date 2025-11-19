@@ -13,33 +13,33 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 ## Repositories (4)
 > **Agent note:** Sub-modules and sibling repositories often expose reusable libraries (e.g., extension methods, utilities). Cross-reference these before re-implementing.
 
+  - https://github.com/deanthecoder/G33kBoy   
+    C# implementation of the GameBoy's SM83 CPU.
   - https://github.com/adtennant/GameboyCPUTests (Submodule)  
     Test data for developers of Gameboy emulators.
   - https://github.com/deanthecoder/DTC.Core (Submodule)  
     Core C# library (used by many deanthecoder repos)
   - https://github.com/retrio/gb-test-roms (Submodule)  
     Collection of Game Boy test roms.
-  - https://github.com/mattcurrie/dmg-acid2 (Submodule)  
-    😀 The Acid2 test, now for the original Game Boy! 😀
 ## Stats
 > **Agent note:** Match the project’s English style for identifiers, comments, and documentation.
 > **Agent note:** Use the dominant language(s) and idioms when proposing code.
 
-* Files      : 848
+* Files      : 860
 * Languages  : C# (100%)
 * English    : American English
 ## Largest Source Files (8)
 > **Agent note:** Avoid ingesting very large files wholesale; focus on public types, key methods, and file headers to preserve tokens.
 
-* 46.45 KB     : `DTC.SM83/Instructions.cs`
+* 46.51 KB     : `DTC.SM83/Instructions.cs`
 * 44.18 KB     : `DTC.SM83/PrefixedInstructions.cs`
+* 24.42 KB     : `DTC.SM83/PPU.cs`
 * 17.37 KB     : `DTC.Core/DTC.Core/UI/ShaderControl.cs`
 * 15.61 KB     : `DTC.Core/DTC.Core/Extensions/FastLinq.cs`
 * 14.67 KB     : `DTC.Core/DTC.Core/Markdown/ConsoleRenderer.cs`
+* 10.97 KB     : `DTC.SM83/Cartridge.cs`
 * 10.79 KB     : `DTC.Core/DTC.Core/Extensions/DirectoryInfoExtensions.cs`
-* 7.21 KB      : `UnitTests/CpuTests.cs`
-* 6.79 KB      : `DTC.Core/DTC.Core/Extensions/FileInfoExtensions.cs`
-## NuGet (14)
+## NuGet (15)
 > **Agent note:** Prefer solutions using the listed packages and frameworks; avoid introducing new technologies without justification.
 
 * `Avalonia               ` : Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.
@@ -55,6 +55,7 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 * `NUnit                  ` : NUnit is a unit-testing framework for all .NET languages.
 * `NUnit3TestAdapter      ` : The NUnit3 TestAdapter for Visual Studio, all versions from 2012 and onwards, and DotNet (incl. .Net core), versions .net framework 4.6.2 or higher, .net core 3.1, .net 5 or higher.
 * `OpenCvSharp4           ` : OpenCV wrapper for .NET. Since this package includes only core managed libraries, another package of native bindings for your OS is required (OpenCvSharp4.runtime.*).
+* `SharpHook              ` : SharpHook provides a cross-platform global keyboard and mouse hook, event simulation, and text entry simulation for .NET.
 * `SkiaSharp              ` : SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google's Skia Graphics Library.
 ## Preferences
 > **Agent note:** Align with nullable settings, test framework/assertion style, mocking approach, and UI patterns already used in this codebase.
@@ -67,11 +68,12 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 > **Agent note:** Treat internal projects as core dependencies; follow their naming, layering, and public APIs when extending functionality.
 
 ### Top-level
+* `G33kBoy.csproj` (net9.0)
 * `UnitTests.csproj` (net9.0)
 ### Internal
-* `DTC.Core.csproj` (net8.0) [refs:1]
-* `DTC.SM83.csproj` (net9.0) [refs:1]
-## READMEs (6)
+* `DTC.Core.csproj` (net8.0) [refs:4]
+* `DTC.SM83.csproj` (net9.0) [refs:2]
+## READMEs (5)
 > **Agent note:** READMEs often contain background, design intent, and setup steps; consult them when modifying code or documentation.
 
 * `DTC.Core/README.md`
@@ -79,4 +81,3 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 * `external/GameboyCPUTests/README.md`
 * `external/GameboyCPUTests/v1/README.md`
 * `external/GameboyCPUTests/v2/README.md`
-* `external/dmg-acid2/README.md`

@@ -33,6 +33,7 @@ public sealed class Bus : IMemDevice, IDisposable
 
     public BootRom BootRom { get; }
     public PPU PPU { get; }
+    public CartRamDevice CartRam { get; }
 
     /// <summary>
     /// The number of T cycles elapsed since boot. (4T = 1M)
@@ -88,7 +89,8 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(vram);
             
             // Cartridge RAM (0xA000 - 0xBFFF)
-            Attach(new CartRamDevice());
+            CartRam = new CartRamDevice();
+            Attach(CartRam);
             
             // Ram bank 0 (0xC000 - 0xDFFF)
             var wram = new WorkRamDevice();

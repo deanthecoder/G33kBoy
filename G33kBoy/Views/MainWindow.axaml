@@ -33,6 +33,7 @@
                     <MenuItem Header="File">
                         <MenuItem Header="_Open..." Command="{Binding LoadGameRom}"
                                   InputGesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
+                        <MenuItem Header="_Clear Game Data" Command="{Binding ClearGameData}" />
                         <Separator />
                         <MenuItem Header="_Exit" Command="{Binding CloseCommand}" />
                     </MenuItem>

@@ -53,7 +53,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public MainWindowViewModel()
     {
-        GameBoy = new GameBoy();
+        GameBoy = new GameBoy(Settings.Instance);
         ApplyDisplayVisibilitySettings();
     }
 
@@ -94,6 +94,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     
     public void OpenProjectPage() =>
         new Uri("https://github.com/deanthecoder/G33kBoy").Open();
+
+    public void ClearGameData() =>
+        GameBoy.ClearGameData();
 
     public void ExportTileMap()
     {
