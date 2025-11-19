@@ -45,6 +45,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - ☐ Cartridge MBCs
 - ☐ Gameplay 'roll back'
 - ☐ GameBoy Color support
+- Battery save state
 
 ## External resources
 - `external/GameboyCPUTests/` – CPU tests for regression validation
