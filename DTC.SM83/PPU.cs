@@ -43,6 +43,8 @@ public class PPU
     private int m_spriteCount;
     private int m_windowLine;
     private bool m_windowLineUsedThisScanline;
+    private bool m_backgroundVisible = true;
+    private bool m_spritesVisible = true;
 
     private enum FrameState
     {
@@ -71,6 +73,18 @@ public class PPU
     /// Raised whenever a full frame (160x144) has been rendered to the frame buffer.
     /// </summary>
     public event EventHandler<byte[]> FrameRendered;
+
+    public bool BackgroundVisible
+    {
+        get => m_backgroundVisible;
+        set => m_backgroundVisible = value;
+    }
+
+    public bool SpritesVisible
+    {
+        get => m_spritesVisible;
+        set => m_spritesVisible = value;
+    }
 
     /// <summary>
     /// True when the CPU is allowed to read/write OAM (LCD disabled, HBlank or VBlank).
@@ -205,7 +219,7 @@ public class PPU
     private void CaptureVisibleSprites()
     {
         m_spriteCount = 0;
-        if (!m_lcdc.SpriteEnable)
+        if (!m_lcdc.SpriteEnable || !m_spritesVisible)
             return; // No sprite drawing required.
         
         // Capture up to 10 sprites for this LY in OAM order.
@@ -278,7 +292,7 @@ public class PPU
                 $"BGP=0x{lcdBGP:X2} OBP0=0x{m_lcd.OBP0:X2} OBP1=0x{m_lcd.OBP1:X2}");
         }
 
-        var bgEnabled = m_lcdc.BgWindowEnablePriority;
+        var bgEnabled = m_lcdc.BgWindowEnablePriority && m_backgroundVisible;
         var windowEnabled =
             bgEnabled &&
             m_lcdc.WindowEnable &&
@@ -369,7 +383,7 @@ public class PPU
             // Now we draw the sprites.
             byte spriteColorIndex = 0x00;
             byte spritePalette = 0x00;
-            if (m_spritePixelCoverage[x])
+            if (m_spritePixelCoverage[x] && m_spritesVisible)
             {
                 for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
                 {

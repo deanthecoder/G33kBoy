@@ -9,9 +9,7 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -60,7 +58,7 @@ public sealed class GameBoy : IDisposable
 
     public void PowerOnAsync(FileInfo romFile = null)
     {
-        var fileToLoad = romFile ?? new FileInfo("/Users/dean/Downloads/Tetris (World) (Rev 1).gb");
+        var fileToLoad = romFile ?? new FileInfo("/Users/dean/Desktop/GBROMS/Tetris (World) (Rev 1).gb");
         if (!fileToLoad.Exists)
         {
             Logger.Instance.Warn($"ROM file '{fileToLoad.FullName}' not found. Unable to power on.");
@@ -145,14 +143,16 @@ public sealed class GameBoy : IDisposable
 
     public void SetBackgroundVisibility(bool isVisible)
     {
-        // if (m_bus?.PPU != null)
-        //     m_bus.PPU.BackgroundVisible = isVisible;
+        var ppu = m_bus?.PPU;
+        if (ppu != null)
+            ppu.BackgroundVisible = isVisible;
     }
 
     public void SetSpriteVisibility(bool isVisible)
     {
-        // if (m_bus?.PPU != null)
-        //     m_bus.PPU.SpritesVisible = isVisible;
+        var ppu = m_bus?.PPU;
+        if (ppu != null)
+            ppu.SpritesVisible = isVisible;
     }
 
     public void SaveScreenshot(FileInfo tgaFile)
