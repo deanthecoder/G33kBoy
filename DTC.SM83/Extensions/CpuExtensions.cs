@@ -105,7 +105,7 @@ public static class CpuExtensions
     /// <summary>
     /// Load a ROM into the CPU's memory.
     /// </summary>
-    public static Cpu LoadRom(this Cpu cpu, Cartridge cartridge)
+    public static void LoadRom(this Cpu cpu, Cartridge cartridge)
     {
         if (cpu == null)
             throw new ArgumentNullException(nameof(cpu));
@@ -115,25 +115,9 @@ public static class CpuExtensions
         var rom = cartridge.RomData;
         Console.WriteLine(cartridge);
         
-        const int MaxSimpleRomSizeBytes = 32 * 1024;
-        if (rom.Length > MaxSimpleRomSizeBytes)
-            throw new NotSupportedException("Cartridges larger than 32KB (requiring bank controllers) are not supported yet.");
-        if (cartridge.IsCgbOnly)
-            throw new NotSupportedException("CGB-only cartridges are not supported.");
-        if (cartridge.CartridgeType != CartridgeType.RomOnly)
-            Console.WriteLine($"Treating {cartridge.CartridgeType} as ROM-only because the image is {rom.Length / 1024}KB.");
-
         // Simple 32 KiB mapping.
         cpu.Bus.Load(0x0000, rom);
         cpu.Bus.LockCart = true;
         cpu.Bus.BootRom?.Load();
-        return cpu;
-    }
-
-    public static Cpu LoadRom(this Cpu cpu, byte[] rom)
-    {
-        if (rom == null)
-            throw new ArgumentNullException(nameof(rom));
-        return cpu.LoadRom(new Cartridge(rom));
     }
 }

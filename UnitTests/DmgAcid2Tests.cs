@@ -29,13 +29,10 @@ public class DmgAcid2Tests : TestsBase
         var romFile = RomFile;
         Assert.That(romFile, Does.Exist, $"Missing dmg-acid2 ROM at {romFile.FullName}");
 
-        var romData = romFile.ReadAllBytes();
-
         using var bus = new Bus(0x10000, Bus.BusType.GameBoy);
-        var cpu =
-            new Cpu(bus)
-                .LoadRom(romData)
-                .SkipBootRom();
+        var cpu = new Cpu(bus);
+        cpu.LoadRom(new Cartridge(romFile.ReadAllBytes()));
+        cpu.SkipBootRom();
 
         string bufferHash = null;
         bus.PPU.FrameRendered += (_, frameBuffer) =>

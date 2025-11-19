@@ -16,7 +16,9 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using DTC.Core;
 using DTC.Core.Extensions;
+using DTC.Core.UI;
 using DTC.SM83.Extensions;
+using Material.Icons;
 
 namespace DTC.SM83;
 
@@ -73,12 +75,20 @@ public sealed class GameBoy : IDisposable
             return;
         }
 
+        var cartridge = new Cartridge(romData);
+        var supportCheck = cartridge.IsSupported();
+        if (!supportCheck.IsSupported)
+        {
+            DialogService.Instance.ShowMessage("Unable to load ROM", supportCheck.Message, MaterialIconKind.GamepadClassicOutline);
+            return;
+        }
+
         ShutdownCpuThread();
         RecreateHardware();
         m_clockSync.Reset();
 
         m_cartridgeKey = romFile.Name;
-        m_loadedCartridge = new Cartridge(romData);
+        m_loadedCartridge = cartridge;
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
 

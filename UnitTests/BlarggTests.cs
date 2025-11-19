@@ -29,10 +29,9 @@ public class BlarggTests : TestsBase
     public void RunCpuRoms(FileInfo romFile)
     {
         using var bus = new Bus(0x10000, Bus.BusType.Minimal);
-        var cpu =
-            new Cpu(bus)
-                .LoadRom(romFile.ReadAllBytes())
-                .SkipBootRom();
+        var cpu = new Cpu(bus);
+        cpu.LoadRom(new Cartridge(romFile.ReadAllBytes()));
+        cpu.SkipBootRom();
 
         var serialBus = new SerialDevice();
         bus.Attach(serialBus);
@@ -53,10 +52,9 @@ public class BlarggTests : TestsBase
     public void RunOAMRoms(FileInfo romFile)
     {
         using var bus = new Bus(0x10000, Bus.BusType.Minimal);
-        var cpu =
-            new Cpu(bus)
-                .LoadRom(romFile.ReadAllBytes())
-                .SkipBootRom();
+        var cpu = new Cpu(bus);
+        cpu.LoadRom(new Cartridge(romFile.ReadAllBytes()));
+        cpu.SkipBootRom();
 
         var serialBus = new SerialDevice();
         bus.Attach(serialBus);

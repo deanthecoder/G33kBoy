@@ -1086,8 +1086,8 @@ public static class Instructions
             "POP BC", // 0xC1
             static cpu =>
             {
-                cpu.Reg.BC = cpu.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
+                cpu.Reg.C = cpu.Read8(cpu.Reg.SP++);
+                cpu.Reg.B = cpu.Read8(cpu.Reg.SP++);
             }
         ),
         new Instruction(
@@ -1218,8 +1218,8 @@ public static class Instructions
             "POP DE", // 0xD1
             static cpu =>
             {
-                cpu.Reg.DE = cpu.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
+                cpu.Reg.E = cpu.Read8(cpu.Reg.SP++);
+                cpu.Reg.D = cpu.Read8(cpu.Reg.SP++);
             }
         ),
         new Instruction(
@@ -1332,8 +1332,8 @@ public static class Instructions
             "POP HL", // 0xE1
             static cpu =>
             {
-                cpu.Reg.HL = cpu.Read16(cpu.Reg.SP);
-                cpu.Reg.SP += 2;
+                cpu.Reg.L = cpu.Read8(cpu.Reg.SP++);
+                cpu.Reg.H = cpu.Read8(cpu.Reg.SP++);
             }
         ),
         new Instruction(

@@ -345,76 +345,16 @@ public sealed class Cartridge
             CartridgeType.HuC1RamBattery => true,
             _ => false
         };
-}
 
-public enum CartridgeType : byte
-{
-    RomOnly = 0x00,
-    Mbc1 = 0x01,
-    Mbc1Ram = 0x02,
-    Mbc1RamBattery = 0x03,
-    Mbc2 = 0x05,
-    Mbc2Battery = 0x06,
-    RomRam = 0x08,
-    RomRamBattery = 0x09,
-    Mmm01 = 0x0B,
-    Mmm01Ram = 0x0C,
-    Mmm01RamBattery = 0x0D,
-    Mbc3TimerBattery = 0x0F,
-    Mbc3TimerRamBattery = 0x10,
-    Mbc3 = 0x11,
-    Mbc3Ram = 0x12,
-    Mbc3RamBattery = 0x13,
-    Mbc5 = 0x19,
-    Mbc5Ram = 0x1A,
-    Mbc5RamBattery = 0x1B,
-    Mbc5Rumble = 0x1C,
-    Mbc5RumbleRam = 0x1D,
-    Mbc5RumbleRamBattery = 0x1E,
-    Mbc6 = 0x20,
-    Mbc7SensorRumbleRamBattery = 0x22,
-    PocketCamera = 0xFC,
-    BandaiTama5 = 0xFD,
-    HuC3 = 0xFE,
-    HuC1RamBattery = 0xFF
-}
-
-public enum RomSize : byte
-{
-    Rom32K = 0x00,
-    Rom64K = 0x01,
-    Rom128K = 0x02,
-    Rom256K = 0x03,
-    Rom512K = 0x04,
-    Rom1M = 0x05,
-    Rom2M = 0x06,
-    Rom4M = 0x07,
-    Rom8M = 0x08,
-    Rom1_1M = 0x52,
-    Rom1_2M = 0x53,
-    Rom1_5M = 0x54
-}
-
-public enum RamSize : byte
-{
-    None = 0x00,
-    RamUnused1 = 0x01,
-    Ram8K = 0x02,
-    Ram32K = 0x03,
-    Ram128K = 0x04,
-    Ram64K = 0x05
-}
-
-[Flags]
-public enum CgbFlag : byte
-{
-    None = 0x00,
-    CgbSupported = 0x80,
-    CgbOnly = 0xC0
-}
-
-public enum SgbFlag : byte
-{
-    None = 0x00,
-    SgbSupported = 0x03
+    public (bool IsSupported, string Message) IsSupported()
+    {
+        const int MaxSimpleRomSizeBytes = 32 * 1024;
+        if (RomData.Length > MaxSimpleRomSizeBytes)
+            return (false, "Cartridges larger than 32KB are not supported yet.");
+        if (IsCgbOnly)
+            return (false, "CGB-only cartridges are not supported.");
+        if (CartridgeType != CartridgeType.RomOnly)
+            Console.WriteLine($"Treating {CartridgeType} as ROM-only because the image is {RomData.Length / 1024}KB.");
+        return (true, null);
+    }
 }

@@ -10,7 +10,6 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using JetBrains.Annotations;
-using System.Diagnostics;
 
 namespace DTC.SM83.Devices;
 
