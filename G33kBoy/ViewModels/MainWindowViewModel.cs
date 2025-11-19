@@ -33,6 +33,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         get => m_windowTitle ?? "G33kBoy";
         private set => SetField(ref m_windowTitle, value);
     }
+    private string m_currentRomTitle = "G33kBoy";
 
     public ClockSync.Speed EmulationSpeed
     {
@@ -65,7 +66,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy = new GameBoy(Settings.Instance);
         GameBoy.RomLoaded += (_, title) =>
             Dispatcher.UIThread.Post(() =>
-                WindowTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : $"G33kBoy - {title}");
+            {
+                m_currentRomTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : title;
+                WindowTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : $"G33kBoy - {title}";
+            });
         ApplyDisplayVisibilitySettings();
     }
 
@@ -112,10 +116,23 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void SaveScreenshot()
     {
-        var desktopPath = GetDesktopDirectory();
-        var fileName = $"G33kBoy-Screenshot-{DateTime.Now:yyyyMMdd-HHmmss}.tga";
-        var file = desktopPath.GetFile(fileName);
-        GameBoy.SaveScreenshot(file);
+        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
+        var prefix = SanitizeFileName(m_currentRomTitle);
+        var defaultName = $"{prefix}.tga";
+        var command = new FileSaveCommand("Save Screenshot", "TGA Files", ["*.tga"], defaultName);
+        command.FileSelected += (_, info) =>
+        {
+            try
+            {
+                GameBoy.SaveScreenshot(info);
+            }
+            finally
+            {
+                keyBlocker.Dispose();
+            }
+        };
+        command.Cancelled += (_, _) => keyBlocker.Dispose();
+        command.Execute(null);
     }
     
     public void OpenProjectPage() =>
@@ -126,9 +143,22 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void ExportTileMap()
     {
-        var desktopPath = GetDesktopDirectory();
-        var file = desktopPath.GetFile("TileMap.tga");
-        GameBoy.ExportTileMap(file);
+        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
+        var prefix = SanitizeFileName(m_currentRomTitle);
+        var command = new FileSaveCommand("Export Tile Map", "TGA Files", ["*.tga"], $"{prefix}-TileMap.tga");
+        command.FileSelected += (_, info) =>
+        {
+            try
+            {
+                GameBoy.ExportTileMap(info);
+            }
+            finally
+            {
+                keyBlocker.Dispose();
+            }
+        };
+        command.Cancelled += (_, _) => keyBlocker.Dispose();
+        command.Execute(null);
     }
 
     private void ApplyDisplayVisibilitySettings()
@@ -146,25 +176,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Settings.LastRomFile = romFile;
     }
 
-    private static DirectoryInfo GetDesktopDirectory()
-    {
-        var candidates = new[]
-        {
-            Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            Environment.CurrentDirectory
-        };
-
-        foreach (var candidate in candidates)
-        {
-            if (!string.IsNullOrWhiteSpace(candidate))
-                return candidate.ToDir();
-        }
-
-        throw new InvalidOperationException("Unable to resolve a desktop directory.");
-    }
-
     public void Dispose() =>
         GameBoy.Dispose();
+
+    private static string SanitizeFileName(string input) =>
+        string.IsNullOrWhiteSpace(input) ? "G33kBoy" : input.ToSafeFileName();
 }
