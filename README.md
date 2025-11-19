@@ -5,7 +5,7 @@
 </p>
 
 # G33kBoy
-A cross-platform Avalonia-based GameBoy emulator.
+A cross-platform Avalonia-based GameBoy emulator. (Work In Progress)
 
 ![image](img/app.png)
 
