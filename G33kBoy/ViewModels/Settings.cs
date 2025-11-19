@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DTC.Core;
 using DTC.Core.Extensions;
@@ -50,6 +51,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
+    public FileInfo LastRomFile
+    {
+        get => Get<FileInfo>();
+        set => Set(value);
+    }
+
     /// <summary>
     /// Serialized game data entries (<c>FileName|Payload</c>).
     /// </summary>
@@ -67,6 +74,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsBackgroundVisible = true;
         AreSpritesVisible = true;
         GameDataStates = [];
+        LastRomFile = null;
     }
 
     public byte[] LoadGameData(string cartridgeFileName)

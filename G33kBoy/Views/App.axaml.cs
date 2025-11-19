@@ -52,7 +52,10 @@ public class App : Application
 
             if (!Design.IsDesignMode)
             {
-                Dispatcher.UIThread.Post(viewModel.LoadGameRom);
+                if (Settings.Instance.LastRomFile?.Exists == true)
+                    Dispatcher.UIThread.Post(() => viewModel.LoadRomFile(Settings.Instance.LastRomFile));
+                else
+                    Dispatcher.UIThread.Post(viewModel.LoadGameRom);
 
                 desktop.MainWindow.Closed += (_, _) =>
                 {

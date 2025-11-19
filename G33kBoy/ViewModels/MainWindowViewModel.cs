@@ -66,7 +66,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         {
             try
             {
-                GameBoy.PowerOnAsync(info);
+                LoadRomFile(info);
             }
             finally
             {
@@ -124,6 +124,15 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
+    }
+
+    internal void LoadRomFile(FileInfo romFile)
+    {
+        if (romFile == null)
+            return;
+
+        GameBoy.PowerOnAsync(romFile);
+        Settings.LastRomFile = romFile;
     }
 
     private static DirectoryInfo GetDesktopDirectory()
