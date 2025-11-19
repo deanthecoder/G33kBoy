@@ -11,6 +11,7 @@
 using System;
 using System.IO;
 using Avalonia;
+using Avalonia.Threading;
 using DTC.Core.Commands;
 using DTC.Core.Extensions;
 using DTC.Core.ViewModels;
@@ -21,10 +22,17 @@ namespace G33kBoy.ViewModels;
 public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private ClockSync.Speed m_emulationSpeed;
-    
+    private string m_windowTitle;
+
     public GameBoy GameBoy { get; }
 
     public Settings Settings => Settings.Instance;
+    
+    public string WindowTitle
+    {
+        get => m_windowTitle ?? "G33kBoy";
+        private set => SetField(ref m_windowTitle, value);
+    }
 
     public ClockSync.Speed EmulationSpeed
     {
@@ -55,6 +63,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public MainWindowViewModel()
     {
         GameBoy = new GameBoy(Settings.Instance);
+        GameBoy.RomLoaded += (_, title) =>
+            Dispatcher.UIThread.Post(() =>
+                WindowTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : $"G33kBoy - {title}");
         ApplyDisplayVisibilitySettings();
     }
 

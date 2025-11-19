@@ -12,7 +12,7 @@
         Width="1066" Height="768"
         MinWidth="520" MinHeight="320"
         Icon="/Assets/app.ico"
-        Title="G33kBoy">
+        Title="{Binding WindowTitle}">
     <Design.DataContext>
         <viewModels:MainWindowViewModel />
     </Design.DataContext>
@@ -25,6 +25,10 @@
             <Setter Property="IsHitTestVisible" Value="False"/>
         </Style>
     </Window.Styles>
+
+    <Window.KeyBindings>
+        <KeyBinding Command="{Binding LoadGameRom}" Gesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
+    </Window.KeyBindings>
 
     <dialogHostAvalonia:DialogHost x:Name="Host" OverlayBackground="Black">
         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*">

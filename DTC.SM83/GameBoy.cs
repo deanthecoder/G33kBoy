@@ -36,6 +36,7 @@ public sealed class GameBoy : IDisposable
     private Cartridge m_loadedCartridge;
     private string m_cartridgeKey;
 
+    public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
 
     public WriteableBitmap Display { get; }
@@ -78,6 +79,7 @@ public sealed class GameBoy : IDisposable
 
         m_cartridgeKey = romFile.Name;
         m_loadedCartridge = new Cartridge(romData);
+        RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
 
         RestoreSavedGameData();
