@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -68,10 +69,10 @@ public sealed class GameBoy : IDisposable
             return;
         }
 
-        var romData = romFile.ReadAllBytes();
+        var romData = ReadRomData(romFile, out var cartridgeKey);
         if (romData == null || romData.Length == 0)
         {
-            Logger.Instance.Warn($"Failed to read ROM '{romFile.FullName}'.");
+            DialogService.Instance.ShowMessage($"Unable to load ROM '{romFile.Name}'", "No valid ROM data found.", MaterialIconKind.GamepadClassicOutline);
             return;
         }
 
@@ -79,7 +80,7 @@ public sealed class GameBoy : IDisposable
         var supportCheck = cartridge.IsSupported();
         if (!supportCheck.IsSupported)
         {
-            DialogService.Instance.ShowMessage("Unable to load ROM", supportCheck.Message, MaterialIconKind.GamepadClassicOutline);
+            DialogService.Instance.ShowMessage($"Unable to load ROM '{romFile.Name}'", supportCheck.Message, MaterialIconKind.GamepadClassicOutline);
             return;
         }
 
@@ -87,7 +88,7 @@ public sealed class GameBoy : IDisposable
         RecreateHardware();
         m_clockSync.Reset();
 
-        m_cartridgeKey = romFile.Name;
+        m_cartridgeKey = cartridgeKey;
         m_loadedCartridge = cartridge;
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
@@ -124,6 +125,29 @@ public sealed class GameBoy : IDisposable
         }
         
         Logger.Instance.Info("CPU loop stopped.");
+    }
+
+    private static byte[] ReadRomData(FileInfo romFile, out string cartridgeKey)
+    {
+        cartridgeKey = romFile.Name;
+        if (!romFile.Extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            return romFile.ReadAllBytes();
+
+        using var archive = ZipFile.OpenRead(romFile.FullName);
+        foreach (var entry in archive.Entries)
+        {
+            if (!entry.Name.EndsWith(".gb", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var buffer = new byte[(int)entry.Length];
+            using var stream = entry.Open();
+            stream.ReadExactly(buffer.AsSpan());
+
+            cartridgeKey = entry.Name;
+            return buffer;
+        }
+
+        return null;
     }
 
     private void OnFrameRendered(object sender, byte[] frameBuffer)

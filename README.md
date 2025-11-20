@@ -11,7 +11,7 @@ A cross-platform Avalonia-based Game Boy emulator. (Work In Progress)
 
 ## Purpose
 G33kBoy exists so I can learn Game Boy hardware properly, starting from a clean SM83 CPU implementation.  
-My [ZX Spectrum emulator](https://github.com/deanthecoder/ZXSpeculator) taught me a lot about emulation, and the Game Boy has a *similar* CPU - But additionally contains a dedicated PPU (/video) and sound chips which need emulation too. Plus there's some techniques for improving CPU performance I wanted to try out.
+My [ZX Spectrum emulator](https://github.com/deanthecoder/ZXSpeculator) taught me a lot about emulation, and the Game Boy has a *similar* CPU – but it also includes a dedicated PPU (video) and sound hardware that need to be emulated too. It is also a playground for some CPU performance techniques I wanted to try.
 
 ## Keyboard controls
 Global key hooks translate the following keys into the Game Boy joypad:
@@ -31,23 +31,30 @@ Global key hooks translate the following keys into the Game Boy joypad:
   <img src="img/KeyMap.png" alt="Key map" width="200">
 </div>
 
-## Highlights
-- **SM83 accuracy** – `DTC.SM83` implements the Game Boy CPU, including interrupt handling, prefixed instructions, memory bus, PPU timing, and a mnemonic disassembler to inspect opcode streams.
-- **Shared core utilities** – `DTC.Core` provides reusable commands, extensions, converters, and Avalonia helpers so the emulator and any future UI/drivers share common infrastructure.
-- **Avalonia UI shell** – `G33kBoy` hosts the emulator in a cross-platform desktop window.
-- **Validation suite** – `UnitTests` target the CPU core via NUnit, ensuring regressions are caught early.
-- **Battery-backed saves** – Cartridge RAM is checkpointed every few seconds, compressed, and restored when the ROM loads so in-game progress (scores, unlocks, etc.) persists between sessions.
+## Emulator features
+- **ROM loading from ZIPs** – Load standard `.gb` ROMs directly, or from a `.zip` archive containing a Game Boy ROM.
+- **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
+- **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
+- **Screenshot capture** – Save the current frame as a TGA screenshot.
+- **Tile map export** – Export the current tile map as a TGA image for debugging graphics or capturing assets.
 
 ## Status
 - ✔ CPU: full instruction set + automated tests
 - ✔ PPU: Scanline-based renderer
 - ✔ Boot ROM behaviour
 - ✔ Battery-backed RAM persistence
-- ☐ Zipped ROM loading
+- ✔ Zipped ROM loading
 - ☐ Audio
 - ☐ Cartridge MBCs
 - ☐ Gameplay 'roll back'
 - ☐ Game Boy Color support
+
+## Highlights
+- **SM83 accuracy** – `DTC.SM83` implements the Game Boy CPU, including interrupt handling, prefixed instructions, memory bus, PPU timing, and a mnemonic disassembler to inspect opcode streams.
+- **Shared core utilities** – `DTC.Core` provides reusable commands, extensions, converters, and Avalonia helpers so the emulator and any future UI/drivers share common infrastructure.
+- **Avalonia UI shell** – `G33kBoy` hosts the emulator in a cross-platform desktop window.
+- **Validation suite** – `UnitTests` target the CPU core via NUnit, ensuring regressions are caught early.
+- **Battery-backed saves** – Cartridge RAM is checkpointed every few seconds, compressed, and restored when the ROM loads so in-game progress (scores, unlocks, etc.) persists between sessions.
 
 ## External resources
 - `external/GameboyCPUTests/` – CPU tests for regression validation
