@@ -36,7 +36,7 @@ public sealed class GameBoy : IDisposable
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private Cartridge m_loadedCartridge;
     private string m_cartridgeKey;
-    private bool m_greenScreenEnabled = true;
+    private bool m_lcdEmulationEnabled = true;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -193,19 +193,13 @@ public sealed class GameBoy : IDisposable
             ppu.SpritesVisible = isVisible;
     }
 
-    public void SetGreenScreen(bool isEnabled)
+    public void SetLcdEmulation(bool isEnabled)
     {
-        m_greenScreenEnabled = isEnabled;
+        m_lcdEmulationEnabled = isEnabled;
+        m_screen.LcdEmulationEnabled = isEnabled;
         var ppu = m_bus?.PPU;
         if (ppu != null)
-            ppu.GreenScreenEnabled = isEnabled;
-    }
-
-    public void SetMotionBlur(bool isEnabled)
-    {
-        var ppu = m_bus?.PPU;
-        if (ppu != null)
-            ppu.MotionBlurEnabled = isEnabled;
+            ppu.LcdEmulationEnabled = isEnabled;
     }
 
     public void SaveScreenshot(FileInfo tgaFile)
@@ -310,7 +304,7 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, m_joypad);
-        m_bus.PPU.GreenScreenEnabled = m_greenScreenEnabled;
+        m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
         {
 #if DEBUG

@@ -53,6 +53,7 @@ public class PPU
     private bool m_windowLineUsedThisScanline;
     private bool m_motionBlurEnabled;
     private bool m_motionBlurPrimed;
+    private bool m_lcdEmulationEnabled = true;
     private const double MotionBlurOldWeight = 0.6;
     private const double MotionBlurOldWeightDark = 0.3;
 
@@ -88,19 +89,23 @@ public class PPU
 
     public bool SpritesVisible { get; set; } = true;
 
-    public bool GreenScreenEnabled { get; set; }
-
-    public bool MotionBlurEnabled
+    public bool LcdEmulationEnabled
     {
-        get => m_motionBlurEnabled;
+        get => m_lcdEmulationEnabled;
         set
         {
-            if (m_motionBlurEnabled == value)
-                return;
-            m_motionBlurEnabled = value;
-            if (!m_motionBlurEnabled)
-                m_motionBlurPrimed = false;
+            m_lcdEmulationEnabled = value;
+            SetMotionBlurEnabled(value);
         }
+    }
+
+    private void SetMotionBlurEnabled(bool enabled)
+    {
+        if (m_motionBlurEnabled == enabled)
+            return;
+        m_motionBlurEnabled = enabled;
+        if (!m_motionBlurEnabled)
+            m_motionBlurPrimed = false;
     }
 
     /// <summary>
@@ -497,7 +502,7 @@ public class PPU
             byte targetG;
             byte targetB;
 
-            if (GreenScreenEnabled)
+            if (m_lcdEmulationEnabled)
             {
                 var greenIndex = colorValue * 3;
                 targetR = m_greenMap[greenIndex];
@@ -563,7 +568,7 @@ public class PPU
         byte baseG;
         byte baseB;
 
-        if (GreenScreenEnabled)
+        if (m_lcdEmulationEnabled)
         {
             baseR = m_greenMap[0];
             baseG = m_greenMap[1];

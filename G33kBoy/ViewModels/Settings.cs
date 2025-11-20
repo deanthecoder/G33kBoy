@@ -51,13 +51,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
-    public bool IsGreenScreenEnabled
-    {
-        get => Get<bool>();
-        set => Set(value);
-    }
-
-    public bool IsMotionBlurEnabled
+    public bool IsLcdEmulationEnabled
     {
         get => Get<bool>();
         set => Set(value);
@@ -84,8 +78,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsAmbientBlurred = true;
         IsSoundEnabled = true;
         IsBackgroundVisible = true;
-        IsGreenScreenEnabled = true;
-        IsMotionBlurEnabled = true;
+        IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;
         GameDataStates = [];
         LastRomFile = null;

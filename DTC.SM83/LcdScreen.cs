@@ -17,21 +17,22 @@ namespace DTC.SM83;
 
 public sealed class LcdScreen : IDisposable
 {
+    private const int Scale = 3;
     private readonly int m_sourceWidth;
     private readonly int m_sourceHeight;
-    private readonly int m_scale = 3;
     private readonly int m_destWidth;
     private readonly double[] m_grain;
     private uint m_previousFrameBufferHash;
 
     public WriteableBitmap Display { get; }
+    public bool LcdEmulationEnabled { get; set; } = true;
 
     public LcdScreen(int sourceWidth, int sourceHeight)
     {
         m_sourceWidth = sourceWidth;
         m_sourceHeight = sourceHeight;
-        m_destWidth = sourceWidth * m_scale;
-        var destHeight = sourceHeight * m_scale;
+        m_destWidth = sourceWidth * Scale;
+        var destHeight = sourceHeight * Scale;
 
         var pixelSize = new PixelSize(m_destWidth, destHeight);
         Display = new WriteableBitmap(pixelSize, new Vector(96, 96), PixelFormat.Rgba8888);
@@ -59,8 +60,8 @@ public sealed class LcdScreen : IDisposable
         for (var y = 0; y < m_sourceHeight; y++)
         {
             var sourceRowOffset = y * m_sourceWidth * 4;
-            var destBaseY = y * m_scale;
-            
+            var destBaseY = y * Scale;
+
             // Top/bottom tinge.
             var redBoostTop = (1.0 - y / 5.0).Clamp(0.0, 1.0) * 1.1;
             var redBoostBottom = (1.0 - (m_sourceHeight - y) / 5.0).Clamp(0.0, 1.0) * 1.1;
@@ -75,7 +76,7 @@ public sealed class LcdScreen : IDisposable
                 var a = frameBuffer[srcOffset + 3];
                 
                 // Convert RGB to [0.0, 1.0].
-                var destBaseX = x * m_scale;
+                var destBaseX = x * Scale;
                 var grainBaseIndex = destBaseY * m_destWidth + destBaseX;
                 var redBase = r / 255.0;
                 var greenBase = g / 255.0;
@@ -85,34 +86,44 @@ public sealed class LcdScreen : IDisposable
                 var redBoostLeft = (1.0 - x / 3.0).Clamp(0.0, 1.0);
                 var redBoostRight = (1.0 - (m_sourceWidth - x) / 3.0).Clamp(0.0, 1.0);
                 var redBoost = Math.Max(redBoostTop, Math.Max(redBoostBottom, Math.Max(redBoostLeft, redBoostRight)));
-                redBase *= 1.0 + redBoost * 0.25;
-                greenBase *= 1.0 + redBoost * 0.07;
+                if (LcdEmulationEnabled)
+                {
+                    redBase *= 1.0 + redBoost * 0.25;
+                    greenBase *= 1.0 + redBoost * 0.07;
+                }
                 
-                for (var py = 0; py < m_scale; py++)
+                for (var py = 0; py < Scale; py++)
                 {
                     var destRowStart = destPtr + (destBaseY + py) * destStride;
                     var grainRowStart = grainBaseIndex + py * m_destWidth;
-                    for (var px = 0; px < m_scale; px++)
+                    for (var px = 0; px < Scale; px++)
                     {
-                        var grain = m_grain[grainRowStart + px];
+                        var red = redBase;
+                        var green = greenBase;
+                        var blue = blueBase;
 
-                        // Left/right shadow.
-                        var shadowL = (x + px / (double)m_scale).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
-                        var shadowR = (m_sourceWidth - (x + px / (double)m_scale)).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
-                        var shadow = Math.Min(shadowL, shadowR); 
-                        grain *= 0.6 + 0.4 * shadow;
+                        if (LcdEmulationEnabled)
+                        {
+                            var grain = m_grain[grainRowStart + px];
 
-                        var red = redBase * grain;
-                        var green = greenBase * grain;
-                        var blue = blueBase * grain;
+                            // Left/right shadow.
+                            var shadowL = (x + px / (double)Scale).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
+                            var shadowR = (m_sourceWidth - (x + px / (double)Scale)).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
+                            var shadow = Math.Min(shadowL, shadowR); 
+                            grain *= 0.6 + 0.4 * shadow;
 
-                        // Pixel outlines.
-                        var s = 1.0 - px % m_scale + 1.0 - py % m_scale;
-                        s *= 0.005;
-                        red -= s;
-                        green -= s;
-                        blue -= s;
-                
+                            red *= grain;
+                            green *= grain;
+                            blue *= grain;
+
+                            // Pixel outlines.
+                            var s = 1.0 - px % Scale + 1.0 - py % Scale;
+                            s *= 0.005;
+                            red -= s;
+                            green -= s;
+                            blue -= s;
+                        }
+
                         // Set target pixel.
                         var destOffset = destRowStart + (destBaseX + px) * 4;
                         destOffset[0] = (byte)(red * 255.0).Clamp(0.0, 255.0);

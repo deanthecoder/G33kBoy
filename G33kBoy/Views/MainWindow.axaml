@@ -28,6 +28,8 @@
 
     <Window.KeyBindings>
         <KeyBinding Command="{Binding LoadGameRom}" Gesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
+        <KeyBinding Command="{Binding ResetDevice}" Gesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
+        <KeyBinding Command="{Binding SaveScreenshot}" Gesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
     </Window.KeyBindings>
 
     <dialogHostAvalonia:DialogHost x:Name="Host" OverlayBackground="Black">
@@ -44,6 +46,13 @@
 
                     <MenuItem Header="Hardware">
                         <MenuItem Header="Display">
+                            <MenuItem Header="Emulate LCD" Command="{Binding ToggleLcdEmulation}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding Settings.IsLcdEmulationEnabled}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
                             <MenuItem Header="Background Tiles" Command="{Binding ToggleBackgroundVisibility}">
                                 <MenuItem.Icon>
                                     <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsBackgroundVisible}" />
@@ -52,16 +61,6 @@
                             <MenuItem Header="Sprites" Command="{Binding ToggleSpriteVisibility}">
                                 <MenuItem.Icon>
                                     <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.AreSpritesVisible}" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="Green Screen" Command="{Binding ToggleGreenScreen}">
-                                <MenuItem.Icon>
-                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsGreenScreenEnabled}" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="Motion Blur" Command="{Binding ToggleMotionBlur}">
-                                <MenuItem.Icon>
-                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsMotionBlurEnabled}" />
                                 </MenuItem.Icon>
                             </MenuItem>
                         </MenuItem>
@@ -75,11 +74,13 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
-                        <MenuItem Header="Reset Device" Command="{Binding ResetDevice}" />
+                        <MenuItem Header="Reset Device" Command="{Binding ResetDevice}"
+                                  InputGesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
                     </MenuItem>
 
                     <MenuItem Header="Extras">
-                        <MenuItem Header="Save Screenshot..." Command="{Binding SaveScreenshot}" />
+                        <MenuItem Header="Save Screenshot..." Command="{Binding SaveScreenshot}"
+                                  InputGesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
                         <MenuItem Header="Export TileMap..." Command="{Binding ExportTileMap}" />
                     </MenuItem>
 

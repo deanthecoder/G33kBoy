@@ -62,15 +62,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         ApplyDisplayVisibilitySettings();
     }
 
-    public void ToggleGreenScreen()
+    public void ToggleLcdEmulation()
     {
-        Settings.IsGreenScreenEnabled = !Settings.IsGreenScreenEnabled;
-        ApplyDisplayVisibilitySettings();
-    }
-
-    public void ToggleMotionBlur()
-    {
-        Settings.IsMotionBlurEnabled = !Settings.IsMotionBlurEnabled;
+        Settings.IsLcdEmulationEnabled = !Settings.IsLcdEmulationEnabled;
         ApplyDisplayVisibilitySettings();
     }
 
@@ -194,8 +188,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
-        GameBoy.SetGreenScreen(Settings.IsGreenScreenEnabled);
-        GameBoy.SetMotionBlur(Settings.IsMotionBlurEnabled);
+        GameBoy.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
     }
 
     internal void LoadRomFile(FileInfo romFile)
