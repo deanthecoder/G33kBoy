@@ -12,6 +12,7 @@ using System;
 using System.IO;
 using Avalonia;
 using Avalonia.Threading;
+using DTC.Core;
 using DTC.Core.Commands;
 using DTC.Core.Extensions;
 using DTC.Core.ViewModels;
@@ -172,6 +173,21 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         };
         command.Cancelled += (_, _) => keyBlocker.Dispose();
         command.Execute(null);
+    }
+
+    public void ResetDevice()
+    {
+        var romFile = Settings.LastRomFile;
+        if (romFile == null)
+            return;
+
+        if (!romFile.Exists)
+        {
+            Logger.Instance.Warn($"Unable to reset: ROM '{romFile.FullName}' not found.");
+            return;
+        }
+
+        LoadRomFile(romFile);
     }
 
     private void ApplyDisplayVisibilitySettings()

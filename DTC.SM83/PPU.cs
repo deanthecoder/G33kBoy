@@ -51,9 +51,6 @@ public class PPU
     private int m_spriteCount;
     private int m_windowLine;
     private bool m_windowLineUsedThisScanline;
-    private bool m_backgroundVisible = true;
-    private bool m_spritesVisible = true;
-    private bool m_greenScreenEnabled;
     private bool m_motionBlurEnabled;
     private bool m_motionBlurPrimed;
     private const double MotionBlurOldWeight = 0.6;
@@ -87,23 +84,11 @@ public class PPU
     /// </summary>
     public event EventHandler<byte[]> FrameRendered;
 
-    public bool BackgroundVisible
-    {
-        get => m_backgroundVisible;
-        set => m_backgroundVisible = value;
-    }
+    public bool BackgroundVisible { get; set; } = true;
 
-    public bool SpritesVisible
-    {
-        get => m_spritesVisible;
-        set => m_spritesVisible = value;
-    }
+    public bool SpritesVisible { get; set; } = true;
 
-    public bool GreenScreenEnabled
-    {
-        get => m_greenScreenEnabled;
-        set => m_greenScreenEnabled = value;
-    }
+    public bool GreenScreenEnabled { get; set; }
 
     public bool MotionBlurEnabled
     {
@@ -161,8 +146,7 @@ public class PPU
             CurrentState = FrameState.HBlank; // Mode 0.
             m_tCycles = 0;
 
-            Array.Clear(m_frameBuffer);
-            Array.Clear(m_colorAccumulator);
+            ClearFrameBufferToBaseColor();
             return; // Stop PPU while LCD is off.
         }
 
@@ -253,7 +237,7 @@ public class PPU
     private void CaptureVisibleSprites()
     {
         m_spriteCount = 0;
-        if (!m_lcdc.SpriteEnable || !m_spritesVisible)
+        if (!m_lcdc.SpriteEnable || !SpritesVisible)
             return; // No sprite drawing required.
         
         // Capture up to 10 sprites for this LY in OAM order.
@@ -326,7 +310,7 @@ public class PPU
                 $"BGP=0x{lcdBGP:X2} OBP0=0x{m_lcd.OBP0:X2} OBP1=0x{m_lcd.OBP1:X2}");
         }
 
-        var bgEnabled = m_lcdc.BgWindowEnablePriority && m_backgroundVisible;
+        var bgEnabled = m_lcdc.BgWindowEnablePriority && BackgroundVisible;
         var windowEnabled =
             bgEnabled &&
             m_lcdc.WindowEnable &&
@@ -417,7 +401,7 @@ public class PPU
             // Now we draw the sprites.
             byte spriteColorIndex = 0x00;
             byte spritePalette = 0x00;
-            if (m_spritePixelCoverage[x] && m_spritesVisible)
+            if (m_spritePixelCoverage[x] && SpritesVisible)
             {
                 for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
                 {
@@ -513,7 +497,7 @@ public class PPU
             byte targetG;
             byte targetB;
 
-            if (m_greenScreenEnabled)
+            if (GreenScreenEnabled)
             {
                 var greenIndex = colorValue * 3;
                 targetR = m_greenMap[greenIndex];
@@ -572,6 +556,42 @@ public class PPU
 
     public void ResetLyCounter() =>
         UpdateLineIndex(false);
+
+    private void ClearFrameBufferToBaseColor()
+    {
+        byte baseR;
+        byte baseG;
+        byte baseB;
+
+        if (GreenScreenEnabled)
+        {
+            baseR = m_greenMap[0];
+            baseG = m_greenMap[1];
+            baseB = m_greenMap[2];
+        }
+        else
+        {
+            var grey = m_greyMap[0];
+            baseR = grey;
+            baseG = grey;
+            baseB = grey;
+        }
+
+        var pixelCount = FrameWidth * FrameHeight;
+        for (var i = 0; i < pixelCount; i++)
+        {
+            var fbOffset = i * 4;
+            m_frameBuffer[fbOffset] = baseR;
+            m_frameBuffer[fbOffset + 1] = baseG;
+            m_frameBuffer[fbOffset + 2] = baseB;
+            m_frameBuffer[fbOffset + 3] = 0xFF;
+
+            var accOffset = i * 3;
+            m_colorAccumulator[accOffset] = baseR;
+            m_colorAccumulator[accOffset + 1] = baseG;
+            m_colorAccumulator[accOffset + 2] = baseB;
+        }
+    }
 
     /// <summary>
     /// Compare LY vs LYC; set STAT.coincidence + IF STAT if enabled.

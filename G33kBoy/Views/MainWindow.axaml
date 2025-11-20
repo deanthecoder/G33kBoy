@@ -74,6 +74,8 @@
                                 <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsAmbientBlurred}" />
                             </MenuItem.Icon>
                         </MenuItem>
+                        <Separator />
+                        <MenuItem Header="Reset Device" Command="{Binding ResetDevice}" />
                     </MenuItem>
 
                     <MenuItem Header="Extras">

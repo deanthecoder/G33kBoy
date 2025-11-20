@@ -38,6 +38,7 @@ public sealed class GameBoy : IDisposable
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private Cartridge m_loadedCartridge;
     private string m_cartridgeKey;
+    private bool m_greenScreenEnabled = true;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -196,6 +197,7 @@ public sealed class GameBoy : IDisposable
 
     public void SetGreenScreen(bool isEnabled)
     {
+        m_greenScreenEnabled = isEnabled;
         var ppu = m_bus?.PPU;
         if (ppu != null)
             ppu.GreenScreenEnabled = isEnabled;
@@ -310,6 +312,7 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, m_joypad);
+        m_bus.PPU.GreenScreenEnabled = m_greenScreenEnabled;
         m_cpu = new Cpu(m_bus)
         {
 #if DEBUG
