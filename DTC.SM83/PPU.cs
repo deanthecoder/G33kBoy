@@ -30,6 +30,13 @@ public class PPU
     private readonly byte[] m_frameBuffer = new byte[FrameWidth * FrameHeight * 4];
 
     private readonly byte[] m_greyMap = [0xE0, 0xA8, 0x58, 0x10];
+    private readonly byte[] m_greenMap =
+    [
+        0x81, 0x7D, 0x15,
+        0x63, 0x74, 0x3F,
+        0x45, 0x5D, 0x4E,
+        0x35, 0x42, 0x2F 
+    ];
     private readonly byte[] m_spriteIndices = new byte[10];
     private readonly bool[] m_spritePixelCoverage = new bool[FrameWidth];
     private readonly ILcd m_lcd;
@@ -45,6 +52,7 @@ public class PPU
     private bool m_windowLineUsedThisScanline;
     private bool m_backgroundVisible = true;
     private bool m_spritesVisible = true;
+    private bool m_greenScreenEnabled;
 
     private enum FrameState
     {
@@ -84,6 +92,12 @@ public class PPU
     {
         get => m_spritesVisible;
         set => m_spritesVisible = value;
+    }
+
+    public bool GreenScreenEnabled
+    {
+        get => m_greenScreenEnabled;
+        set => m_greenScreenEnabled = value;
     }
 
     /// <summary>
@@ -473,10 +487,22 @@ public class PPU
             }
 
             var frameOffset = (lcdLy * FrameWidth + x) * 4;
-            m_frameBuffer[frameOffset] = m_greyMap[colorValue];     // R
-            m_frameBuffer[frameOffset + 1] = m_greyMap[colorValue]; // G
-            m_frameBuffer[frameOffset + 2] = m_greyMap[colorValue]; // B
-            m_frameBuffer[frameOffset + 3] = 0xFF;                  // A
+            if (m_greenScreenEnabled)
+            {
+                var greenIndex = colorValue * 3;
+                m_frameBuffer[frameOffset] = m_greenMap[greenIndex];         // R
+                m_frameBuffer[frameOffset + 1] = m_greenMap[greenIndex + 1]; // G
+                m_frameBuffer[frameOffset + 2] = m_greenMap[greenIndex + 2]; // B
+                m_frameBuffer[frameOffset + 3] = 0xFF;                       // A
+            }
+            else
+            {
+                var grey = m_greyMap[colorValue];
+                m_frameBuffer[frameOffset] = grey;     // R
+                m_frameBuffer[frameOffset + 1] = grey; // G
+                m_frameBuffer[frameOffset + 2] = grey; // B
+                m_frameBuffer[frameOffset + 3] = 0xFF; // A
+            }
         }
     }
 

@@ -51,6 +51,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
+    public bool IsGreenScreenEnabled
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     public FileInfo LastRomFile
     {
         get => Get<FileInfo>();
@@ -72,6 +78,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsAmbientBlurred = true;
         IsSoundEnabled = true;
         IsBackgroundVisible = true;
+        IsGreenScreenEnabled = true;
         AreSpritesVisible = true;
         GameDataStates = [];
         LastRomFile = null;

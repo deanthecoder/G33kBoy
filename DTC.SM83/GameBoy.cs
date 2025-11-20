@@ -194,6 +194,13 @@ public sealed class GameBoy : IDisposable
             ppu.SpritesVisible = isVisible;
     }
 
+    public void SetGreenScreen(bool isEnabled)
+    {
+        var ppu = m_bus?.PPU;
+        if (ppu != null)
+            ppu.GreenScreenEnabled = isEnabled;
+    }
+
     public void SaveScreenshot(FileInfo tgaFile)
     {
         if (tgaFile == null)

@@ -61,6 +61,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         ApplyDisplayVisibilitySettings();
     }
 
+    public void ToggleGreenScreen()
+    {
+        Settings.IsGreenScreenEnabled = !Settings.IsGreenScreenEnabled;
+        ApplyDisplayVisibilitySettings();
+    }
+
     public MainWindowViewModel()
     {
         GameBoy = new GameBoy(Settings.Instance);
@@ -69,6 +75,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             {
                 m_currentRomTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : title;
                 WindowTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : $"G33kBoy - {title}";
+                ApplyDisplayVisibilitySettings();
             });
         ApplyDisplayVisibilitySettings();
     }
@@ -165,6 +172,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
+        GameBoy.SetGreenScreen(Settings.IsGreenScreenEnabled);
     }
 
     internal void LoadRomFile(FileInfo romFile)

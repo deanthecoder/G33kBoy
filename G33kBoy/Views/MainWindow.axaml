@@ -54,6 +54,11 @@
                                     <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.AreSpritesVisible}" />
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <MenuItem Header="Green Screen" Command="{Binding ToggleGreenScreen}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsGreenScreenEnabled}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </MenuItem>
                         <Separator />
                         <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
