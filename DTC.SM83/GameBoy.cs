@@ -11,10 +11,7 @@
 
 using System.Diagnostics;
 using System.IO.Compression;
-using System.Runtime.InteropServices;
-using Avalonia;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using DTC.Core;
 using DTC.Core.Extensions;
 using DTC.Core.UI;
@@ -32,6 +29,7 @@ public sealed class GameBoy : IDisposable
     private Bus m_bus;
     private Cpu m_cpu;
     private readonly Joypad m_joypad;
+    private readonly LcdScreen m_screen;
 
     private Thread m_cpuThread;
     private bool m_shutdownRequested;
@@ -43,7 +41,7 @@ public sealed class GameBoy : IDisposable
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
 
-    public WriteableBitmap Display { get; }
+    public WriteableBitmap Display => m_screen.Display;
 
     public double RelativeSpeed { get; private set; }
 
@@ -54,7 +52,7 @@ public sealed class GameBoy : IDisposable
         m_gameDataStore = gameDataStore;
         m_joypad = new Joypad();
         CreateHardware();
-        Display = new WriteableBitmap(new PixelSize(PPU.FrameWidth, PPU.FrameHeight), new Vector(96, 96), PixelFormat.Rgba8888);
+        m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
 
         m_clockSync = new ClockSync(4194304, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
     }
@@ -153,8 +151,7 @@ public sealed class GameBoy : IDisposable
 
     private void OnFrameRendered(object sender, byte[] frameBuffer)
     {
-        using (var lockedBuffer = Display.Lock())
-            Marshal.Copy(frameBuffer, 0, lockedBuffer.Address, frameBuffer.Length);
+        m_screen.Update(frameBuffer);
 
         // Calculate relative speed based on frame frequency (60Hz = 100%)
         var elapsedMs = m_frameStopwatch.Elapsed.TotalMilliseconds;
@@ -176,6 +173,7 @@ public sealed class GameBoy : IDisposable
         ShutdownCpuThread();
         DisposeHardware();
         m_joypad.Dispose();
+        m_screen.Dispose();
     }
 
     public void SetSpeed(ClockSync.Speed speed) =>
