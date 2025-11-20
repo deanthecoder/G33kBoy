@@ -36,6 +36,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
 - **Original green display** – Toggle a classic four-shade green palette to mimic the original DMG screen.
+- **Motion blur** – Blend frames together for a persistence-of-vision effect that smooths fast movement.
 - **Screenshot capture** – Save the current frame as a TGA screenshot.
 - **Tile map export** – Export the current tile map as a TGA image for debugging graphics or capturing assets.
 

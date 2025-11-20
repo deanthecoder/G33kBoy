@@ -67,6 +67,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         ApplyDisplayVisibilitySettings();
     }
 
+    public void ToggleMotionBlur()
+    {
+        Settings.IsMotionBlurEnabled = !Settings.IsMotionBlurEnabled;
+        ApplyDisplayVisibilitySettings();
+    }
+
     public MainWindowViewModel()
     {
         GameBoy = new GameBoy(Settings.Instance);
@@ -173,6 +179,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
         GameBoy.SetGreenScreen(Settings.IsGreenScreenEnabled);
+        GameBoy.SetMotionBlur(Settings.IsMotionBlurEnabled);
     }
 
     internal void LoadRomFile(FileInfo romFile)

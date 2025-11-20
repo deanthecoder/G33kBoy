@@ -57,6 +57,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
+    public bool IsMotionBlurEnabled
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     public FileInfo LastRomFile
     {
         get => Get<FileInfo>();
@@ -79,6 +85,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsSoundEnabled = true;
         IsBackgroundVisible = true;
         IsGreenScreenEnabled = true;
+        IsMotionBlurEnabled = true;
         AreSpritesVisible = true;
         GameDataStates = [];
         LastRomFile = null;

@@ -37,6 +37,7 @@ public class PPU
         0x45, 0x5D, 0x4E,
         0x35, 0x42, 0x2F 
     ];
+    private readonly double[] m_colorAccumulator = new double[FrameWidth * FrameHeight * 3];
     private readonly byte[] m_spriteIndices = new byte[10];
     private readonly bool[] m_spritePixelCoverage = new bool[FrameWidth];
     private readonly ILcd m_lcd;
@@ -53,6 +54,10 @@ public class PPU
     private bool m_backgroundVisible = true;
     private bool m_spritesVisible = true;
     private bool m_greenScreenEnabled;
+    private bool m_motionBlurEnabled;
+    private bool m_motionBlurPrimed;
+    private const double MotionBlurOldWeight = 0.6;
+    private const double MotionBlurOldWeightDark = 0.3;
 
     private enum FrameState
     {
@@ -100,6 +105,19 @@ public class PPU
         set => m_greenScreenEnabled = value;
     }
 
+    public bool MotionBlurEnabled
+    {
+        get => m_motionBlurEnabled;
+        set
+        {
+            if (m_motionBlurEnabled == value)
+                return;
+            m_motionBlurEnabled = value;
+            if (!m_motionBlurEnabled)
+                m_motionBlurPrimed = false;
+        }
+    }
+
     /// <summary>
     /// True when the CPU is allowed to read/write OAM (LCD disabled, HBlank or VBlank).
     /// </summary>
@@ -144,6 +162,7 @@ public class PPU
             m_tCycles = 0;
 
             Array.Clear(m_frameBuffer);
+            Array.Clear(m_colorAccumulator);
             return; // Stop PPU while LCD is off.
         }
 
@@ -196,6 +215,7 @@ public class PPU
                     {
                         CurrentState = FrameState.FrameWait;
                         FrameRendered?.Invoke(this, m_frameBuffer);
+                        m_motionBlurPrimed = m_motionBlurEnabled;
                         RaiseInterrupt(InterruptDevice.InterruptType.VBlank);
                     }
                     else
@@ -486,23 +506,45 @@ public class PPU
                 colorValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
             }
 
-            var frameOffset = (lcdLy * FrameWidth + x) * 4;
+            var frameIndex = lcdLy * FrameWidth + x;
+            var frameOffset = frameIndex * 4;
+            var accumulatorOffset = frameIndex * 3;
+            byte targetR;
+            byte targetG;
+            byte targetB;
+
             if (m_greenScreenEnabled)
             {
                 var greenIndex = colorValue * 3;
-                m_frameBuffer[frameOffset] = m_greenMap[greenIndex];         // R
-                m_frameBuffer[frameOffset + 1] = m_greenMap[greenIndex + 1]; // G
-                m_frameBuffer[frameOffset + 2] = m_greenMap[greenIndex + 2]; // B
-                m_frameBuffer[frameOffset + 3] = 0xFF;                       // A
+                targetR = m_greenMap[greenIndex];
+                targetG = m_greenMap[greenIndex + 1];
+                targetB = m_greenMap[greenIndex + 2];
             }
             else
             {
                 var grey = m_greyMap[colorValue];
-                m_frameBuffer[frameOffset] = grey;     // R
-                m_frameBuffer[frameOffset + 1] = grey; // G
-                m_frameBuffer[frameOffset + 2] = grey; // B
-                m_frameBuffer[frameOffset + 3] = 0xFF; // A
+                targetR = grey;
+                targetG = grey;
+                targetB = grey;
             }
+
+            var oldR = m_colorAccumulator[accumulatorOffset];
+            var oldG = m_colorAccumulator[accumulatorOffset + 1];
+            var oldB = m_colorAccumulator[accumulatorOffset + 2];
+
+            var oldWeight = !m_motionBlurEnabled || !m_motionBlurPrimed ? 0.0 : MotionBlurOldWeight;
+            if (m_motionBlurEnabled && m_motionBlurPrimed && targetR < oldR)
+                oldWeight = MotionBlurOldWeightDark; // Different bias for darker colors.
+            var newWeight = 1.0 - oldWeight;
+
+            m_colorAccumulator[accumulatorOffset] = oldR * oldWeight + targetR * newWeight;
+            m_colorAccumulator[accumulatorOffset + 1] = oldG * oldWeight + targetG * newWeight;
+            m_colorAccumulator[accumulatorOffset + 2] = oldB * oldWeight + targetB * newWeight;
+
+            m_frameBuffer[frameOffset] = (byte)Math.Clamp((int)Math.Round(m_colorAccumulator[accumulatorOffset]), 0, 255);
+            m_frameBuffer[frameOffset + 1] = (byte)Math.Clamp((int)Math.Round(m_colorAccumulator[accumulatorOffset + 1]), 0, 255);
+            m_frameBuffer[frameOffset + 2] = (byte)Math.Clamp((int)Math.Round(m_colorAccumulator[accumulatorOffset + 2]), 0, 255);
+            m_frameBuffer[frameOffset + 3] = 0xFF; // A
         }
     }
 
