@@ -272,7 +272,14 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, m_joypad);
-        m_cpu = new Cpu(m_bus) { DebugMode = true };
+        m_cpu = new Cpu(m_bus)
+        {
+#if DEBUG
+            DebugMode = true
+#else
+            DebugMode = false
+#endif
+        };
         m_bus.PPU.FrameRendered += OnFrameRendered;
     }
 

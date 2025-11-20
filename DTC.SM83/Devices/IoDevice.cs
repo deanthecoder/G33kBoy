@@ -101,10 +101,6 @@ public class IoDevice : IMemDevice, ILcd
         {
             var src = (ushort)(value << 8);
 
-#if DEBUG
-            Debug.WriteLine($"DMA: FF46=0x{value:X2}, src=0x{src:X4}");
-#endif
-
             IsDMATransferActive = true;
             const int oamSize = 0xA0; // 160 bytes.
             var dest = 0xFE00;

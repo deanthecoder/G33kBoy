@@ -35,11 +35,7 @@ public class DmgAcid2Tests : TestsBase
         cpu.SkipBootRom();
 
         string bufferHash = null;
-        bus.PPU.FrameRendered += (_, frameBuffer) =>
-        {
-            bufferHash = frameBuffer.GetMd5Hex();
-            bus.PPU.Dump(new FileInfo("/Users/dean/Desktop/dmg-acid2.tga"));
-        };
+        bus.PPU.FrameRendered += (_, frameBuffer) => bufferHash = frameBuffer.GetMd5Hex();
 
         while (bufferHash != "7307162C0CCB34631E3B2F9DF80F3B03" && bus.ClockTicks < OneSecondTicks)
             cpu.Step();
