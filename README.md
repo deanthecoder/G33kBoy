@@ -7,7 +7,7 @@
 # G33kBoy
 A cross-platform Avalonia-based Game Boy emulator. (Work In Progress)
 
-![image](img/app.png)
+![Application screenshot](img/app.png)
 
 ## Purpose
 G33kBoy exists so I can learn Game Boy hardware properly, starting from a clean SM83 CPU implementation.  
@@ -36,9 +36,25 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
 - **Original green display** – Toggle a classic four-shade green palette to mimic the original DMG screen.
+- **LCD emulation** – Optional high‑fidelity LCD simulation including pixel‑grid structure, sub‑pixel glow, grain, edge shadowing, and per‑pixel diffusion to closely mimic the look of the original DMG screen.
 - **Motion blur** – Blend frames together for a persistence-of-vision effect that smooths fast movement.
 - **Screenshot capture** – Save the current frame as a TGA screenshot.
 - **Tile map export** – Export the current tile map as a TGA image for debugging graphics or capturing assets.
+
+## LCD emulation
+![LCD pixel close-up](img/LCDPixels.png)
+
+The Game Boy’s original DMG screen has a distinctive look: soft diffusion, pixel‑grid separation, slight edge‑shadowing, and a subtle shimmer caused by panel grain.  
+G33kBoy includes an optional LCD emulation mode that reproduces these characteristics without shaders, using a hand‑tuned software renderer.
+
+**Techniques used:**
+- Pixel‑grid outlines for authentic DMG cell structure  
+- Per‑pixel grain to simulate panel irregularities  
+- Dynamic edge‑shadowing for a recessed‑screen feel  
+- Tinted top/bottom/side glow that matches the original greenish bleed  
+- High‑quality scaling that preserves “LCD softness” without blur  
+
+LCD emulation can be toggled at runtime and has very little performance overhead thanks to lookup‑table optimisation.
 
 ## Status
 - ✔ CPU: full instruction set + automated tests

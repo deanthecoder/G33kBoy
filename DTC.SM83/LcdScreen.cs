@@ -12,16 +12,19 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using DTC.Core.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace DTC.SM83;
 
 public sealed class LcdScreen : IDisposable
 {
-    private const int Scale = 3;
+    private const int Scale = 4;
     private readonly int m_sourceWidth;
     private readonly int m_sourceHeight;
     private readonly int m_destWidth;
-    private readonly double[] m_grain;
+    private readonly int m_destHeight;
+    private readonly double[] m_redBoostPerPixel;
+    private readonly double[] m_grainWithShadow;
     private uint m_previousFrameBufferHash;
 
     public WriteableBitmap Display { get; }
@@ -32,16 +35,60 @@ public sealed class LcdScreen : IDisposable
         m_sourceWidth = sourceWidth;
         m_sourceHeight = sourceHeight;
         m_destWidth = sourceWidth * Scale;
-        var destHeight = sourceHeight * Scale;
+        m_destHeight = sourceHeight * Scale;
 
-        var pixelSize = new PixelSize(m_destWidth, destHeight);
+        var pixelSize = new PixelSize(m_destWidth, m_destHeight);
         Display = new WriteableBitmap(pixelSize, new Vector(96, 96), PixelFormat.Rgba8888);
 
-        // Pre-build the screen grain.
-        m_grain = new double[m_destWidth * destHeight];
+        // Pre-build the screen grain and static spatial effects.
+        m_redBoostPerPixel = new double[m_sourceWidth * m_sourceHeight];
+        m_grainWithShadow = new double[m_destWidth * m_destHeight];
+
+        PrecomputeRedBoost();
+        PrecomputeGrainWithShadow();
+    }
+
+    /// <summary>
+    /// Precomputes a per-source-pixel red‑boost map used for simulating LCD tinge on the edges.
+    /// </summary>
+    private void PrecomputeRedBoost()
+    {
+        for (var y = 0; y < m_sourceHeight; y++)
+        {
+            var redBoostTop = (1.0 - y / 5.0).Clamp(0.0, 1.0) * 1.1;
+            var redBoostBottom = (1.0 - (m_sourceHeight - y) / 5.0).Clamp(0.0, 1.0) * 1.1;
+
+            for (var x = 0; x < m_sourceWidth; x++)
+            {
+                var redBoostLeft = (1.0 - x / 3.0).Clamp(0.0, 1.0);
+                var redBoostRight = (1.0 - (m_sourceWidth - x) / 3.0).Clamp(0.0, 1.0);
+                var redBoost = Math.Max(redBoostTop, Math.Max(redBoostBottom, Math.Max(redBoostLeft, redBoostRight)));
+
+                m_redBoostPerPixel[y * m_sourceWidth + x] = redBoost;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Precomputes grain combined with a left/right edge shadow for each destination pixel.
+    /// </summary>
+    private void PrecomputeGrainWithShadow()
+    {
         var random = new Random(0);
-        for (var i = 0; i < m_grain.Length; i++)
-            m_grain[i] = 1.0 + 0.03 * (random.NextDouble() * 2.0 - 1.0);
+        for (var destY = 0; destY < m_destHeight; destY++)
+        {
+            var rowOffset = destY * m_destWidth;
+            for (var destX = 0; destX < m_destWidth; destX++)
+            {
+                var xPos = destX / (double)Scale;
+                var shadowL = xPos.InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
+                var shadowR = (m_sourceWidth - xPos).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
+                var shadow = Math.Min(shadowL, shadowR);
+                var grain = 1.0 + 0.03 * (random.NextDouble() * 2.0 - 1.0);
+
+                m_grainWithShadow[rowOffset + destX] = grain * (0.6 + 0.4 * shadow);
+            }
+        }
     }
 
     public unsafe void Update(byte[] frameBuffer)
@@ -57,101 +104,160 @@ public sealed class LcdScreen : IDisposable
         var destStride = locked.RowBytes;
         var destPtr = (byte*)locked.Address;
 
-        for (var y = 0; y < m_sourceHeight; y++)
-        {
-            var sourceRowOffset = y * m_sourceWidth * 4;
-            var destBaseY = y * Scale;
-
-            // Top/bottom tinge.
-            var redBoostTop = (1.0 - y / 5.0).Clamp(0.0, 1.0) * 1.1;
-            var redBoostBottom = (1.0 - (m_sourceHeight - y) / 5.0).Clamp(0.0, 1.0) * 1.1;
-
-            for (var x = 0; x < m_sourceWidth; x++)
-            {
-                // Get source RGB.
-                var srcOffset = sourceRowOffset + x * 4;
-                var r = frameBuffer[srcOffset];
-                var g = frameBuffer[srcOffset + 1];
-                var b = frameBuffer[srcOffset + 2];
-                var a = frameBuffer[srcOffset + 3];
-                
-                // Convert RGB to [0.0, 1.0].
-                var destBaseX = x * Scale;
-                var grainBaseIndex = destBaseY * m_destWidth + destBaseX;
-                var redBase = r / 255.0;
-                var greenBase = g / 255.0;
-                var blueBase = b / 255.0;
-
-                // Left/right tinge.
-                var redBoostLeft = (1.0 - x / 3.0).Clamp(0.0, 1.0);
-                var redBoostRight = (1.0 - (m_sourceWidth - x) / 3.0).Clamp(0.0, 1.0);
-                var redBoost = Math.Max(redBoostTop, Math.Max(redBoostBottom, Math.Max(redBoostLeft, redBoostRight)));
-                if (LcdEmulationEnabled)
-                {
-                    redBase *= 1.0 + redBoost * 0.25;
-                    greenBase *= 1.0 + redBoost * 0.07;
-                }
-                
-                for (var py = 0; py < Scale; py++)
-                {
-                    var destRowStart = destPtr + (destBaseY + py) * destStride;
-                    var grainRowStart = grainBaseIndex + py * m_destWidth;
-                    for (var px = 0; px < Scale; px++)
-                    {
-                        var red = redBase;
-                        var green = greenBase;
-                        var blue = blueBase;
-
-                        if (LcdEmulationEnabled)
-                        {
-                            var grain = m_grain[grainRowStart + px];
-
-                            // Left/right shadow.
-                            var shadowL = (x + px / (double)Scale).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
-                            var shadowR = (m_sourceWidth - (x + px / (double)Scale)).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
-                            var shadow = Math.Min(shadowL, shadowR); 
-                            grain *= 0.6 + 0.4 * shadow;
-
-                            red *= grain;
-                            green *= grain;
-                            blue *= grain;
-
-                            // Pixel outlines.
-                            var s = 1.0 - px % Scale + 1.0 - py % Scale;
-                            s *= 0.005;
-                            red -= s;
-                            green -= s;
-                            blue -= s;
-                        }
-
-                        // Set target pixel.
-                        var destOffset = destRowStart + (destBaseX + px) * 4;
-                        destOffset[0] = (byte)(red * 255.0).Clamp(0.0, 255.0);
-                        destOffset[1] = (byte)(green * 255.0).Clamp(0.0, 255.0);
-                        destOffset[2] = (byte)(blue * 255.0).Clamp(0.0, 255.0);
-                        destOffset[3] = a;
-                    }
-                }
-            }
-        }
+        if (LcdEmulationEnabled)
+            RenderWithLcdEffects(frameBuffer, destPtr, destStride);
+        else
+            RenderSimple(frameBuffer, destPtr, destStride);
 
         m_previousFrameBufferHash = frameBufferHash;
     }
 
-    public void Dispose() =>
-        Display?.Dispose();
+    /// <summary>
+    /// Fast clamp‑to‑byte helper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static byte ToByte(double value)
+    {
+        if (value <= 0.0)
+            return 0;
+        if (value >= 255.0)
+            return 255;
+        return (byte)value;
+    }
 
+    /// <summary>
+    /// Renders the framebuffer with no LCD effects applied — just a straight nearest‑neighbour scale.
+    /// </summary>
+    private unsafe void RenderSimple(byte[] frameBuffer, byte* destPtr, int destStride)
+    {
+        fixed (byte* srcPtr = frameBuffer)
+        {
+            for (var y = 0; y < m_sourceHeight; y++)
+            {
+                var sourceRowOffset = y * m_sourceWidth * 4;
+                var destBaseY = y * Scale;
+
+                for (var py = 0; py < Scale; py++)
+                {
+                    var destRowStart = destPtr + (destBaseY + py) * destStride;
+
+                    for (var x = 0; x < m_sourceWidth; x++)
+                    {
+                        var src = srcPtr + sourceRowOffset + x * 4;
+                        var r = src[0];
+                        var g = src[1];
+                        var b = src[2];
+                        var a = src[3];
+
+                        var destBaseX = x * Scale;
+                        for (var px = 0; px < Scale; px++)
+                        {
+                            var destOffset = destRowStart + (destBaseX + px) * 4;
+                            destOffset[0] = r;
+                            destOffset[1] = g;
+                            destOffset[2] = b;
+                            destOffset[3] = a;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Renders the framebuffer using grain, edge tinge, per‑pixel shading and outlines to simulate a Game Boy LCD panel.
+    /// </summary>
+    private unsafe void RenderWithLcdEffects(byte[] frameBuffer, byte* destPtr, int destStride)
+    {
+        fixed (byte* srcPtr = frameBuffer)
+        {
+            for (var y = 0; y < m_sourceHeight; y++)
+            {
+                var sourceRowOffset = y * m_sourceWidth * 4;
+                var destBaseY = y * Scale;
+                var redBoostRowOffset = y * m_sourceWidth;
+
+                for (var x = 0; x < m_sourceWidth; x++)
+                {
+                    // Get source RGBA.
+                    var src = srcPtr + sourceRowOffset + x * 4;
+                    var r = src[0];
+                    var g = src[1];
+                    var b = src[2];
+                    var a = src[3];
+
+                    var destBaseX = x * Scale;
+                    var grainBaseIndex = destBaseY * m_destWidth + destBaseX;
+
+                    // Convert RGB to [0.0, 1.0].
+                    var redBase = r / 255.0;
+                    var greenBase = g / 255.0;
+                    var blueBase = b / 255.0;
+
+                    // Precomputed red boost (top/bottom/left/right tinge).
+                    var redBoost = m_redBoostPerPixel[redBoostRowOffset + x];
+                    redBase *= 1.0 + redBoost * 0.25;
+                    greenBase *= 1.0 + redBoost * 0.07;
+
+                    for (var py = 0; py < Scale; py++)
+                    {
+                        var destRowStart = destPtr + (destBaseY + py) * destStride;
+                        var grainRowStart = grainBaseIndex + py * m_destWidth;
+
+                        for (var px = 0; px < Scale; px++)
+                        {
+                            var red = redBase;
+                            var green = greenBase;
+                            var blue = blueBase;
+
+                            // Pixel outlines.
+                            if (px == 0 || py == 0)
+                            {
+                                var bright = red.Lerp(0.6, 1.5);
+                                const double s = 0.5;
+                                red = s.Lerp(red, 0x81 / 255.0 * bright);
+                                green = s.Lerp(green, 0x7D / 255.0 * bright);
+                                blue = s.Lerp(blue, 0x15 / 255.0 * bright);
+                            }
+
+                            // Left/right shadow.
+                            var destX = destBaseX + px;
+                            var grain = m_grainWithShadow[grainRowStart + px];
+                            red *= grain;
+                            green *= grain;
+                            blue *= grain;
+
+                            // Set target pixel.
+                            var destOffset = destRowStart + destX * 4;
+                            destOffset[0] = ToByte(red * 255.0);
+                            destOffset[1] = ToByte(green * 255.0);
+                            destOffset[2] = ToByte(blue * 255.0);
+                            destOffset[3] = a;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// FNV-1a (Fowler–Noll–Vo) hash function.
+    /// </summary>
     private static uint ComputeFrameBufferHash(ReadOnlySpan<byte> buffer)
     {
         const uint fnvOffset = 2166136261;
         const uint fnvPrime = 16777619;
         var hash = fnvOffset;
-        foreach (var b in buffer)
+        for (var i = 0; i < buffer.Length; i++)
         {
+            var b = buffer[i];
             hash ^= b;
             hash *= fnvPrime;
         }
 
         return hash;
     }
+    
+    public void Dispose() =>
+        Display?.Dispose();
 }
