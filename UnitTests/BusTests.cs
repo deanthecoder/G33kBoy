@@ -35,4 +35,43 @@ public class BusTests : TestsBase
 
         Assert.That(memory.Read8(address), Is.EqualTo(value));
     }
+
+    [Test]
+    public void TracksWritesToWorkRam()
+    {
+        using var memory = new Bus(0x10000, Bus.BusType.Trivial);
+        const ushort address = 0xC234;
+
+        Assert.That(memory.IsUninitializedWorkRam(address), Is.True);
+
+        memory.Write8(address, 0x11);
+
+        Assert.That(memory.IsUninitializedWorkRam(address), Is.False);
+    }
+
+    [Test]
+    public void TracksWritesAcrossWorkRamEcho()
+    {
+        using var memory = new Bus(0x10000, Bus.BusType.Trivial);
+        const ushort wramAddr = 0xC345;
+        const ushort echoAddr = 0xE345;
+
+        memory.Write8(wramAddr, 0x22);
+
+        Assert.That(memory.IsUninitializedWorkRam(echoAddr), Is.False);
+    }
+
+    [Test]
+    public void DetectsOamAndIoRanges()
+    {
+        using var memory = new Bus(0x10000, Bus.BusType.Trivial);
+
+        Assert.That(Bus.IsOamOrUnusable(0xFE00), Is.True);
+        Assert.That(Bus.IsOamOrUnusable(0xFEFF), Is.True);
+        Assert.That(Bus.IsOamOrUnusable(0xFDFF), Is.False);
+
+        Assert.That(Bus.IsIo(0xFF00), Is.True);
+        Assert.That(Bus.IsIo(0xFF7F), Is.True);
+        Assert.That(Bus.IsIo(0xFF80), Is.False);
+    }
 }

@@ -91,10 +91,21 @@ public class Cpu
 
     public void Step()
     {
+        var isDebugMode = DebugMode;
         if (!IsHalted)
         {
             try
             {
+                if (isDebugMode)
+                {
+                    if (Bus.IsUninitializedWorkRam(Reg.PC))
+                        m_instructionLog.Write($"WARN: Executing from uninitialized WRAM at {Reg.PC:X4} - This is probably a CPU/interrupt/RET bug.");
+                    else if (Bus.IsOamOrUnusable(Reg.PC))
+                        m_instructionLog.Write($"WARN: Executing from OAM/unusable region at {Reg.PC:X4} - This is not typical.");
+                    else if (Bus.IsIo(Reg.PC))
+                        m_instructionLog.Write($"WARN: Executing from IO region at {Reg.PC:X4} - This is not typical.");
+                }
+
                 // Decode instruction.
                 Instruction instruction;
                 if (m_fetchedOpcode == 0xCB)
@@ -111,7 +122,7 @@ public class Cpu
                         throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
                 }
 
-                if (DebugMode && m_instructionState != null)
+                if (isDebugMode && m_instructionState != null)
                     m_instructionLog.Write(m_instructionState.Replace("xxx", $"{instruction,-12}"));
 
                 // Execute instruction.
@@ -143,7 +154,7 @@ public class Cpu
             return;
         }
 
-        if (DebugMode)
+        if (isDebugMode)
             m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2} │ {Reg,-32} │ {Reg.FlagsAsString()} │ Tick: {Bus.ClockTicks}";
         Fetch8();
     }
