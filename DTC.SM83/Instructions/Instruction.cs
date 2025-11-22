@@ -8,7 +8,7 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
-namespace DTC.SM83;
+namespace DTC.SM83.Instructions;
 
 /// <summary>
 /// Represents a single CPU instruction with its mnemonic and execution logic.

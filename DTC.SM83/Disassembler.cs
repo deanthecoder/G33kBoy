@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Instructions;
+
 namespace DTC.SM83;
 
 /// <summary>
@@ -30,7 +32,7 @@ public static class Disassembler
             return cbInstruction?.Mnemonic ?? $"CB ${cbOpcode:X2}";
         }
 
-        var instruction = Instructions.Table[opcode];
+        var instruction = Instructions.Instructions.Table[opcode];
         return instruction?.Mnemonic ?? $"DB ${opcode:X2}";
     }
 }

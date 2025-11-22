@@ -11,7 +11,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace DTC.SM83;
+namespace DTC.SM83.Instructions;
 
 /// <summary>
 /// Initially auto-generated from https://gbdev.io/gb-opcodes/Opcodes.json
@@ -1233,7 +1233,9 @@ public static class Instructions
                 cpu.InternalWaitM();
             }
         ),
-        null, // 0xD3
+        new Instruction(
+            "#INV_D3",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
         new Instruction(
             "CALL NC,a16", // 0xD4 nn nn
             static cpu =>
@@ -1297,7 +1299,9 @@ public static class Instructions
                 cpu.InternalWaitM();
             }
         ),
-        null, // 0xDB
+        new Instruction(
+            "#INV_DB",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
         new Instruction(
             "CALL C,a16", // 0xDC nn nn
             static cpu =>
@@ -1310,7 +1314,9 @@ public static class Instructions
                 cpu.InternalWaitM();
             }
         ),
-        null, // 0xDD
+        new Instruction(
+            "#INV_DD",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
         new Instruction(
             "SBC A,nn", // 0xDE nn
             static cpu => { DoSBC(cpu, cpu.Fetch8()); }
@@ -1340,8 +1346,12 @@ public static class Instructions
             "LDH (C),A", // 0xE2
             static cpu => { cpu.Write8((ushort)(0xFF00 + cpu.Reg.C), cpu.Reg.A); }
         ),
-        null, // 0xE3
-        null, // 0xE4
+        new Instruction(
+            "#INV_E3",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
+        new Instruction(
+            "#INV_E4",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
         new Instruction(
             "PUSH HL", // 0xE5
             static cpu =>
@@ -1387,9 +1397,15 @@ public static class Instructions
             "LD (a16),A", // 0xEA nn nn
             static cpu => { cpu.Write8(cpu.Fetch16(), cpu.Reg.A); }
         ),
-        null, // 0xEB
-        null, // 0xEC
-        null, // 0xED
+        new Instruction(
+            "#INV_EB",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
+        new Instruction(
+            "#INV_EC",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
+        new Instruction(
+            "#INV_ED",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
         new Instruction(
             "XOR A,nn", // 0xEE nn
             static cpu => { DoXOR(cpu, cpu.Fetch8()); }
@@ -1427,7 +1443,9 @@ public static class Instructions
             "DI", // 0xF3
             static cpu => { cpu.IME = false; }
         ),
-        null, // 0xF4
+        new Instruction(
+            "#INV_F4",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
         new Instruction(
             "PUSH AF", // 0xF5
             static cpu =>
@@ -1483,8 +1501,12 @@ public static class Instructions
             "EI", // 0xFB
             static cpu => { cpu.PendingIME = true; }
         ),
-        null, // 0xFC
-        null, // 0xFD
+        new Instruction(
+            "#INV_FC",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
+        new Instruction(
+            "#INV_FD",
+            _ => throw new InvalidOperationException("Invalid instruction.")),
         new Instruction(
             "CP A,nn", // 0xFE nn
             static cpu =>

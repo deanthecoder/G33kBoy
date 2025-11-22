@@ -10,12 +10,13 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 using DTC.Core;
 using DTC.Core.Extensions;
+using DTC.SM83.Instructions;
 
 namespace DTC.SM83;
 
 public class Cpu
 {
-    private readonly CircularBuffer<string> m_instructionLog = new(2400);
+    private readonly CircularBuffer<string> m_instructionLog = new(1024);
     private string m_instructionState;
     private byte m_fetchedOpcode;
     private bool m_isHalted;
@@ -92,17 +93,28 @@ public class Cpu
     {
         if (!IsHalted)
         {
-            // Decode instruction.
-            var instruction = m_fetchedOpcode == 0xCB ? PrefixedInstructions.Table[Fetch8()] : Instructions.Table[m_fetchedOpcode];
-            if (instruction == null)
-                throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
-
-            if (DebugMode && m_instructionState != null)
-                m_instructionLog.Write(m_instructionState.Replace("xxx", $"{instruction,-12}"));
-            
-            // Execute instruction.
             try
             {
+                // Decode instruction.
+                Instruction instruction;
+                if (m_fetchedOpcode == 0xCB)
+                {
+                    var opcode = Fetch8();
+                    instruction = PrefixedInstructions.Table[opcode];
+                    if (instruction == null)
+                        throw new InvalidOperationException($"Opcode CB {opcode:X2} has null instruction.");
+                }
+                else
+                {
+                    instruction = Instructions.Instructions.Table[m_fetchedOpcode];
+                    if (instruction == null)
+                        throw new InvalidOperationException($"Opcode {m_fetchedOpcode:X2} has null instruction.");
+                }
+
+                if (DebugMode && m_instructionState != null)
+                    m_instructionLog.Write(m_instructionState.Replace("xxx", $"{instruction,-12}"));
+
+                // Execute instruction.
                 instruction.Execute(this);
             }
             catch (Exception ex)
@@ -132,7 +144,7 @@ public class Cpu
         }
 
         if (DebugMode)
-            m_instructionState = $"{Reg.PC:X4}│ xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2} │ {Reg,-32} │ {Reg.FlagsAsString()} │ Tick: {Bus.ClockTicks}";
+            m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2} │ {Reg,-32} │ {Reg.FlagsAsString()} │ Tick: {Bus.ClockTicks}";
         Fetch8();
     }
     

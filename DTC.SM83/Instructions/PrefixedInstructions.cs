@@ -11,7 +11,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace DTC.SM83;
+namespace DTC.SM83.Instructions;
 
 /// <summary>
 /// Initially auto-generated from https://gbdev.io/gb-opcodes/Opcodes.json
