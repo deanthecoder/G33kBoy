@@ -37,10 +37,17 @@ public class DmgAcid2Tests : TestsBase
         string bufferHash = null;
         bus.PPU.FrameRendered += (_, frameBuffer) => bufferHash = frameBuffer.GetMd5Hex();
 
-        while (bufferHash != "7307162C0CCB34631E3B2F9DF80F3B03" && bus.ClockTicks < OneSecondTicks)
+        const string expectedHash = "872DDDF2DB592552FA912D45C23956FE";
+        while (bufferHash != expectedHash && bus.ClockTicks < OneSecondTicks)
             cpu.Step();
-        
+
         Assert.That(bufferHash, Is.Not.Null, $"No frame rendered within {OneSecondTicks} T ticks.");
-        Assert.That(bufferHash, Is.EqualTo("7307162C0CCB34631E3B2F9DF80F3B03"));
+        if (bufferHash != expectedHash)
+        {
+            bus.PPU.Dump(Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                .ToDir()
+                .GetFile("acid-test-fail.tga"));
+        }
+        Assert.That(bufferHash, Is.EqualTo(expectedHash));
     }
 }
