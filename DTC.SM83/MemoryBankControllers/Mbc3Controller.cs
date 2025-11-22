@@ -1,0 +1,57 @@
+// Code authored by Dean Edis (DeanTheCoder).
+// Anyone is free to copy, modify, use, compile, or distribute this software,
+// either in source code form or as a compiled binary, for any purpose.
+//
+// If you modify the code, please retain this copyright header,
+// and consider contributing back to the repository or letting us know
+// about your modifications. Your contributions are valued!
+//
+// THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+
+namespace DTC.SM83.MemoryBankControllers;
+
+/// <summary>
+/// MBC3: ROM/RAM banking (RTC not implemented yet).
+/// </summary>
+internal sealed class Mbc3Controller : MemoryBankControllerBase
+{
+    private int m_romBank = 1;
+    private int m_ramBank;
+
+    public Mbc3Controller(Cartridge cartridge) : base(cartridge)
+    {
+    }
+
+    public override byte ReadRom(ushort addr)
+    {
+        var bank = addr < 0x4000 ? 0 : m_romBank;
+        return ReadRomFromBank(bank, addr);
+    }
+
+    public override void WriteRom(ushort addr, byte value)
+    {
+        switch (addr)
+        {
+            case <= 0x1FFF:
+                m_ramEnabled = (value & 0x0F) == 0x0A;
+                break;
+
+            case <= 0x3FFF:
+                m_romBank = value & 0x7F;
+                if (m_romBank == 0)
+                    m_romBank = 1;
+                break;
+
+            case <= 0x5FFF:
+                m_ramBank = value & 0x0F; // 0x08-0x0C would select RTC; not yet supported.
+                break;
+
+            case <= 0x7FFF:
+                // Latch clock (ignored for now).
+                break;
+        }
+    }
+
+    protected override int GetRamBankIndex() =>
+        m_ramBank < m_ramBanks.Length ? m_ramBank : 0;
+}

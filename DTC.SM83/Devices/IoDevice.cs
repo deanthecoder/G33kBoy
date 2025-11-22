@@ -116,7 +116,10 @@ public class IoDevice : IMemDevice, ILcd
         
         // Boot Disable (Unload the boot ROM).
         if (idx == 0x50)
+        {
+            m_bus.Detach(m_bootRom, m_bus.CartridgeRom);
             m_bootRom.Unload();
+        }
     }
 
     private void WriteJoyp(byte value)

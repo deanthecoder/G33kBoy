@@ -220,7 +220,7 @@ public sealed class GameBoy : IDisposable
 
     public void ClearGameData()
     {
-        m_bus?.CartRam?.Clear();
+        m_bus?.CartridgeRam?.Clear();
         if (!string.IsNullOrEmpty(m_cartridgeKey))
             m_gameDataStore?.ClearGameData(m_cartridgeKey);
     }
@@ -229,7 +229,7 @@ public sealed class GameBoy : IDisposable
         m_gameDataStore != null &&
         m_loadedCartridge?.SupportsBattery == true &&
         !string.IsNullOrEmpty(m_cartridgeKey) &&
-        m_bus?.CartRam != null;
+        m_bus?.CartridgeRam != null;
 
     private void PersistCartRamIfDue(bool canPersistGameData)
     {
@@ -250,7 +250,7 @@ public sealed class GameBoy : IDisposable
     {
         try
         {
-            var cartRam = m_bus?.CartRam;
+            var cartRam = m_bus?.CartridgeRam;
             if (cartRam == null)
                 return;
 
@@ -274,7 +274,7 @@ public sealed class GameBoy : IDisposable
 
         try
         {
-            var cartRam = m_bus?.CartRam;
+            var cartRam = m_bus?.CartridgeRam;
             if (cartRam == null)
                 return;
 

@@ -12,6 +12,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using DTC.SM83.Devices;
+using DTC.SM83.MemoryBankControllers;
 
 namespace DTC.SM83;
 
@@ -33,14 +34,14 @@ public sealed class Bus : IMemDevice, IDisposable
 
     public BootRom BootRom { get; }
     public PPU PPU { get; }
-    public CartRamDevice CartRam { get; }
+    public CartridgeRamDevice CartridgeRam { get; private set; }
+    public CartridgeRomDevice CartridgeRom { get; private set; }
+    private IMemoryBankController m_memoryBankController;
 
     /// <summary>
     /// The number of T cycles elapsed since boot. (4T = 1M)
     /// </summary>
     public ulong ClockTicks { get; private set; }
-
-    public bool LockCart { get; set; }
 
     /// <summary>
     /// The type of bus to create.
@@ -68,7 +69,6 @@ public sealed class Bus : IMemDevice, IDisposable
         Allow,
         Block
     }
-    
 
     public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null)
     {
@@ -80,17 +80,11 @@ public sealed class Bus : IMemDevice, IDisposable
         VramDevice vram = null;
         if (busType == BusType.GameBoy)
         {
-            // The GameBoy boot ROM (0x0000 - 0x00FF).
             BootRom = new BootRom();
-            Attach(BootRom);
-            
+
             // V(ideo)RAM (0x8000 - 0x9FFF)
             vram = new VramDevice();
             Attach(vram);
-            
-            // Cartridge RAM (0xA000 - 0xBFFF)
-            CartRam = new CartRamDevice();
-            Attach(CartRam);
             
             // Ram bank 0 (0xC000 - 0xDFFF)
             var wram = new WorkRamDevice();
@@ -113,6 +107,9 @@ public sealed class Bus : IMemDevice, IDisposable
             // High RAM (0xFF80 - 0xFFFE)
             m_hramDevice = new HramDevice();
             Attach(m_hramDevice);
+
+            // The GameBoy boot ROM (0x0000 - 0x00FF).
+            Attach(BootRom);
         }
 
         if (busType != BusType.Trivial)
@@ -122,10 +119,7 @@ public sealed class Bus : IMemDevice, IDisposable
             m_interruptDevice = new InterruptDevice();
             m_timer = new TimerDevice(m_interruptDevice);
             Attach(m_timer);
-        }
 
-        if (busType != BusType.Trivial)
-        {
             // Represents the interrupt mask at 0xFF0F.
             Attach(m_interruptDevice);
             
@@ -146,6 +140,35 @@ public sealed class Bus : IMemDevice, IDisposable
     public void Attach(IMemDevice device) =>
         Array.Fill(m_devices, device, device.FromAddr, device.ToAddr - device.FromAddr + 1);
 
+    /// <summary>
+    /// Detach a device, replacing its range with another device (or null).
+    /// </summary>
+    public void Detach(IMemDevice device, IMemDevice replacement)
+    {
+        if (device == null)
+            return;
+        Array.Fill(m_devices, replacement, device.FromAddr, device.ToAddr - device.FromAddr + 1);
+    }
+
+    /// <summary>
+    /// Install the supplied cartridge and its memory controller.
+    /// </summary>
+    public void LoadCartridge(Cartridge cartridge)
+    {
+        m_memoryBankController = MemoryBankControllerFactory.Create(cartridge);
+
+        CartridgeRom = new CartridgeRomDevice(m_memoryBankController);
+        Attach(CartridgeRom);
+
+        CartridgeRam = m_memoryBankController.HasRam ? new CartridgeRamDevice(m_memoryBankController) : null;
+        if (CartridgeRam != null)
+            Attach(CartridgeRam);
+
+        // Boot ROM must overlay the cartridge; re-attach to ensure priority.
+        if (BootRom != null)
+            Attach(BootRom);
+    }
+
     public byte Read8(ushort addr) =>
         GetMemoryAccess(addr) == MemoryAccess.Allow ? UncheckedRead(addr) : (byte)0xFF;
 
@@ -155,9 +178,6 @@ public sealed class Bus : IMemDevice, IDisposable
 
     public void Write8(ushort addr, byte value)
     {
-        if (LockCart && addr < 0x8000)
-            return;
-        
         if (GetMemoryAccess(addr) == MemoryAccess.Allow)
             UncheckedWrite(addr, value);
     }

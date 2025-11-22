@@ -33,7 +33,7 @@ public static class CpuExtensions
     /// Hardware register defaults that the boot ROM programs before handing control to the cartridge (DMG/MGB column).
     /// </summary>
     private static readonly (ushort Address, byte Value)[] BootIoDefaults =
-    {
+    [
         (0xFF00, 0xCF), // P1
         (0xFF01, 0x00), // SB
         (0xFF02, 0x7E), // SC
@@ -77,7 +77,7 @@ public static class CpuExtensions
         (0xFF4B, 0x00), // WX
         (0xFF50, 0x01), // BOOT (disable boot ROM)
         (0xFFFF, 0x00)  // IE
-    };
+    ];
 
     /// <summary>
     /// Mimic the state the CPU and IO registers are left in once the DMG boot ROM hands off to the cartridge.
@@ -87,7 +87,11 @@ public static class CpuExtensions
         if (cpu == null)
             throw new ArgumentNullException(nameof(cpu));
 
-        cpu.Bus.BootRom?.Unload();
+        if (cpu.Bus.BootRom != null)
+        {
+            cpu.Bus.Detach(cpu.Bus.BootRom, cpu.Bus.CartridgeRom);
+            cpu.Bus.BootRom.Unload();
+        }
         BootState.CopyTo(cpu.Reg);
         cpu.IME = true;
         cpu.PendingIME = false;
@@ -112,12 +116,9 @@ public static class CpuExtensions
         if (cartridge == null)
             throw new ArgumentNullException(nameof(cartridge));
 
-        var rom = cartridge.RomData;
         Console.WriteLine(cartridge);
-        
-        // Simple 32 KiB mapping.
-        cpu.Bus.Load(0x0000, rom);
-        cpu.Bus.LockCart = true;
+
+        cpu.Bus.LoadCartridge(cartridge);
         cpu.Bus.BootRom?.Load();
     }
 }

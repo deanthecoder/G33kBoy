@@ -348,13 +348,31 @@ public sealed class Cartridge
 
     public (bool IsSupported, string Message) IsSupported()
     {
-        const int MaxSimpleRomSizeBytes = 32 * 1024;
-        if (RomData.Length > MaxSimpleRomSizeBytes)
-            return (false, "Cartridges larger than 32KB are not supported yet.");
         if (IsCgbOnly)
             return (false, "CGB-only cartridges are not supported.");
-        if (CartridgeType != CartridgeType.RomOnly)
-            Console.WriteLine($"Treating {CartridgeType} as ROM-only because the image is {RomData.Length / 1024}KB.");
-        return (true, null);
+
+        var isSupportedType = CartridgeType switch
+        {
+            CartridgeType.RomOnly or
+            CartridgeType.RomRam or
+            CartridgeType.RomRamBattery or
+            CartridgeType.Mbc1 or
+            CartridgeType.Mbc1Ram or
+            CartridgeType.Mbc1RamBattery or
+            CartridgeType.Mbc3 or
+            CartridgeType.Mbc3Ram or
+            CartridgeType.Mbc3RamBattery or
+            CartridgeType.Mbc3TimerBattery or
+            CartridgeType.Mbc3TimerRamBattery or
+            CartridgeType.Mbc5 or
+            CartridgeType.Mbc5Ram or
+            CartridgeType.Mbc5RamBattery or
+            CartridgeType.Mbc5Rumble or
+            CartridgeType.Mbc5RumbleRam or
+            CartridgeType.Mbc5RumbleRamBattery => true,
+            _ => false
+        };
+
+        return isSupportedType ? (true, null) : (false, $"Cartridge type {CartridgeType} is not supported yet.");
     }
 }

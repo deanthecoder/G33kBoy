@@ -247,17 +247,6 @@ public class PPU
         
         // Capture up to 10 sprites for this LY in OAM order.
         var sprites = m_oam.GetSprites();
-
-        if (m_lcd.LY == 0)
-        {
-            for (var i = 0; i < 10; i++)
-            {
-                var s = sprites[i];
-                Debug.WriteLine(
-                    $"OAM[{i}] Y={s.Y} X={s.X} Tile={s.Tile} UseObp1={s.UseObp1} Priority={s.Priority} XFlip={s.XFlip} YFlip={s.YFlip}");
-            }
-        }
-        
         for (byte i = 0; i < 40 && m_spriteCount < 10; i++)
         {
             var sprite = sprites[i];
@@ -307,14 +296,6 @@ public class PPU
         var lcdSCX = m_lcd.SCX;
         var lcdBGP = m_lcd.BGP;
         var lcdWX = m_lcd.WX;
-
-        if (lcdLy == 0)
-        {
-            Debug.WriteLine(
-                $"PPU: LY={lcdLy} SCX={lcdSCX} SCY={lcdSCY} WX={lcdWX} WY={m_lcd.WY} " +
-                $"BGP=0x{lcdBGP:X2} OBP0=0x{m_lcd.OBP0:X2} OBP1=0x{m_lcd.OBP1:X2}");
-        }
-
         var bgEnabled = m_lcdc.BgWindowEnablePriority && BackgroundVisible;
         var windowEnabled =
             bgEnabled &&
