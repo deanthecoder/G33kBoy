@@ -7,3 +7,6 @@
 [submodule "external/blargg-test-roms"]
 	path = external/blargg-test-roms
 	url = https://github.com/retrio/gb-test-roms
+[submodule "Installer"]
+	path = Installer
+	url = https://github.com/deanthecoder/DTC.Installer.git
