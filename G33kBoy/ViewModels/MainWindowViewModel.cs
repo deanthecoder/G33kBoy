@@ -15,6 +15,7 @@ using Avalonia.Threading;
 using DTC.Core;
 using DTC.Core.Commands;
 using DTC.Core.Extensions;
+using DTC.Core.UI;
 using DTC.Core.ViewModels;
 using DTC.SM83;
 
@@ -73,6 +74,22 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         get => m_isAutoFireEnabled;
         private set => SetField(ref m_isAutoFireEnabled, value);
+    }
+
+    public void ClearAllGameData()
+    {
+        DialogService.Instance.Warn(
+            "Clear All Saved ROM Data",
+            "Are you sure you want to clear all saved ROM data?",
+            "Cancel",
+            "Clear and Reset Device",
+            confirmed =>
+            {
+                if (!confirmed)
+                    return;
+                GameBoy.ClearAllGameData();
+                ResetDevice();
+            });
     }
 
     public void ToggleAutoFire()
@@ -158,9 +175,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     
     public void OpenProjectPage() =>
         new Uri("https://github.com/deanthecoder/G33kBoy").Open();
-
-    public void ClearGameData() =>
-        GameBoy.ClearGameData();
 
     public void ExportTileMap()
     {

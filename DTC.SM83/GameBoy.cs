@@ -26,16 +26,14 @@ public sealed class GameBoy : IDisposable
     private readonly ClockSync m_clockSync;
     private readonly IGameDataStore m_gameDataStore;
     private readonly Stopwatch m_ramPersistStopwatch = new();
+    private readonly LcdScreen m_screen;
+    private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private Bus m_bus;
     private Cpu m_cpu;
-    private readonly Joypad m_joypad;
-    private readonly LcdScreen m_screen;
-
+    private string m_cartridgeKey;
     private Thread m_cpuThread;
     private bool m_shutdownRequested;
-    private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private Cartridge m_loadedCartridge;
-    private string m_cartridgeKey;
     private bool m_lcdEmulationEnabled = true;
 
     public event EventHandler<string> RomLoaded;
@@ -45,12 +43,12 @@ public sealed class GameBoy : IDisposable
 
     public double RelativeSpeed { get; private set; }
 
-    public Joypad Joypad => m_joypad;
+    public Joypad Joypad { get; }
 
     public GameBoy(IGameDataStore gameDataStore = null)
     {
         m_gameDataStore = gameDataStore;
-        m_joypad = new Joypad();
+        Joypad = new Joypad();
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
 
@@ -173,7 +171,7 @@ public sealed class GameBoy : IDisposable
     {
         ShutdownCpuThread();
         DisposeHardware();
-        m_joypad.Dispose();
+        Joypad.Dispose();
         m_screen.Dispose();
     }
 
@@ -204,7 +202,7 @@ public sealed class GameBoy : IDisposable
     }
 
     public void SetAutoFireEnabled(bool isEnabled) =>
-        m_joypad.AutoFireEnabled = isEnabled;
+        Joypad.AutoFireEnabled = isEnabled;
 
     public void SaveScreenshot(FileInfo tgaFile)
     {
@@ -221,13 +219,9 @@ public sealed class GameBoy : IDisposable
         var ppu = m_bus?.PPU ?? throw new InvalidOperationException("Game Boy hardware is not initialized.");
         ppu.DumpTileMap(tgaFile);
     }
-
-    public void ClearGameData()
-    {
-        m_bus?.CartridgeRam?.Clear();
-        if (!string.IsNullOrEmpty(m_cartridgeKey))
-            m_gameDataStore?.ClearGameData(m_cartridgeKey);
-    }
+    
+    public void ClearAllGameData() =>
+        m_gameDataStore?.ClearAllGameData();
 
     private bool CanPersistGameData =>
         m_gameDataStore != null &&
@@ -307,7 +301,7 @@ public sealed class GameBoy : IDisposable
 
     private void CreateHardware()
     {
-        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, m_joypad);
+        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad);
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
         {

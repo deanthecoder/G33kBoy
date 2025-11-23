@@ -25,5 +25,4 @@ public interface IMemoryBankController
 
     byte[] GetRamSnapshot();
     void LoadRamSnapshot(ReadOnlySpan<byte> data);
-    void ClearRam();
 }

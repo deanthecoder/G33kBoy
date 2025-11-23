@@ -36,7 +36,4 @@ public sealed class CartridgeRamDevice : IMemDevice
 
     public void LoadSnapshot(ReadOnlySpan<byte> data) =>
         m_controller.LoadRamSnapshot(data);
-
-    public void Clear() =>
-        m_controller.ClearRam();
 }

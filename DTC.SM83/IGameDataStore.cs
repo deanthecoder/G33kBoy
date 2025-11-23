@@ -30,8 +30,7 @@ public interface IGameDataStore
     void SaveGameData(string cartridgeFileName, byte[] data);
 
     /// <summary>
-    /// Remove any stored entry that matches the given cartridge file name.
+    /// Remove all stored entries.
     /// </summary>
-    /// <param name="cartridgeFileName">File name (no directory) identifying the cartridge.</param>
-    void ClearGameData(string cartridgeFileName);
+    void ClearAllGameData();
 }

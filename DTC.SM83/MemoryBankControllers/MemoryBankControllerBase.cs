@@ -91,12 +91,6 @@ internal abstract class MemoryBankControllerBase : IMemoryBankController
         }
     }
 
-    public void ClearRam()
-    {
-        foreach (var bank in m_ramBanks)
-            Array.Clear(bank);
-    }
-
     protected byte ReadRomFromBank(int bank, ushort addr)
     {
         if (bank < 0)

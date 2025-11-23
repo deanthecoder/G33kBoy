@@ -137,20 +137,10 @@ public class Settings : UserSettingsBase, IGameDataStore
         GameDataStates = entries.ToArray();
         Save();
     }
-
-    public void ClearGameData(string cartridgeFileName)
+    
+    public void ClearAllGameData()
     {
-        if (string.IsNullOrWhiteSpace(cartridgeFileName))
-            return;
-
-        var prefix = BuildPrefix(cartridgeFileName);
-        var entries = GameDataStates;
-        var filtered = entries.Where(entry =>
-            !entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToArray();
-        if (filtered.Length == entries.Length)
-            return;
-
-        GameDataStates = filtered;
+        GameDataStates = [];
         Save();
     }
 
