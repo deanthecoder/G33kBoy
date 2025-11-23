@@ -220,6 +220,9 @@ public sealed class GameBoy : IDisposable
         var ppu = m_bus?.PPU ?? throw new InvalidOperationException("Game Boy hardware is not initialized.");
         ppu.DumpTileMap(tgaFile);
     }
+
+    public void DumpCpuHistory() =>
+        m_cpu?.DumpInstructionHistory();
     
     public void ClearAllGameData() =>
         m_gameDataStore?.ClearAllGameData();

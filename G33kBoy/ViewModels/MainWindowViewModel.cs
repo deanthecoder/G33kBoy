@@ -30,6 +30,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public GameBoy GameBoy { get; }
 
     public Settings Settings => Settings.Instance;
+
+#if DEBUG
+    public bool IsDebugBuild => true;
+#else
+    public bool IsDebugBuild => false;
+#endif
     
     public string WindowTitle
     {
@@ -210,6 +216,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
         LoadRomFile(romFile);
     }
+
+    public void DumpCpuHistory() =>
+        GameBoy.DumpCpuHistory();
 
     private void ApplyDisplayVisibilitySettings()
     {

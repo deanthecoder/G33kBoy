@@ -90,6 +90,10 @@
                         <MenuItem Header="Export TileMap..." Command="{Binding ExportTileMap}" />
                     </MenuItem>
 
+                    <MenuItem Header="Debug" IsVisible="{Binding IsDebugBuild}">
+                        <MenuItem Header="Dump CPU History" Command="{Binding DumpCpuHistory}" />
+                    </MenuItem>
+
                     <MenuItem Header="Help">
                         <MenuItem Header="_Open Project Page..." Command="{Binding OpenProjectPage}" />
                         <MenuItem Header="_About..."
