@@ -182,7 +182,28 @@ public sealed class Bus : IMemDevice, IDisposable
     public void Write8(ushort addr, byte value)
     {
         if (GetMemoryAccess(addr) == MemoryAccess.Allow)
+        {
             UncheckedWrite(addr, value);
+            return;
+        }
+
+        // DMG OAM bug approximation: writes during modes 2/3 corrupt a pair of bytes.
+        if (PPU is {CanAccessOam: false} && m_oam?.Contains(addr) == true && m_ioDevice?.IsDMATransferActive != true)
+        {
+            var baseAddr = (ushort)(addr & 0xFFFE);
+            if (m_oam.Contains(baseAddr))
+            {
+                MarkWritten(baseAddr);
+                m_oam.Write8(baseAddr, value);
+
+                var neighbor = (ushort)(baseAddr + 1);
+                if (m_oam.Contains(neighbor))
+                {
+                    MarkWritten(neighbor);
+                    m_oam.Write8(neighbor, value);
+                }
+            }
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

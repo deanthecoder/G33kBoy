@@ -16,7 +16,7 @@ namespace DTC.SM83;
 
 public class Cpu
 {
-    private readonly CircularBuffer<string> m_instructionLog = new(1024);
+    private readonly CircularBuffer<string> m_instructionLog = new(10240);
     private string m_instructionState;
     private byte m_fetchedOpcode;
     private bool m_isHalted;
@@ -74,7 +74,7 @@ public class Cpu
     /// <remarks>
     /// Indicates which interrupts are requested.
     /// </remarks>
-    public byte IF => Bus.UncheckedRead(0xFF0F);
+    public byte IF => (byte)(Bus.UncheckedRead(0xFF0F) & 0x1F);
 
     /// <summary>
     /// Captures the state of the CPU for debugging purposes.
@@ -169,7 +169,12 @@ public class Cpu
     {
         var ie = IE;
         var iff = IF;
-        var pending = (byte)(ie & iff);
+
+        // Wake from HALT if any interrupt is requested, even if masked.
+        if (IsHalted && iff != 0)
+            IsHalted = false;
+
+        var pending = (byte)((ie & iff) & 0x1F);
         if (pending == 0)
             return;
 
@@ -186,6 +191,7 @@ public class Cpu
         if ((pending & 0x01) != 0)
         {
             // VBlank
+            m_instructionLog.Write("Service VBlank interrupt");
             Service(0x0040, 0x01);
             return;
         }
@@ -193,6 +199,7 @@ public class Cpu
         if ((pending & 0x02) != 0)
         {
             // LCD STAT
+            m_instructionLog.Write("Service LCD STAT interrupt");
             Service(0x0048, 0x02);
             return;
         }
@@ -200,6 +207,7 @@ public class Cpu
         if ((pending & 0x04) != 0)
         {
             // Timer
+            m_instructionLog.Write("Service Timer interrupt");
             Service(0x0050, 0x04);
             return;
         }
@@ -207,6 +215,7 @@ public class Cpu
         if ((pending & 0x08) != 0)
         {
             // Serial
+            m_instructionLog.Write("Service Serial interrupt");
             Service(0x0058, 0x08);
             return;
         }
@@ -214,6 +223,7 @@ public class Cpu
         if ((pending & 0x10) != 0)
         {
             // Joypad
+            m_instructionLog.Write("Service Joypad interrupt");
             Service(0x0060, 0x10);
         }
         

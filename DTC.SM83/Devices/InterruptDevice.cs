@@ -22,10 +22,10 @@ public class InterruptDevice : IMemDevice
     public ushort ToAddr => 0xFF0F;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte Read8(ushort addr) => m_if;
+    public byte Read8(ushort addr) => (byte)(m_if | 0xE0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write8(ushort addr, byte value) => m_if = value;
+    public void Write8(ushort addr, byte value) => m_if = (byte)(value & 0x1F);
 
     public enum InterruptType
     {

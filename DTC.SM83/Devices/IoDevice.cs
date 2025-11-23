@@ -29,6 +29,9 @@ public class IoDevice : IMemDevice, ILcd
         m_bus = bus ?? throw new ArgumentNullException(nameof(bus));
         m_bootRom = bootRom ?? throw new ArgumentNullException(nameof(bootRom));
         m_joypad = joypad;
+
+        // STAT bit 7 is always 1; bits 0-2 are read-only (mode + coincidence flag).
+        m_data[0x41] = 0x80;
     }
 
     public ushort FromAddr => 0xFF00;
@@ -80,8 +83,17 @@ public class IoDevice : IMemDevice, ILcd
     public void Write8(ushort addr, byte value)
     {
         var idx = addr - FromAddr;
+
+        // STAT: Only bits 3-6 are writable; bit 7 always reads as 1; bits 0-2 are read-only.
+        if (idx == 0x41)
+        {
+            var preserved = (byte)(m_data[idx] & 0x07); // mode + coincidence flag
+            m_data[idx] = (byte)(0x80 | preserved | (value & 0x78));
+            return;
+        }
+
         m_data[idx] = value;
-        
+
         // Joypad
         if (idx == 0x00)
         {

@@ -46,7 +46,15 @@ public class PPU
     private readonly OamDevice m_oam;
     private readonly LcdcRegister m_lcdc;
     private readonly StatRegister m_stat;
+    private const int TicksPerScanline = 456;
+    private const int OamCycles = 80;
+    private const int Mode3Cycles = 172;
+    private const int HBlankCycles = TicksPerScanline - OamCycles - Mode3Cycles; // 204
+    private const int LcdEnableDelayCycles = 4;
     private ulong m_tCycles;
+    private ulong m_lcdStartDelay;
+    private bool m_statInterruptsEnabled = true;
+    private bool m_line153Wrapped;
     private bool m_lcdOff;
     private int m_spriteCount;
     private int m_windowLine;
@@ -119,7 +127,7 @@ public class PPU
     private FrameState CurrentState
     {
         get => (FrameState)m_stat.GetMode();
-        set => m_stat.SetMode((byte)value, m_lcdc.LcdEnable);
+        set => m_stat.SetMode((byte)value, m_statInterruptsEnabled && m_lcdc.LcdEnable);
     }
 
     public PPU(ILcd lcd, VramDevice vram, InterruptDevice interruptDevice, [NotNull] OamDevice oam)
@@ -141,17 +149,22 @@ public class PPU
     /// </remarks>
     public void AdvanceT(ulong tCycles)
     {
-        // Turn off the display?
-        if (!m_lcdOff && !m_lcdc.LcdEnable)
+        // LCD disabled: hold LY/mode reset until re-enabled.
+        if (!m_lcdc.LcdEnable)
         {
-            m_lcdOff = true;
+            if (!m_lcdOff)
+            {
+                m_lcdOff = true;
+                m_lcdStartDelay = 0;
+                m_tCycles = 0;
+                m_line153Wrapped = false;
 
-            // Hardware: LY becomes 0, mode 0, timing reset.
-            UpdateLineIndex(false);           // LY = 0, windowLine reset.
-            CurrentState = FrameState.HBlank; // Mode 0.
-            m_tCycles = 0;
+                // Hardware: LY becomes 0, mode 0, timing reset.
+                UpdateLineIndex(false);           // LY = 0, windowLine reset.
+                CurrentState = FrameState.HBlank; // Mode 0.
 
-            ClearFrameBufferToBaseColor();
+                ClearFrameBufferToBaseColor();
+            }
             return; // Stop PPU while LCD is off.
         }
 
@@ -159,45 +172,83 @@ public class PPU
         if (m_lcdOff && m_lcdc.LcdEnable)
         {
             m_lcdOff = false;
-
-            // Start a fresh frame from LY=0, mode 2, dot=0.
-            // LY is already 0 from the disable, so don't bump it again.
+            m_lcdStartDelay = LcdEnableDelayCycles;
             m_tCycles = 0;
-            CurrentState = FrameState.OAMScan; // Mode 2 at start of scanline 0.
+            m_line153Wrapped = false;
+
+            // Start a fresh frame from LY=0, mode 0 for the 4T enable delay.
+            // LY is already 0 from the disable, so don't bump it again.
+            m_statInterruptsEnabled = false;
+            UpdateLineIndex(false);
+            CurrentState = FrameState.HBlank;
+            m_statInterruptsEnabled = true;
         }
 
-        m_tCycles += tCycles;
-
-        const int tCyclesPerScanline = 456;
-        const ulong drawStartCycle = 172;
-        switch (CurrentState)
+        var remaining = tCycles;
+        while (remaining > 0)
         {
-            // Capture up to 10 sprites.
-            case FrameState.OAMScan:
-                if (m_tCycles >= 80)
+            if (m_lcdStartDelay > 0)
+            {
+                var step = Math.Min(remaining, m_lcdStartDelay);
+                m_lcdStartDelay -= step;
+                remaining -= step;
+
+                if (m_lcdStartDelay > 0)
+                    continue;
+
+                m_tCycles = 0;
+                CurrentState = FrameState.OAMScan; // Enter mode 2 after the enable delay.
+                continue;
+            }
+
+            switch (CurrentState)
+            {
+                // Capture up to 10 sprites.
+                case FrameState.OAMScan:
                 {
-                    m_tCycles -= 80;
+                    var untilDrawing = (ulong)OamCycles - m_tCycles;
+                    var step = Math.Min(remaining, untilDrawing);
+                    m_tCycles += step;
+                    remaining -= step;
+
+                    if (m_tCycles < (ulong)OamCycles)
+                        continue;
+
+                    m_tCycles -= (ulong)OamCycles;
                     CaptureVisibleSprites();
                     CurrentState = FrameState.Drawing;
+                    break;
                 }
-                break;
             
-            // Build up a scanline of pixels.
-            case FrameState.Drawing:
-                if (m_tCycles >= drawStartCycle) // 172-289 T per scanline.
+                // Build up a scanline of pixels.
+                case FrameState.Drawing:
                 {
-                    m_tCycles -= drawStartCycle;
+                    var untilHBlank = (ulong)Mode3Cycles - m_tCycles; // 172 T per scanline.
+                    var step = Math.Min(remaining, untilHBlank);
+                    m_tCycles += step;
+                    remaining -= step;
+
+                    if (m_tCycles < (ulong)Mode3Cycles)
+                        continue;
+
+                    m_tCycles -= (ulong)Mode3Cycles;
                     RenderScanline();
                     CurrentState = FrameState.HBlank;
+                    break;
                 }
-                break;
             
-            // Wait until end of scanline.
-            case FrameState.HBlank:
-                var hblankLen = tCyclesPerScanline - drawStartCycle - 80;
-                if (m_tCycles >= hblankLen)
+                // Wait until end of scanline.
+                case FrameState.HBlank:
                 {
-                    m_tCycles -= hblankLen;
+                    var untilLineEnd = (ulong)HBlankCycles - m_tCycles; // 204 T.
+                    var step = Math.Min(remaining, untilLineEnd);
+                    m_tCycles += step;
+                    remaining -= step;
+
+                    if (m_tCycles < (ulong)HBlankCycles)
+                        continue;
+
+                    m_tCycles -= (ulong)HBlankCycles;
                     UpdateLineIndex(true);
                     
                     if (m_lcd.LY == FrameHeight)
@@ -211,31 +262,56 @@ public class PPU
                     {
                         CurrentState = FrameState.OAMScan;
                     }
+                    break;
                 }
-                break;
             
-            // Wait until end of frame.
-            case FrameState.FrameWait:
-                if (m_tCycles >= tCyclesPerScanline)
+                // Wait until end of frame.
+                case FrameState.FrameWait:
                 {
-                    // We're at the end of a hidden scanline.
-                    m_tCycles -= tCyclesPerScanline;
-                    if (m_lcd.LY + 1 == 154)
+                    // LY resets to 0 a few cycles into the final vblank line (LY=153).
+                    if (m_lcd.LY == 153 && m_tCycles < 4UL)
                     {
-                        // Reached the bottom of the frame - Start a new one.
-                        UpdateLineIndex(false);
-                        CurrentState = FrameState.OAMScan;
+                        var untilReset = Math.Min(remaining, 4UL - m_tCycles);
+                        m_tCycles += untilReset;
+                        remaining -= untilReset;
+
+                        if (m_tCycles == 4UL)
+                        {
+                            m_line153Wrapped = true;
+                            UpdateLineIndex(false);
+                        }
+
+                        if (remaining == 0)
+                            break;
+                    }
+
+                    var untilLineEnd = (ulong)TicksPerScanline - m_tCycles;
+                    var step = Math.Min(remaining, untilLineEnd);
+                    m_tCycles += step;
+                    remaining -= step;
+
+                    if (m_tCycles < (ulong)TicksPerScanline)
+                        continue;
+
+                    m_tCycles -= (ulong)TicksPerScanline;
+
+                    if (m_line153Wrapped)
+                    {
+                        m_line153Wrapped = false;
+                        CurrentState = FrameState.OAMScan; // Start of line 0.
                     }
                     else
                     {
-                        // Not at the bottom of the frame - Continue the current one.
                         UpdateLineIndex(true);
+                        if (m_lcd.LY == 0)
+                            CurrentState = FrameState.OAMScan;
                     }
+                    break;
                 }
-                break;
             
-            default:
-                throw new ArgumentOutOfRangeException();
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 
