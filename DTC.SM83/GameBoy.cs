@@ -150,7 +150,7 @@ public sealed class GameBoy : IDisposable
 
     private void OnFrameRendered(object sender, byte[] frameBuffer)
     {
-        m_screen.Update(frameBuffer);
+        var didUpdate = m_screen.Update(frameBuffer);
 
         // Calculate relative speed based on frame frequency (60Hz = 100%)
         var elapsedMs = m_frameStopwatch.Elapsed.TotalMilliseconds;
@@ -164,7 +164,8 @@ public sealed class GameBoy : IDisposable
         }
         m_frameStopwatch.Restart();
 
-        DisplayUpdated?.Invoke(this, EventArgs.Empty);
+        if (didUpdate)
+            DisplayUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     public void Dispose()

@@ -91,14 +91,14 @@ public sealed class LcdScreen : IDisposable
         }
     }
 
-    public unsafe void Update(byte[] frameBuffer)
+    public unsafe bool Update(byte[] frameBuffer)
     {
         if (frameBuffer == null)
             throw new ArgumentNullException(nameof(frameBuffer));
 
         var frameBufferHash = ComputeFrameBufferHash(frameBuffer);
         if (frameBufferHash == m_previousFrameBufferHash)
-            return; // Nothing to do - No change in frame data.
+            return false; // Nothing to do - No change in frame data.
 
         using var locked = Display.Lock();
         var destStride = locked.RowBytes;
@@ -110,6 +110,7 @@ public sealed class LcdScreen : IDisposable
             RenderSimple(frameBuffer, destPtr, destStride);
 
         m_previousFrameBufferHash = frameBufferHash;
+        return true; // Frame data changed.
     }
 
     /// <summary>

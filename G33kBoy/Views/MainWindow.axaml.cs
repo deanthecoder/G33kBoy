@@ -63,7 +63,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    private static void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (!IsDirectionalKey(e.Key))
             return;
