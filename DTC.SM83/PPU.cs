@@ -540,16 +540,19 @@ public class PPU
             }
 
             // Update the frame buffer.
-            byte colorValue = 0x00;
+            // Background palette entry (includes color 0).
+            var bgPaletteValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
+
+            byte colorValue;
             if (spriteColorIndex != 0x00)
             {
                 // Sprite is drawn, so use the sprite palette.
                 colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
             }
-            else if (bgColorIndex != 0x00)
+            else
             {
-                // No sprite, so use the background palette.
-                colorValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
+                // No sprite, so use the background palette (color 0 included).
+                colorValue = bgPaletteValue;
             }
 
             var frameIndex = lcdLy * FrameWidth + x;
