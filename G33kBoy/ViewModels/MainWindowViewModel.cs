@@ -24,6 +24,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private ClockSync.Speed m_emulationSpeed;
     private string m_windowTitle;
+    private bool m_isAutoFireEnabled;
 
     public GameBoy GameBoy { get; }
 
@@ -66,6 +67,18 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         Settings.IsLcdEmulationEnabled = !Settings.IsLcdEmulationEnabled;
         ApplyDisplayVisibilitySettings();
+    }
+
+    public bool IsAutoFireEnabled
+    {
+        get => m_isAutoFireEnabled;
+        private set => SetField(ref m_isAutoFireEnabled, value);
+    }
+
+    public void ToggleAutoFire()
+    {
+        IsAutoFireEnabled = !IsAutoFireEnabled;
+        GameBoy.SetAutoFireEnabled(IsAutoFireEnabled);
     }
 
     public MainWindowViewModel()
@@ -195,6 +208,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         if (romFile == null)
             return;
+
+        // Auto-fire is not persisted and resets per cartridge load.
+        if (IsAutoFireEnabled)
+            ToggleAutoFire();
 
         GameBoy.PowerOnAsync(romFile);
         Settings.LastRomFile = romFile;

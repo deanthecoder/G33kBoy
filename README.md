@@ -24,6 +24,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
   | Arrow keys | D-pad |
   | `Z` | B |
   | `X` | A |
+  | `C` | Auto-fire A |
   | Space | Select |
   | Enter/Return | Start |
   </div>
@@ -34,6 +35,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 ## Emulator features
 - **ROM loading from ZIPs** – Load standard `.gb` ROMs directly, or from a `.zip` archive containing a Game Boy ROM.
 - **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
+- **On-demand auto-fire** – Enable hardware auto-fire (Hardware → Auto-fire) to have `C` pulse the A button.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
 - **Original green display** – Toggle a classic four-shade green palette to mimic the original DMG screen.
 - **LCD emulation** – Optional high‑fidelity LCD simulation including pixel‑grid structure, sub‑pixel glow, grain, edge shadowing, and per‑pixel diffusion to closely mimic the look of the original DMG screen.

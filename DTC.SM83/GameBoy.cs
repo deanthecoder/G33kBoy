@@ -86,6 +86,7 @@ public sealed class GameBoy : IDisposable
         ShutdownCpuThread();
         RecreateHardware();
         m_clockSync.Reset();
+        SetAutoFireEnabled(false); // Reset auto-fire on cartridge change.
 
         m_cartridgeKey = cartridgeKey;
         m_loadedCartridge = cartridge;
@@ -201,6 +202,9 @@ public sealed class GameBoy : IDisposable
         if (ppu != null)
             ppu.LcdEmulationEnabled = isEnabled;
     }
+
+    public void SetAutoFireEnabled(bool isEnabled) =>
+        m_joypad.AutoFireEnabled = isEnabled;
 
     public void SaveScreenshot(FileInfo tgaFile)
     {

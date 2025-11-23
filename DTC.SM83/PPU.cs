@@ -206,15 +206,15 @@ public class PPU
                 // Capture up to 10 sprites.
                 case FrameState.OAMScan:
                 {
-                    var untilDrawing = (ulong)OamCycles - m_tCycles;
+                    var untilDrawing = OamCycles - m_tCycles;
                     var step = Math.Min(remaining, untilDrawing);
                     m_tCycles += step;
                     remaining -= step;
 
-                    if (m_tCycles < (ulong)OamCycles)
+                    if (m_tCycles < OamCycles)
                         continue;
 
-                    m_tCycles -= (ulong)OamCycles;
+                    m_tCycles -= OamCycles;
                     CaptureVisibleSprites();
                     CurrentState = FrameState.Drawing;
                     break;
@@ -223,15 +223,15 @@ public class PPU
                 // Build up a scanline of pixels.
                 case FrameState.Drawing:
                 {
-                    var untilHBlank = (ulong)Mode3Cycles - m_tCycles; // 172 T per scanline.
+                    var untilHBlank = Mode3Cycles - m_tCycles; // 172 T per scanline.
                     var step = Math.Min(remaining, untilHBlank);
                     m_tCycles += step;
                     remaining -= step;
 
-                    if (m_tCycles < (ulong)Mode3Cycles)
+                    if (m_tCycles < Mode3Cycles)
                         continue;
 
-                    m_tCycles -= (ulong)Mode3Cycles;
+                    m_tCycles -= Mode3Cycles;
                     RenderScanline();
                     CurrentState = FrameState.HBlank;
                     break;
@@ -240,15 +240,15 @@ public class PPU
                 // Wait until end of scanline.
                 case FrameState.HBlank:
                 {
-                    var untilLineEnd = (ulong)HBlankCycles - m_tCycles; // 204 T.
+                    var untilLineEnd = HBlankCycles - m_tCycles; // 204 T.
                     var step = Math.Min(remaining, untilLineEnd);
                     m_tCycles += step;
                     remaining -= step;
 
-                    if (m_tCycles < (ulong)HBlankCycles)
+                    if (m_tCycles < HBlankCycles)
                         continue;
 
-                    m_tCycles -= (ulong)HBlankCycles;
+                    m_tCycles -= HBlankCycles;
                     UpdateLineIndex(true);
                     
                     if (m_lcd.LY == FrameHeight)
@@ -285,15 +285,15 @@ public class PPU
                             break;
                     }
 
-                    var untilLineEnd = (ulong)TicksPerScanline - m_tCycles;
+                    var untilLineEnd = TicksPerScanline - m_tCycles;
                     var step = Math.Min(remaining, untilLineEnd);
                     m_tCycles += step;
                     remaining -= step;
 
-                    if (m_tCycles < (ulong)TicksPerScanline)
+                    if (m_tCycles < TicksPerScanline)
                         continue;
 
-                    m_tCycles -= (ulong)TicksPerScanline;
+                    m_tCycles -= TicksPerScanline;
 
                     if (m_line153Wrapped)
                     {

@@ -65,6 +65,12 @@
                             </MenuItem>
                         </MenuItem>
                         <Separator />
+                        <MenuItem Header="Auto-fire (C)" Command="{Binding ToggleAutoFire}">
+                            <MenuItem.Icon>
+                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsAutoFireEnabled}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
                         <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
                             <MenuItem.Effect>
                                 <BlurEffect Radius="2"/>

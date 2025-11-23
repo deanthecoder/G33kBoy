@@ -171,7 +171,6 @@ public sealed class Cartridge
         CgbFlag = (CgbFlag)RomData[0x0143];
         Title = ReadTitle();
         NewLicenseeCode = ReadAscii(0x0144, 2);
-        SgbFlag = (SgbFlag)RomData[0x0146];
         CartridgeType = (CartridgeType)RomData[0x0147];
         SupportsBattery = DetermineBatterySupport(CartridgeType);
 
@@ -219,11 +218,6 @@ public sealed class Cartridge
     /// Two-character ASCII “new licensee” code at 0x0144-0x0145 (used when old licensee is 0x33).
     /// </summary>
     private string NewLicenseeCode { get; }
-
-    /// <summary>
-    /// Super Game Boy feature flag stored at 0x0146.
-    /// </summary>
-    private SgbFlag SgbFlag { get; }
 
     /// <summary>
     /// Cartridge hardware type (mapper and extras) stored at 0x0147.

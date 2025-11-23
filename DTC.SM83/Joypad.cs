@@ -15,19 +15,28 @@ using SharpHook.Native;
 
 namespace DTC.SM83;
 
-/// <summary>Captures global keyboard input and tracks Game Boy button state.</summary>
+/// <summary>
+/// Captures global keyboard input and tracks Game Boy button state.
+/// </summary>
 public sealed class Joypad : IDisposable
 {
+    private const int AutoFireIntervalMs = 60; // ~8 presses per second (50% duty cycle).
     private readonly SimpleGlobalHook m_keyboardHook;
     private readonly Lock m_stateLock = new();
+    private readonly Timer m_autoFireTimer;
+    private JoypadButtons m_physicalButtons;
     private JoypadButtons m_pressedButtons;
     private bool m_handlePressEvents = true;
+    private bool m_autoFireEnabled;
+    private bool m_autoFireHeld;
+    private bool m_autoFirePulseOn;
 
     public Joypad()
     {
         m_keyboardHook = new SimpleGlobalHook();
         m_keyboardHook.KeyPressed += (_, args) => HandleKey(args.Data.KeyCode, true);
         m_keyboardHook.KeyReleased += (_, args) => HandleKey(args.Data.KeyCode, false);
+        m_autoFireTimer = new Timer(_ => AutoFireTick(), null, Timeout.Infinite, Timeout.Infinite);
 
         if (!Design.IsDesignMode)
             m_keyboardHook.RunAsync();
@@ -50,6 +59,30 @@ public sealed class Joypad : IDisposable
         }
     }
 
+    /// <summary>
+    /// Enables/disables the auto-fire feature (toggled from UI; not persisted).
+    /// </summary>
+    public bool AutoFireEnabled
+    {
+        get
+        {
+            lock (m_stateLock)
+                return m_autoFireEnabled;
+        }
+        set
+        {
+            lock (m_stateLock)
+            {
+                if (m_autoFireEnabled == value)
+                    return;
+
+                m_autoFireEnabled = value;
+                if (!value)
+                    ResetAutoFireStateInternal();
+            }
+        }
+    }
+
     public JoypadButtons GetPressedButtons()
     {
         lock (m_stateLock)
@@ -64,15 +97,24 @@ public sealed class Joypad : IDisposable
         if (!m_handlePressEvents)
             return;
 
+        if (keyCode == KeyCode.VcC)
+        {
+            if (AutoFireEnabled)
+                SetAutoFireHeld(isPressed);
+            return;
+        }
+
         if (!TryMapButton(keyCode, out var button))
             return;
 
         lock (m_stateLock)
         {
             if (isPressed)
-                m_pressedButtons |= button;
+                m_physicalButtons |= button;
             else
-                m_pressedButtons &= ~button;
+                m_physicalButtons &= ~button;
+
+            RecomputeButtons();
         }
     }
 
@@ -113,11 +155,27 @@ public sealed class Joypad : IDisposable
     private void ClearState()
     {
         lock (m_stateLock)
-            m_pressedButtons = JoypadButtons.None;
+        {
+            m_physicalButtons = JoypadButtons.None;
+            ResetAutoFireStateInternal();
+            RecomputeButtons();
+        }
     }
 
-    public void Dispose() =>
+    public void ResetAutoFireState()
+    {
+        lock (m_stateLock)
+        {
+            ResetAutoFireStateInternal();
+            RecomputeButtons();
+        }
+    }
+
+    public void Dispose()
+    {
+        m_autoFireTimer?.Dispose();
         m_keyboardHook.Dispose();
+    }
 
     [Flags]
     public enum JoypadButtons
@@ -147,5 +205,60 @@ public sealed class Joypad : IDisposable
 
         public void Dispose() =>
             m_joypad.HandlePressEvents = m_oldHandlePressEvents;
+    }
+
+    private void SetAutoFireHeld(bool isPressed)
+    {
+        lock (m_stateLock)
+        {
+            if (m_autoFireHeld == isPressed)
+                return;
+
+            m_autoFireHeld = isPressed;
+
+            if (isPressed)
+            {
+                m_autoFirePulseOn = true; // Press immediately on engage.
+                RecomputeButtons();
+                m_autoFireTimer.Change(AutoFireIntervalMs, AutoFireIntervalMs);
+            }
+            else
+            {
+                ResetAutoFireStateInternal();
+                RecomputeButtons();
+            }
+        }
+    }
+
+    private void AutoFireTick()
+    {
+        lock (m_stateLock)
+        {
+            if (!m_autoFireEnabled || !m_autoFireHeld)
+            {
+                ResetAutoFireStateInternal();
+                RecomputeButtons();
+                return;
+            }
+
+            m_autoFirePulseOn = !m_autoFirePulseOn;
+            RecomputeButtons();
+        }
+    }
+
+    private void RecomputeButtons()
+    {
+        var combined = m_physicalButtons;
+        if (m_autoFireEnabled && m_autoFireHeld && m_autoFirePulseOn)
+            combined |= JoypadButtons.A;
+
+        m_pressedButtons = combined;
+    }
+
+    private void ResetAutoFireStateInternal()
+    {
+        m_autoFireHeld = false;
+        m_autoFirePulseOn = false;
+        m_autoFireTimer?.Change(Timeout.Infinite, Timeout.Infinite);
     }
 }
