@@ -35,7 +35,7 @@ public class PPU
         0x81, 0x7D, 0x15,
         0x63, 0x74, 0x3F,
         0x45, 0x5D, 0x4E,
-        0x35, 0x42, 0x2F 
+        0x28, 0x32, 0x23
     ];
     private readonly double[] m_colorAccumulator = new double[FrameWidth * FrameHeight * 3];
     private readonly byte[] m_spriteIndices = new byte[10];
