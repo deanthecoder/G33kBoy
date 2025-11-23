@@ -5,6 +5,7 @@
         xmlns:viewModels="clr-namespace:G33kBoy.ViewModels"
         xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
         xmlns:views="clr-namespace:G33kBoy.Views"
+        xmlns:converters="clr-namespace:G33kBoy.Converters"
         xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="G33kBoy.Views.MainWindow"
@@ -16,6 +17,10 @@
     <Design.DataContext>
         <viewModels:MainWindowViewModel />
     </Design.DataContext>
+
+    <Window.Resources>
+        <converters:RomFileToNameConverter x:Key="RomFileToNameConverter" />
+    </Window.Resources>
     
     <Window.Styles>
         <Style Selector="Button">
@@ -39,6 +44,19 @@
                     <MenuItem Header="File">
                         <MenuItem Header="_Open..." Command="{Binding LoadGameRom}"
                                   InputGesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
+                        <MenuItem Header="Open _Recent">
+                            <MenuItem Header="Empty" IsVisible="{Binding Mru.IsEmpty}" IsEnabled="False"/>
+                            <MenuItem Header="{Binding Mru.Item1, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item1.FullName}" IsVisible="{Binding Mru.Item1.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="1"/>
+                            <MenuItem Header="{Binding Mru.Item2, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item2.FullName}" IsVisible="{Binding Mru.Item2.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="2"/>
+                            <MenuItem Header="{Binding Mru.Item3, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item3.FullName}" IsVisible="{Binding Mru.Item3.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="3"/>
+                            <MenuItem Header="{Binding Mru.Item4, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item4.FullName}" IsVisible="{Binding Mru.Item4.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="4"/>
+                            <MenuItem Header="{Binding Mru.Item5, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item5.FullName}" IsVisible="{Binding Mru.Item5.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="5"/>
+                            <MenuItem Header="{Binding Mru.Item6, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item6.FullName}" IsVisible="{Binding Mru.Item6.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="6"/>
+                            <MenuItem Header="{Binding Mru.Item7, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item7.FullName}" IsVisible="{Binding Mru.Item7.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="7"/>
+                            <MenuItem Header="{Binding Mru.Item8, Converter={StaticResource RomFileToNameConverter}}" ToolTip.Tip="{Binding Mru.Item8.FullName}" IsVisible="{Binding Mru.Item8.IsUsed}" Command="{Binding Mru.Open}" CommandParameter="8"/>
+                            <Separator/>
+                            <MenuItem Header="Clear" Command="{Binding Mru.Clear}"/>
+                        </MenuItem>
                         <MenuItem Header="_Clear All Saved ROM Data" Command="{Binding ClearAllGameData}"/>
                         <Separator />
                         <MenuItem Header="_Exit" Command="{Binding CloseCommand}" />

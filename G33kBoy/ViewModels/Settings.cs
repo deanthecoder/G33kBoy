@@ -57,6 +57,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
+    public string MruFiles
+    {
+        get => Get<string>();
+        set => Set(value);
+    }
+
     public FileInfo LastRomFile
     {
         get => Get<FileInfo>();
@@ -81,6 +87,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;
         GameDataStates = [];
+        MruFiles = string.Empty;
         LastRomFile = null;
     }
 

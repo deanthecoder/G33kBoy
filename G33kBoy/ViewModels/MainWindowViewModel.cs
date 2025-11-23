@@ -28,6 +28,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private bool m_isAutoFireEnabled;
 
     public GameBoy GameBoy { get; }
+    public MruFiles Mru { get; }
 
     public Settings Settings => Settings.Instance;
 
@@ -106,6 +107,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public MainWindowViewModel()
     {
+        Mru = new MruFiles().InitFromString(Settings.MruFiles);
+        Mru.OpenRequested += (_, file) => LoadRomFile(file, addToMru: false);
+
         GameBoy = new GameBoy(Settings.Instance);
         GameBoy.RomLoaded += (_, title) =>
             Dispatcher.UIThread.Post(() =>
@@ -227,21 +231,32 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
     }
 
-    internal void LoadRomFile(FileInfo romFile)
+    internal void LoadRomFile(FileInfo romFile, bool addToMru = true)
     {
         if (romFile == null)
             return;
+        if (!romFile.Exists)
+        {
+            Logger.Instance.Warn($"Unable to load ROM '{romFile.FullName}': File not found.");
+            return;
+        }
 
         // Auto-fire is not persisted and resets per cartridge load.
         if (IsAutoFireEnabled)
             ToggleAutoFire();
 
+        if (addToMru)
+            Mru.Add(romFile);
+
         GameBoy.PowerOnAsync(romFile);
         Settings.LastRomFile = romFile;
     }
 
-    public void Dispose() =>
+    public void Dispose()
+    {
+        Settings.MruFiles = Mru.AsString();
         GameBoy.Dispose();
+    }
 
     private static string SanitizeFileName(string input) =>
         string.IsNullOrWhiteSpace(input) ? "G33kBoy" : input.ToSafeFileName();
