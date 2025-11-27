@@ -36,6 +36,7 @@ public sealed class GameBoy : IDisposable
     private Cartridge m_loadedCartridge;
     private bool m_lcdEmulationEnabled = true;
     private readonly SoundHandler m_soundHandler;
+    private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -209,6 +210,15 @@ public sealed class GameBoy : IDisposable
 
     public void SetAutoFireEnabled(bool isEnabled) =>
         Joypad.AutoFireEnabled = isEnabled;
+    
+    public void SetSoundChannelEnabled(int channel, bool isEnabled)
+    {
+        if (channel is < 1 or > 4)
+            return;
+
+        m_soundChannelsEnabled[channel - 1] = isEnabled;
+        m_bus?.SetSoundChannelEnabled(channel, isEnabled);
+    }
 
     public void SaveScreenshot(FileInfo tgaFile)
     {
@@ -234,6 +244,15 @@ public sealed class GameBoy : IDisposable
     
     public void SetSoundEnabled(bool isEnabled) =>
         m_soundHandler?.SetEnabled(isEnabled);
+
+    private void ApplySoundChannelSettings()
+    {
+        if (m_bus == null)
+            return;
+
+        for (var channel = 1; channel <= m_soundChannelsEnabled.Length; channel++)
+            m_bus.SetSoundChannelEnabled(channel, m_soundChannelsEnabled[channel - 1]);
+    }
 
     private bool CanPersistGameData =>
         m_gameDataStore != null &&
@@ -314,6 +333,7 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_soundHandler);
+        ApplySoundChannelSettings();
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
         {

@@ -82,6 +82,28 @@
                                 </MenuItem.Icon>
                             </MenuItem>
                         </MenuItem>
+                        <MenuItem Header="Sound">
+                            <MenuItem Header="Channel 1 (Square)" Command="{Binding ToggleSoundChannel1}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsSoundChannel1Enabled}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Channel 2 (Square)" Command="{Binding ToggleSoundChannel2}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsSoundChannel2Enabled}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Channel 3 (Wave)" Command="{Binding ToggleSoundChannel3}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsSoundChannel3Enabled}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Channel 4 (Noise)" Command="{Binding ToggleSoundChannel4}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsSoundChannel4Enabled}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuItem>
                         <Separator />
                         <MenuItem Header="Auto-fire (C)" Command="{Binding ToggleAutoFire}">
                             <MenuItem.Icon>

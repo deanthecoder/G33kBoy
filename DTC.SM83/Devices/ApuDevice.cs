@@ -23,6 +23,7 @@ public sealed class ApuDevice
     private readonly SquareChannel m_channel2 = new();
     private readonly WaveChannel m_channel3;
     private readonly NoiseChannel m_channel4 = new();
+    private readonly bool[] m_channelEnabled = [true, true, true, true];
     private bool m_isPowered = true;
     private byte m_nr10;
     private byte m_nr11;
@@ -73,10 +74,10 @@ public sealed class ApuDevice
         var ch3 = m_channel3.Sample(tStates);
         var ch4 = m_channel4.Sample(tStates);
 
-        var routedCh1 = IsChannelRouted(0) ? ch1 : 0.0;
-        var routedCh2 = IsChannelRouted(1) ? ch2 : 0.0;
-        var routedCh3 = IsChannelRouted(2) ? ch3 : 0.0;
-        var routedCh4 = IsChannelRouted(3) ? ch4 : 0.0;
+        var routedCh1 = IsChannelRouted(0) && IsChannelEnabled(0) ? ch1 : 0.0;
+        var routedCh2 = IsChannelRouted(1) && IsChannelEnabled(1) ? ch2 : 0.0;
+        var routedCh3 = IsChannelRouted(2) && IsChannelEnabled(2) ? ch3 : 0.0;
+        var routedCh4 = IsChannelRouted(3) && IsChannelEnabled(3) ? ch4 : 0.0;
 
         // Normalize by the maximum number of mixed channels to avoid per-sample pumping when
         // channels (especially noise) cross zero between successive samples.
@@ -254,6 +255,14 @@ public sealed class ApuDevice
         UpdateStatusFlags();
     }
 
+    public void SetChannelEnabled(int channel, bool isEnabled)
+    {
+        if (channel is < 1 or > 4)
+            return;
+
+        m_channelEnabled[channel - 1] = isEnabled;
+    }
+
     private void UpdateStatusFlags()
     {
         var active =
@@ -289,6 +298,9 @@ public sealed class ApuDevice
         var leftMask = 1 << (channel + 4);
         return (m_nr51 & (rightMask | leftMask)) != 0;
     }
+
+    private bool IsChannelEnabled(int channel) =>
+        m_channelEnabled[channel];
 
     private double MasterVolume
     {

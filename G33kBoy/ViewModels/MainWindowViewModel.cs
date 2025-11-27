@@ -27,6 +27,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private ClockSync.Speed m_emulationSpeed;
     private string m_windowTitle;
     private bool m_isAutoFireEnabled;
+    private bool m_isSoundChannel1Enabled = true;
+    private bool m_isSoundChannel2Enabled = true;
+    private bool m_isSoundChannel3Enabled = true;
+    private bool m_isSoundChannel4Enabled = true;
 
     public GameBoy GameBoy { get; }
     public MruFiles Mru { get; }
@@ -77,6 +81,30 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Settings.IsLcdEmulationEnabled = !Settings.IsLcdEmulationEnabled;
         ApplyDisplayVisibilitySettings();
     }
+    
+    public bool IsSoundChannel1Enabled
+    {
+        get => m_isSoundChannel1Enabled;
+        private set => SetField(ref m_isSoundChannel1Enabled, value);
+    }
+
+    public bool IsSoundChannel2Enabled
+    {
+        get => m_isSoundChannel2Enabled;
+        private set => SetField(ref m_isSoundChannel2Enabled, value);
+    }
+
+    public bool IsSoundChannel3Enabled
+    {
+        get => m_isSoundChannel3Enabled;
+        private set => SetField(ref m_isSoundChannel3Enabled, value);
+    }
+
+    public bool IsSoundChannel4Enabled
+    {
+        get => m_isSoundChannel4Enabled;
+        private set => SetField(ref m_isSoundChannel4Enabled, value);
+    }
 
     public bool IsAutoFireEnabled
     {
@@ -106,6 +134,30 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetAutoFireEnabled(IsAutoFireEnabled);
     }
 
+    public void ToggleSoundChannel1()
+    {
+        IsSoundChannel1Enabled = !IsSoundChannel1Enabled;
+        GameBoy.SetSoundChannelEnabled(1, IsSoundChannel1Enabled);
+    }
+    
+    public void ToggleSoundChannel2()
+    {
+        IsSoundChannel2Enabled = !IsSoundChannel2Enabled;
+        GameBoy.SetSoundChannelEnabled(2, IsSoundChannel2Enabled);
+    }
+    
+    public void ToggleSoundChannel3()
+    {
+        IsSoundChannel3Enabled = !IsSoundChannel3Enabled;
+        GameBoy.SetSoundChannelEnabled(3, IsSoundChannel3Enabled);
+    }
+    
+    public void ToggleSoundChannel4()
+    {
+        IsSoundChannel4Enabled = !IsSoundChannel4Enabled;
+        GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
+    }
+
     public MainWindowViewModel()
     {
         Mru = new MruFiles().InitFromString(Settings.MruFiles);
@@ -122,6 +174,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             });
         ApplyDisplayVisibilitySettings();
         ApplySoundEnabledSetting();
+        ApplySoundChannelSettings();
     }
 
     public void LoadGameRom()
@@ -236,6 +289,14 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     
     private void ApplySoundEnabledSetting() =>
         GameBoy.SetSoundEnabled(Settings.IsSoundEnabled);
+    
+    private void ApplySoundChannelSettings()
+    {
+        GameBoy.SetSoundChannelEnabled(1, IsSoundChannel1Enabled);
+        GameBoy.SetSoundChannelEnabled(2, IsSoundChannel2Enabled);
+        GameBoy.SetSoundChannelEnabled(3, IsSoundChannel3Enabled);
+        GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
+    }
 
     private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
     {

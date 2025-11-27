@@ -174,6 +174,9 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(BootRom);
     }
 
+    public void SetSoundChannelEnabled(int channel, bool isEnabled) =>
+        m_apu?.SetChannelEnabled(channel, isEnabled);
+
     public byte Read8(ushort addr) =>
         GetMemoryAccess(addr) == MemoryAccess.Allow ? UncheckedRead(addr) : (byte)0xFF;
 
