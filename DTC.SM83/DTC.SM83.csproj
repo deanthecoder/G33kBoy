@@ -17,6 +17,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="OpenTK.Audio.OpenAL" Version="4.8.2" />
       <PackageReference Include="SharpHook" Version="5.2.3" />
     </ItemGroup>
 

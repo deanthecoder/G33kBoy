@@ -35,6 +35,7 @@ public sealed class GameBoy : IDisposable
     private bool m_shutdownRequested;
     private Cartridge m_loadedCartridge;
     private bool m_lcdEmulationEnabled = true;
+    private readonly SoundHandler m_soundHandler;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -45,14 +46,15 @@ public sealed class GameBoy : IDisposable
 
     public Joypad Joypad { get; }
 
-    public GameBoy(IGameDataStore gameDataStore = null)
+    public GameBoy(IGameDataStore gameDataStore = null, int soundLevelResolution = 256)
     {
         m_gameDataStore = gameDataStore;
         Joypad = new Joypad();
+        m_soundHandler = new SoundHandler(soundLevelResolution);
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
 
-        m_clockSync = new ClockSync(4194304, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
+        m_clockSync = new ClockSync(Cpu.Hz, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
     }
 
     public void PowerOnAsync(FileInfo romFile)
@@ -92,6 +94,8 @@ public sealed class GameBoy : IDisposable
         m_cpu.LoadRom(m_loadedCartridge);
 
         RestoreSavedGameData();
+
+        m_soundHandler?.Start();
         
         m_ramPersistStopwatch.Restart();
         m_cpuThread = new Thread(RunLoop) { Name = "GameBoy CPU" };
@@ -174,6 +178,7 @@ public sealed class GameBoy : IDisposable
         DisposeHardware();
         Joypad.Dispose();
         m_screen.Dispose();
+        m_soundHandler?.Dispose();
     }
 
     public void SetSpeed(ClockSync.Speed speed) =>
@@ -226,6 +231,9 @@ public sealed class GameBoy : IDisposable
     
     public void ClearAllGameData() =>
         m_gameDataStore?.ClearAllGameData();
+    
+    public void SetSoundEnabled(bool isEnabled) =>
+        m_soundHandler?.SetEnabled(isEnabled);
 
     private bool CanPersistGameData =>
         m_gameDataStore != null &&
@@ -305,7 +313,7 @@ public sealed class GameBoy : IDisposable
 
     private void CreateHardware()
     {
-        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad);
+        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_soundHandler);
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
         {

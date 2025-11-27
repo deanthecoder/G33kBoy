@@ -9,6 +9,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System;
+using System.ComponentModel;
 using System.IO;
 using Avalonia;
 using Avalonia.Threading;
@@ -111,6 +112,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Mru.OpenRequested += (_, file) => LoadRomFile(file, addToMru: false);
 
         GameBoy = new GameBoy(Settings.Instance);
+        Settings.PropertyChanged += OnSettingsPropertyChanged;
         GameBoy.RomLoaded += (_, title) =>
             Dispatcher.UIThread.Post(() =>
             {
@@ -119,6 +121,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
                 ApplyDisplayVisibilitySettings();
             });
         ApplyDisplayVisibilitySettings();
+        ApplySoundEnabledSetting();
     }
 
     public void LoadGameRom()
@@ -230,6 +233,15 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
         GameBoy.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
     }
+    
+    private void ApplySoundEnabledSetting() =>
+        GameBoy.SetSoundEnabled(Settings.IsSoundEnabled);
+
+    private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Settings.IsSoundEnabled))
+            ApplySoundEnabledSetting();
+    }
 
     internal void LoadRomFile(FileInfo romFile, bool addToMru = true)
     {
@@ -255,6 +267,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         Settings.MruFiles = Mru.AsString();
+        Settings.PropertyChanged -= OnSettingsPropertyChanged;
         GameBoy.Dispose();
     }
 

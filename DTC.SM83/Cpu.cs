@@ -16,6 +16,8 @@ namespace DTC.SM83;
 
 public class Cpu
 {
+    public const double Hz = 4194304.0;
+    
     private readonly CircularBuffer<string> m_instructionLog = new(2048);
     private readonly Lock m_instructionLogLock = new();
     private string m_instructionState;

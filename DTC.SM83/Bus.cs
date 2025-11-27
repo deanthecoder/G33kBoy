@@ -27,6 +27,7 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly TimerDevice m_timer;
     private readonly IoDevice m_ioDevice;
     private readonly InterruptDevice m_interruptDevice;
+    private readonly ApuDevice m_apu;
     private readonly HramDevice m_hramDevice;
     private readonly OamDevice m_oam;
 
@@ -71,7 +72,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Block
     }
 
-    public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null)
+    public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null, SoundHandler soundHandler = null)
     {
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_devices);
@@ -84,6 +85,7 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             BootRom = new BootRom();
+            m_apu = new ApuDevice(soundHandler);
 
             // V(ideo)RAM (0x8000 - 0x9FFF)
             vram = new VramDevice();
@@ -104,7 +106,7 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(new UnusableRamDevice());
 
             // IO (0xFF00 - 0xFF7F)
-            m_ioDevice = new IoDevice(this, BootRom, joypad);
+            m_ioDevice = new IoDevice(this, BootRom, joypad, m_apu);
             Attach(m_ioDevice);
 
             // High RAM (0xFF80 - 0xFFFE)
@@ -246,6 +248,7 @@ public sealed class Bus : IMemDevice, IDisposable
         
         // Update the devices.
         m_timer?.AdvanceT(tCycles);
+        m_apu?.AdvanceT(tCycles);
         PPU?.AdvanceT(tCycles);
     }
 

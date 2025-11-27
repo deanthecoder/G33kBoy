@@ -59,6 +59,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Include="..\external\oalinst.exe" Link="3rdParty\oalinst.exe">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\DTC.Core\DTC.Core\DTC.Core.csproj" />
       <ProjectReference Include="..\DTC.SM83\DTC.SM83.csproj" />
     </ItemGroup>
