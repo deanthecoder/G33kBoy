@@ -7,22 +7,12 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+namespace DTC.SM83.HostDevices;
 
-using DTC.SM83.Devices;
-
-namespace DTC.SM83.Extensions;
-
-public static class MemDeviceExtensions
+public interface IAudioSink : IDisposable
 {
     /// <summary>
-    /// Load a block of data into the target bus/device.
+    /// Adds a single stereo sample. Values are expected in the range -1.0 to +1.0.
     /// </summary>
-    public static void Load(this IMemDevice bus, ushort addr, byte[] data)
-    {
-        foreach (var b in data)
-            bus.Write8(addr++, b);
-    }
-    
-    public static ushort Read16(this IMemDevice bus, ushort addr) =>
-        (ushort)(bus.Read8(addr) | (bus.Read8((ushort)(addr + 1)) << 8));
+    void AddSample(double left, double right);
 }

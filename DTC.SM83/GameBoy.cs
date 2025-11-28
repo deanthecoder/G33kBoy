@@ -16,6 +16,7 @@ using DTC.Core;
 using DTC.Core.Extensions;
 using DTC.Core.UI;
 using DTC.SM83.Extensions;
+using DTC.SM83.HostDevices;
 using Material.Icons;
 
 namespace DTC.SM83;
@@ -35,8 +36,10 @@ public sealed class GameBoy : IDisposable
     private bool m_shutdownRequested;
     private Cartridge m_loadedCartridge;
     private bool m_lcdEmulationEnabled = true;
-    private readonly SoundHandler m_soundHandler;
+    private readonly GameBoyAudioSink m_audioSink;
     private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
+    private bool m_isUserSoundEnabled = true;
+    private bool m_isRunningAtNormalSpeed = true;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -51,7 +54,7 @@ public sealed class GameBoy : IDisposable
     {
         m_gameDataStore = gameDataStore;
         Joypad = new Joypad();
-        m_soundHandler = new SoundHandler(soundLevelResolution);
+        m_audioSink = new GameBoyAudioSink(44100);
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
 
@@ -96,7 +99,7 @@ public sealed class GameBoy : IDisposable
 
         RestoreSavedGameData();
 
-        m_soundHandler?.Start();
+        m_audioSink?.Start();
         
         m_ramPersistStopwatch.Restart();
         m_cpuThread = new Thread(RunLoop) { Name = "GameBoy CPU" };
@@ -179,11 +182,20 @@ public sealed class GameBoy : IDisposable
         DisposeHardware();
         Joypad.Dispose();
         m_screen.Dispose();
-        m_soundHandler?.Dispose();
+        m_audioSink?.Dispose();
     }
 
-    public void SetSpeed(ClockSync.Speed speed) =>
+    public void SetSpeed(ClockSync.Speed speed)
+    {
+        var isNormalSpeed = speed == ClockSync.Speed.Actual;
+        if (m_isRunningAtNormalSpeed != isNormalSpeed)
+        {
+            m_isRunningAtNormalSpeed = isNormalSpeed;
+            UpdateSoundEnabled();
+        }
+
         m_clockSync.SetSpeed(speed);
+    }
 
     public void SetBackgroundVisibility(bool isVisible)
     {
@@ -242,8 +254,18 @@ public sealed class GameBoy : IDisposable
     public void ClearAllGameData() =>
         m_gameDataStore?.ClearAllGameData();
     
-    public void SetSoundEnabled(bool isEnabled) =>
-        m_soundHandler?.SetEnabled(isEnabled);
+    public void SetSoundEnabled(bool isEnabled)
+    {
+        m_isUserSoundEnabled = isEnabled;
+        UpdateSoundEnabled();
+    }
+
+    private void UpdateSoundEnabled()
+    {
+        // Auto-mute whenever the emulation is not running at 100% speed to avoid mangled audio.
+        var shouldEnableSound = m_isUserSoundEnabled && m_isRunningAtNormalSpeed;
+        m_audioSink?.SetEnabled(shouldEnableSound);
+    }
 
     private void ApplySoundChannelSettings()
     {
@@ -332,7 +354,7 @@ public sealed class GameBoy : IDisposable
 
     private void CreateHardware()
     {
-        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_soundHandler);
+        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_audioSink);
         ApplySoundChannelSettings();
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
@@ -360,5 +382,32 @@ public sealed class GameBoy : IDisposable
     {
         m_bus?.ResetClock();
         return 0;
+    }
+
+    private sealed class GameBoyAudioSink : IAudioSink, IDisposable
+    {
+        private readonly SoundDevice m_soundDevice;
+        private Task m_soundTask;
+
+        public GameBoyAudioSink(int sampleRate)
+        {
+            m_soundDevice = new SoundDevice(sampleRate);
+        }
+
+        public void Start() =>
+            m_soundTask = m_soundDevice.StartAsync();
+
+        public void SetEnabled(bool isSoundEnabled) =>
+            m_soundDevice.SetEnabled(isSoundEnabled);
+
+        public void AddSample(double left, double right) =>
+            m_soundDevice.AddSample(left, right);
+
+        public void Dispose()
+        {
+            m_soundDevice.Stop();
+            m_soundTask?.Wait();
+            m_soundDevice.Dispose();
+        }
     }
 }

@@ -288,14 +288,6 @@ public class Cpu
     }
     
     /// <summary>
-    /// Read a 16-bit word from memory and advance clock by 8 ticks.
-    /// </summary>
-    /// <param name="addr">Memory address to read.</param>
-    /// <returns>Word value read.</returns>
-    public ushort Read16(ushort addr) =>
-        (ushort)(Read8(addr) | (Read8((ushort)(addr + 1)) << 8));
-    
-    /// <summary>
     /// Write memory at address and advance the clock 4 ticks.
     /// </summary>
     public void Write8(ushort addr, byte value)

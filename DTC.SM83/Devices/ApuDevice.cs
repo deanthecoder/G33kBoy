@@ -9,16 +9,21 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.HostDevices;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
 /// Simplified Game Boy APU. Implements square channels (1 &amp; 2), wave (3) and noise (4)
-/// and feeds mixed output into the shared sound handler.
+/// and feeds mixed stereo output into the audio sink.
 /// </summary>
 public sealed class ApuDevice
 {
+    private const double SampleHz = 44100.0;
+    private static readonly double TicksPerSample = Cpu.Hz / SampleHz;
+    private double m_ticksUntilSample = TicksPerSample;
     private readonly byte[] m_waveRam = new byte[16];
-    private readonly SoundHandler m_soundHandler;
+    private readonly IAudioSink m_audioSink;
     private readonly SquareChannel m_channel1 = new();
     private readonly SquareChannel m_channel2 = new();
     private readonly WaveChannel m_channel3;
@@ -47,48 +52,83 @@ public sealed class ApuDevice
     private byte m_nr51;
     private byte m_nr52 = 0x80;
 
-    public ApuDevice(SoundHandler soundHandler)
+    public ApuDevice(IAudioSink audioSink)
     {
-        m_soundHandler = soundHandler;
+        m_audioSink = audioSink;
         m_channel3 = new WaveChannel(m_waveRam);
     }
 
     public void AdvanceT(ulong tStates)
     {
-        if (!m_isPowered)
-        {
-            m_soundHandler?.SetSpeakerState(0);
-            m_soundHandler?.SampleSpeakerState(tStates);
-            return;
-        }
-
         var ch1Changed = m_channel1.Advance(tStates);
         var ch2Changed = m_channel2.Advance(tStates);
         var ch3Changed = m_channel3.Advance(tStates);
         var ch4Changed = m_channel4.Advance(tStates);
         if (ch1Changed || ch2Changed || ch3Changed || ch4Changed)
+        {
             UpdateStatusFlags();
+        }
 
-        var ch1 = m_channel1.Sample(tStates);
-        var ch2 = m_channel2.Sample(tStates);
-        var ch3 = m_channel3.Sample(tStates);
-        var ch4 = m_channel4.Sample(tStates);
+        // Accumulate CPU time towards the next audio sample.
+        m_ticksUntilSample -= tStates;
+        while (m_ticksUntilSample <= 0.0)
+        {
+            // Generate one audio sample using a fixed tick delta per sample.
+            GenerateAudioSample((ulong)TicksPerSample);
+            m_ticksUntilSample += TicksPerSample;
+        }
+    }
 
-        var routedCh1 = IsChannelRouted(0) && IsChannelEnabled(0) ? ch1 : 0.0;
-        var routedCh2 = IsChannelRouted(1) && IsChannelEnabled(1) ? ch2 : 0.0;
-        var routedCh3 = IsChannelRouted(2) && IsChannelEnabled(2) ? ch3 : 0.0;
-        var routedCh4 = IsChannelRouted(3) && IsChannelEnabled(3) ? ch4 : 0.0;
+    private void GenerateAudioSample(ulong sampleTicks)
+    {
+        var ch1 = m_channel1.Sample(sampleTicks);
+        var ch2 = m_channel2.Sample(sampleTicks);
+        var ch3 = m_channel3.Sample(sampleTicks);
+        var ch4 = m_channel4.Sample(sampleTicks);
 
-        // Normalize by the maximum number of mixed channels to avoid per-sample pumping when
-        // channels (especially noise) cross zero between successive samples.
-        var mix = routedCh1 + routedCh2 + routedCh3 + routedCh4;
-        mix /= 4.0;
-        mix *= MasterVolume;
+        // Route channels according to NR51.
+        var ch1L = (m_nr51 & (1 << 4)) != 0;
+        var ch2L = (m_nr51 & (1 << 5)) != 0;
+        var ch3L = (m_nr51 & (1 << 6)) != 0;
+        var ch4L = (m_nr51 & (1 << 7)) != 0;
 
-        var maxLevel = (m_soundHandler?.LevelResolution ?? 16) - 1;
-        var level = (byte)Math.Clamp(mix * maxLevel, 0, maxLevel);
-        m_soundHandler?.SetSpeakerState(level);
-        m_soundHandler?.SampleSpeakerState(tStates);
+        var ch1R = (m_nr51 & (1 << 0)) != 0;
+        var ch2R = (m_nr51 & (1 << 1)) != 0;
+        var ch3R = (m_nr51 & (1 << 2)) != 0;
+        var ch4R = (m_nr51 & (1 << 3)) != 0;
+
+        // Only include channels that are enabled and routed.
+        var left =
+            (ch1L && IsChannelEnabled(0) ? ch1 : 0.0) +
+            (ch2L && IsChannelEnabled(1) ? ch2 : 0.0) +
+            (ch3L && IsChannelEnabled(2) ? ch3 : 0.0) +
+            (ch4L && IsChannelEnabled(3) ? ch4 : 0.0);
+
+        var right =
+            (ch1R && IsChannelEnabled(0) ? ch1 : 0.0) +
+            (ch2R && IsChannelEnabled(1) ? ch2 : 0.0) +
+            (ch3R && IsChannelEnabled(2) ? ch3 : 0.0) +
+            (ch4R && IsChannelEnabled(3) ? ch4 : 0.0);
+
+        // NR50: left and right master volumes (0–7).
+        var so1 = m_nr50 & 0x07;        // right
+        var so2 = (m_nr50 >> 4) & 0x07; // left
+
+        var leftVol = so2 / 7.0;
+        var rightVol = so1 / 7.0;
+
+        left *= leftVol;
+        right *= rightVol;
+
+        // Normalize for "up to 4 loud channels".
+        left /= 4.0;
+        right /= 4.0;
+
+        // Clamp and send to the audio sink.
+        left = Math.Clamp(left, -1.0, 1.0);
+        right = Math.Clamp(right, -1.0, 1.0);
+
+        m_audioSink?.AddSample(left, right);
     }
 
     public byte Read8(ushort addr)
@@ -96,83 +136,175 @@ public sealed class ApuDevice
         if (addr is >= 0xFF30 and <= 0xFF3F)
             return m_waveRam[addr - 0xFF30];
 
-        if (!m_isPowered && addr != 0xFF26)
-            return 0x00;
-
-        return addr switch
+        var raw = addr switch
         {
             0xFF10 => m_nr10,
             0xFF11 => m_nr11,
             0xFF12 => m_nr12,
             0xFF13 => m_nr13,
-            0xFF14 => (byte)(m_nr14 | 0xBF),
+            0xFF14 => m_nr14,
             0xFF16 => m_nr21,
             0xFF17 => m_nr22,
             0xFF18 => m_nr23,
-            0xFF19 => (byte)(m_nr24 | 0xBF),
+            0xFF19 => m_nr24,
             0xFF1A => m_nr30,
             0xFF1B => m_nr31,
             0xFF1C => m_nr32,
             0xFF1D => m_nr33,
-            0xFF1E => (byte)(m_nr34 | 0xBF),
+            0xFF1E => m_nr34,
             0xFF20 => m_nr41,
             0xFF21 => m_nr42,
             0xFF22 => m_nr43,
-            0xFF23 => (byte)(m_nr44 | 0xBF),
+            0xFF23 => m_nr44,
             0xFF24 => m_nr50,
             0xFF25 => m_nr51,
-            0xFF26 => (byte)(m_nr52 | 0x70),
+            0xFF26 => m_nr52,
             _ => 0xFF
         };
+        return ApplyReadMask(addr, (byte)raw);
     }
 
+    private static byte ApplyReadMask(ushort addr, byte value)
+    {
+        return addr switch
+        {
+            // NR1x
+            0xFF10 => (byte)(value | 0x80),
+            0xFF11 => (byte)(value | 0x3F),
+            0xFF12 => (byte)(value | 0x00),
+            0xFF13 => 0xFF,
+            0xFF14 => (byte)(value | 0xBF),
+
+            // NR2x
+            0xFF16 => (byte)(value | 0x3F),
+            0xFF17 => (byte)(value | 0x00),
+            0xFF18 => (byte)(value | 0xFF),
+            0xFF19 => (byte)(value | 0xBF),
+
+            // NR3x
+            0xFF1A => (byte)(value | 0x7F),
+            0xFF1B => 0xFF,
+            0xFF1C => (byte)(value | 0x9F),
+            0xFF1D => 0xFF,
+            0xFF1E => (byte)(value | 0xBF),
+
+            // NR4x
+            0xFF20 => 0xFF,
+            0xFF21 => (byte)(value | 0x00),
+            0xFF22 => (byte)(value | 0x00),
+            0xFF23 => (byte)(value | 0xBF),
+
+            // NR5x
+            0xFF24 => (byte)(value | 0x00),
+            0xFF25 => (byte)(value | 0x00),
+            0xFF26 => (byte)(value | 0x70),
+
+            _ => value
+        };
+    }
+    
     public void Write8(ushort addr, byte value)
     {
+        // Wave RAM is unaffected by APU power state.
         if (addr is >= 0xFF30 and <= 0xFF3F)
         {
             m_waveRam[addr - 0xFF30] = value;
             return;
         }
 
+        // NR52 – sound on/off.
         if (addr == 0xFF26)
         {
             var powerOn = (value & 0x80) != 0;
+
+            // Always store write to NR52 (masked), regardless of state.
+            m_nr52 = (byte) (value & 0x80);
+
             if (powerOn == m_isPowered)
             {
+                // State did not change, just refresh status bits from channels.
                 UpdateStatusFlags();
                 return;
             }
 
             m_isPowered = powerOn;
+
             if (!powerOn)
-                ResetRegisters();
+            {
+                // Turning sound off:
+                //  - Clear all sound registers (except NR52 bit 7, which is now 0).
+                //  - Disable all channels.
+                //  - Keep wave RAM as-is.
+                ResetRegisters(); // Make sure this does NOT clear m_waveRam.
+                m_nr52 = 0; // Bit 7 now off, lower bits already cleared.
+            }
             else
+            {
+                // Turning sound on:
+                //  - Registers stay at their cleared state.
+                //  - Channels are disabled until triggered.
+                //  - NR52 bit 7 set, lower bits will be updated by UpdateStatusFlags.
+                m_nr52 = 0x80;
                 UpdateStatusFlags();
+            }
+
             return;
         }
 
+        // APU powered off: only certain writes still have effect.
         if (!m_isPowered)
-            return;
+        {
+            switch (addr)
+            {
+                case 0xFF11: // NR11 (duty/length) – only length writable when off.
+                    m_nr11 = (byte) ((m_nr11 & 0xC0) | (value & 0x3F));
+                    m_channel1.SetLength(value);
+                    break;
 
+                case 0xFF16: // NR21 (duty/length) – only length writable when off.
+                    m_nr21 = (byte) ((m_nr21 & 0xC0) | (value & 0x3F));
+                    m_channel2.SetLength(value);
+                    break;
+
+                case 0xFF1B: // NR31 (length).
+                    m_nr31 = value;
+                    m_channel3.SetLength(value);
+                    break;
+
+                case 0xFF20: // NR41 (length).
+                    m_nr41 = value;
+                    m_channel4.SetLength(value);
+                    break;
+            }
+
+            // All other sound writes ignored while powered off.
+            return;
+        }
+
+        // Normal powered-on behaviour from here down.
         switch (addr)
         {
-            case 0xFF10: // NR10 (sweep) - not implemented yet
+            case 0xFF10: // NR10 (sweep) - not implemented yet.
                 m_nr10 = value;
                 break;
-            case 0xFF11: // NR11 (duty/length)
+
+            case 0xFF11: // NR11 (duty/length).
                 m_nr11 = value;
-                m_channel1.SetDuty((byte)((value >> 6) & 0x03));
+                m_channel1.SetDuty((byte) ((value >> 6) & 0x03));
                 m_channel1.SetLength(value);
                 break;
-            case 0xFF12: // NR12 (envelope)
+
+            case 0xFF12: // NR12 (envelope).
                 m_nr12 = value;
                 m_channel1.SetEnvelope(value);
                 break;
-            case 0xFF13: // NR13 (freq low)
+
+            case 0xFF13: // NR13 (freq low).
                 m_nr13 = value;
                 m_channel1.SetFrequency(CombineFrequency(m_nr13, m_nr14));
                 break;
-            case 0xFF14: // NR14 (trigger/freq high)
+
+            case 0xFF14: // NR14 (trigger/freq high).
                 m_nr14 = value;
                 m_channel1.SetFrequency(CombineFrequency(m_nr13, m_nr14));
                 m_channel1.SetLengthEnable((value & 0x40) != 0);
@@ -180,20 +312,23 @@ public sealed class ApuDevice
                     m_channel1.Trigger();
                 break;
 
-            case 0xFF16: // NR21 (duty/length)
+            case 0xFF16: // NR21 (duty/length).
                 m_nr21 = value;
-                m_channel2.SetDuty((byte)((value >> 6) & 0x03));
+                m_channel2.SetDuty((byte) ((value >> 6) & 0x03));
                 m_channel2.SetLength(value);
                 break;
-            case 0xFF17: // NR22 (envelope)
+
+            case 0xFF17: // NR22 (envelope).
                 m_nr22 = value;
                 m_channel2.SetEnvelope(value);
                 break;
-            case 0xFF18: // NR23 (freq low)
+
+            case 0xFF18: // NR23 (freq low).
                 m_nr23 = value;
                 m_channel2.SetFrequency(CombineFrequency(m_nr23, m_nr24));
                 break;
-            case 0xFF19: // NR24 (trigger/freq high)
+
+            case 0xFF19: // NR24 (trigger/freq high).
                 m_nr24 = value;
                 m_channel2.SetFrequency(CombineFrequency(m_nr23, m_nr24));
                 m_channel2.SetLengthEnable((value & 0x40) != 0);
@@ -201,23 +336,27 @@ public sealed class ApuDevice
                     m_channel2.Trigger();
                 break;
 
-            case 0xFF1A: // NR30 (DAC power)
+            case 0xFF1A: // NR30 (DAC power).
                 m_nr30 = value;
                 m_channel3.SetDacEnabled((value & 0x80) != 0);
                 break;
-            case 0xFF1B: // NR31 (length)
+
+            case 0xFF1B: // NR31 (length).
                 m_nr31 = value;
                 m_channel3.SetLength(value);
                 break;
-            case 0xFF1C: // NR32 (volume)
+
+            case 0xFF1C: // NR32 (volume).
                 m_nr32 = value;
-                m_channel3.SetVolume((byte)((value >> 5) & 0x03));
+                m_channel3.SetVolume((byte) ((value >> 5) & 0x03));
                 break;
-            case 0xFF1D: // NR33 (freq low)
+
+            case 0xFF1D: // NR33 (freq low).
                 m_nr33 = value;
                 m_channel3.SetFrequency(CombineFrequency(m_nr33, m_nr34));
                 break;
-            case 0xFF1E: // NR34 (trigger/freq high)
+
+            case 0xFF1E: // NR34 (trigger/freq high).
                 m_nr34 = value;
                 m_channel3.SetFrequency(CombineFrequency(m_nr33, m_nr34));
                 m_channel3.SetLengthEnable((value & 0x40) != 0);
@@ -225,29 +364,33 @@ public sealed class ApuDevice
                     m_channel3.Trigger();
                 break;
 
-            case 0xFF20: // NR41 (length)
+            case 0xFF20: // NR41 (length).
                 m_nr41 = value;
                 m_channel4.SetLength(value);
                 break;
-            case 0xFF21: // NR42 (envelope)
+
+            case 0xFF21: // NR42 (envelope).
                 m_nr42 = value;
                 m_channel4.SetEnvelope(value);
                 break;
-            case 0xFF22: // NR43 (polynomial counter)
+
+            case 0xFF22: // NR43 (polynomial counter).
                 m_nr43 = value;
                 m_channel4.SetPolynomial(value);
                 break;
-            case 0xFF23: // NR44 (trigger/length enable)
+
+            case 0xFF23: // NR44 (trigger/length enable).
                 m_nr44 = value;
                 m_channel4.SetLengthEnable((value & 0x40) != 0);
                 if ((value & 0x80) != 0)
                     m_channel4.Trigger();
                 break;
 
-            case 0xFF24: // NR50 (master volume)
+            case 0xFF24: // NR50 (master volume).
                 m_nr50 = value;
                 break;
-            case 0xFF25: // NR51 (panning)
+
+            case 0xFF25: // NR51 (panning).
                 m_nr51 = value;
                 break;
         }
@@ -280,7 +423,7 @@ public sealed class ApuDevice
         m_nr30 = m_nr31 = m_nr32 = m_nr33 = m_nr34 = 0;
         m_nr41 = m_nr42 = m_nr43 = m_nr44 = 0;
         m_nr50 = m_nr51 = 0;
-        Array.Clear(m_waveRam);
+
         m_channel1.Disable();
         m_channel2.Disable();
         m_channel3.SetDacEnabled(false);
@@ -291,28 +434,10 @@ public sealed class ApuDevice
 
     private static ushort CombineFrequency(byte low, byte high) =>
         (ushort)(low | ((high & 0x07) << 8));
-
-    private bool IsChannelRouted(int channel)
-    {
-        var rightMask = 1 << channel;
-        var leftMask = 1 << (channel + 4);
-        return (m_nr51 & (rightMask | leftMask)) != 0;
-    }
-
+    
     private bool IsChannelEnabled(int channel) =>
         m_channelEnabled[channel];
-
-    private double MasterVolume
-    {
-        get
-        {
-            var so1 = m_nr50 & 0x07;
-            var so2 = (m_nr50 >> 4) & 0x07;
-            var max = Math.Max(so1, so2);
-            return max / 7.0;
-        }
-    }
-
+    
     private sealed class SquareChannel
     {
         private const ulong LengthStepTStates = (ulong)(4194304.0 / 256.0);  // 256 Hz
@@ -470,7 +595,7 @@ public sealed class ApuDevice
             m_lengthEnabled = enabled;
 
         public void SetVolume(byte volumeCode) =>
-            m_volumeCode = (byte)Math.Min((byte)3, volumeCode);
+            m_volumeCode = Math.Min((byte)3, volumeCode);
 
         public void SetFrequency(ushort frequency)
         {
@@ -530,6 +655,8 @@ public sealed class ApuDevice
             sampleIndex = Math.Clamp(sampleIndex, 0, 31);
             var waveByte = m_waveRam[sampleIndex >> 1];
             var sample4 = (sampleIndex & 1) == 0 ? waveByte >> 4 : waveByte & 0x0F;
+            if (sample4 == 0)
+                return 0.0;
 
             var volumeFactor = m_volumeCode switch
             {

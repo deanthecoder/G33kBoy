@@ -45,7 +45,7 @@ public sealed class Joypad : IDisposable
     /// <summary>
     /// Gets or sets whether key press events should update the button state.
     /// </summary>
-    public bool HandlePressEvents
+    private bool HandlePressEvents
     {
         get => m_handlePressEvents;
         set
@@ -161,16 +161,7 @@ public sealed class Joypad : IDisposable
             RecomputeButtons();
         }
     }
-
-    public void ResetAutoFireState()
-    {
-        lock (m_stateLock)
-        {
-            ResetAutoFireStateInternal();
-            RecomputeButtons();
-        }
-    }
-
+    
     public void Dispose()
     {
         m_autoFireTimer?.Dispose();

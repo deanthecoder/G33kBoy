@@ -12,6 +12,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using DTC.SM83.Devices;
+using DTC.SM83.HostDevices;
 using DTC.SM83.MemoryBankControllers;
 
 namespace DTC.SM83;
@@ -72,7 +73,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Block
     }
 
-    public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null, SoundHandler soundHandler = null)
+    public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null, IAudioSink audioSink = null)
     {
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_devices);
@@ -85,7 +86,7 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             BootRom = new BootRom();
-            m_apu = new ApuDevice(soundHandler);
+            m_apu = new ApuDevice(audioSink);
 
             // V(ideo)RAM (0x8000 - 0x9FFF)
             vram = new VramDevice();

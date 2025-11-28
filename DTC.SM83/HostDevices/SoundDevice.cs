@@ -17,13 +17,15 @@ namespace DTC.SM83.HostDevices;
 /// <summary>
 /// A sound device to interface with the host machine's sound card.
 /// </summary>
-public class SoundDevice
+public class SoundDevice : IAudioSink
 {
     private readonly int m_source;
     private readonly int[] m_buffers;
     private readonly int m_sampleRate;
     private bool m_isSoundEnabled = true;
-    private byte m_lastWrittenSample;
+    private byte m_lastLeftSample = 128;
+    private byte m_lastRightSample = 128;
+    private bool m_isCancelled;
 
     /// <summary>
     /// Data received from the CPU, copied into m_transferBuffer for transfer to the sound card.
@@ -53,17 +55,20 @@ public class SoundDevice
         m_buffers = AL.GenBuffers(BufferCount);
         m_source = AL.GenSource();
 
-        // Enough data for 0.1 seconds of play, split between all buffers.
-        var bufferSize = (int)(m_sampleRate * 0.1 / BufferCount);
+        // Enough data for 0.1 seconds of play, split between all buffers (stereo: 2 bytes per sample).
+        var bufferSize = (int)(m_sampleRate * 0.1 * 2 / BufferCount);
         m_transferBuffer = new byte[bufferSize];
     }
+    
+    public Task StartAsync() =>
+        Task.Run(SoundLoop);
 
-    public void SoundLoop(Func<bool> isCancelled)
+    private void SoundLoop()
     {
         Logger.Instance.Info("Sound thread started.");
         
         // Wait for 'real' sound data to appear.
-        while (!isCancelled() && m_cpuBuffer.Count < m_transferBuffer.Length * BufferCount)
+        while (!m_isCancelled && m_cpuBuffer.Count < m_transferBuffer.Length * BufferCount)
             Thread.Sleep(10);
 
         // Pre-fill all buffers with initial data.
@@ -76,7 +81,7 @@ public class SoundDevice
         CheckSoundError();
 
         var gain = 0.0f;
-        while (!isCancelled())
+        while (!m_isCancelled)
         {
             Thread.Sleep(10);
 
@@ -151,12 +156,18 @@ public class SoundDevice
             m_cpuBuffer.RemoveRange(0, (int)srcIndex);
         }
 
-        // Pad transfer buffer if necessary.
-        for (var i = dstIndex; i < m_transferBuffer.Length; i++)
-            m_transferBuffer[i] = m_lastWrittenSample;
+        // Pad transfer buffer if necessary (stereo: left/right).
+        for (var i = dstIndex; i < m_transferBuffer.Length; i += 2)
+        {
+            m_transferBuffer[i] = m_lastLeftSample;
+            if (i + 1 < m_transferBuffer.Length)
+            {
+                m_transferBuffer[i + 1] = m_lastRightSample;
+            }
+        }
 
         // Load the device buffer with data.
-        AL.BufferData(bufferId, ALFormat.Mono8, m_transferBuffer, m_sampleRate);
+        AL.BufferData(bufferId, ALFormat.Stereo8, m_transferBuffer, m_sampleRate);
         CheckSoundError();
 
         // Queue the device buffer for playback.
@@ -164,13 +175,35 @@ public class SoundDevice
         CheckSoundError();
     }
 
-    public void AddSample(double sampleValue)
+    public void AddSample(double leftSample, double rightSample)
     {
-        m_lastWrittenSample = (byte)(m_isSoundEnabled ? sampleValue * byte.MaxValue : 0);
-        lock (m_cpuBuffer)
-            m_cpuBuffer.Add(m_lastWrittenSample);
-    }
+        if (!m_isSoundEnabled)
+        {
+            // Silence: centre both channels.
+            leftSample = 0.0;
+            rightSample = 0.0;
+        }
 
+        byte ToUnsigned8(double sample)
+        {
+            sample = Math.Clamp(sample, -1.0, 1.0);
+            var scaled = 128.0 + sample * 127.0;
+            return (byte)scaled;
+        }
+
+        var leftByte = ToUnsigned8(leftSample);
+        var rightByte = ToUnsigned8(rightSample);
+
+        m_lastLeftSample = leftByte;
+        m_lastRightSample = rightByte;
+
+        lock (m_cpuBuffer)
+        {
+            m_cpuBuffer.Add(leftByte);
+            m_cpuBuffer.Add(rightByte);
+        }
+    }
+    
     public void SetEnabled(bool isSoundEnabled)
     {
         if (m_isSoundEnabled == isSoundEnabled)
@@ -183,6 +216,18 @@ public class SoundDevice
     {
         lock (m_cpuBuffer)
             m_cpuBuffer.Clear();
-        m_lastWrittenSample = 0;
+        m_lastLeftSample = 128;
+        m_lastRightSample = 128;
+    }
+
+    public void Stop() =>
+        m_isCancelled = true;
+    
+    public void Dispose()
+    {
+        m_isCancelled = true;
+        AL.DeleteBuffers(m_buffers);
+        AL.DeleteSource(m_source);
+        ALC.DestroyContext(ALC.GetCurrentContext());
     }
 }
