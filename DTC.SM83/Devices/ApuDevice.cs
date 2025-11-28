@@ -21,10 +21,13 @@ public sealed class ApuDevice
 {
     private const double SampleHz = 44100.0;
     private static readonly double TicksPerSample = Cpu.Hz / SampleHz;
+    private const ulong FrameSequencerStepTStates = (ulong)(Cpu.Hz / 512.0); // 512 Hz.
     private double m_ticksUntilSample = TicksPerSample;
+    private ulong m_frameSequencerTicks;
+    private int m_frameSequencerStep;
     private readonly byte[] m_waveRam = new byte[16];
     private readonly IAudioSink m_audioSink;
-    private readonly SquareChannel m_channel1 = new();
+    private readonly SquareChannel1 m_channel1 = new();
     private readonly SquareChannel m_channel2 = new();
     private readonly WaveChannel m_channel3;
     private readonly NoiseChannel m_channel4 = new();
@@ -60,14 +63,7 @@ public sealed class ApuDevice
 
     public void AdvanceT(ulong tStates)
     {
-        var ch1Changed = m_channel1.Advance(tStates);
-        var ch2Changed = m_channel2.Advance(tStates);
-        var ch3Changed = m_channel3.Advance(tStates);
-        var ch4Changed = m_channel4.Advance(tStates);
-        if (ch1Changed || ch2Changed || ch3Changed || ch4Changed)
-        {
-            UpdateStatusFlags();
-        }
+        ClockFrameSequencer(tStates);
 
         // Accumulate CPU time towards the next audio sample.
         m_ticksUntilSample -= tStates;
@@ -78,6 +74,86 @@ public sealed class ApuDevice
             m_ticksUntilSample += TicksPerSample;
         }
     }
+
+    private void ClockFrameSequencer(ulong tStates)
+    {
+        m_frameSequencerTicks += tStates;
+        var channelChanged = false;
+        while (m_frameSequencerTicks >= FrameSequencerStepTStates)
+        {
+            m_frameSequencerTicks -= FrameSequencerStepTStates;
+            channelChanged |= StepFrameSequencer();
+            m_frameSequencerStep = (m_frameSequencerStep + 1) & 0x07;
+        }
+
+        if (channelChanged)
+            UpdateStatusFlags();
+    }
+
+    private bool StepFrameSequencer()
+    {
+        var channelChanged = false;
+
+        switch (m_frameSequencerStep)
+        {
+            case 0:
+            case 4:
+                channelChanged |= ClockLength();
+                break;
+
+            case 2:
+            case 6:
+                channelChanged |= ClockLength();
+                channelChanged |= ClockSweep();
+                break;
+
+            case 7:
+                channelChanged |= ClockEnvelope();
+                break;
+        }
+
+        return channelChanged;
+    }
+
+    private bool ClockLength()
+    {
+        var changed = false;
+        changed |= m_channel1.StepLength();
+        changed |= m_channel2.StepLength();
+        changed |= m_channel3.StepLength();
+        changed |= m_channel4.StepLength();
+        return changed;
+    }
+
+    private bool ClockSweep() =>
+        m_channel1.StepSweep();
+
+    private bool ClockEnvelope()
+    {
+        var changed = false;
+        changed |= m_channel1.StepEnvelope();
+        changed |= m_channel2.StepEnvelope();
+        changed |= m_channel4.StepEnvelope();
+        return changed;
+    }
+
+    private bool MaybeClockLengthOnEnable(bool wasEnabled, bool isEnabled, Func<bool> stepLength)
+    {
+        if (wasEnabled || !isEnabled)
+            return false;
+
+        if (!IsLengthClockStep(m_frameSequencerStep))
+            return false;
+
+        var inFirstHalfOfStep = m_frameSequencerTicks < FrameSequencerStepTStates / 2;
+        if (!inFirstHalfOfStep)
+            return false;
+
+        return stepLength();
+    }
+
+    private static bool IsLengthClockStep(int frameStep) =>
+        (frameStep & 1) == 0;
 
     private void GenerateAudioSample(ulong sampleTicks)
     {
@@ -245,6 +321,8 @@ public sealed class ApuDevice
                 //  - Channels are disabled until triggered.
                 //  - NR52 bit 7 set, lower bits will be updated by UpdateStatusFlags.
                 m_nr52 = 0x80;
+                m_frameSequencerTicks = 0;
+                m_frameSequencerStep = 0;
                 UpdateStatusFlags();
             }
 
@@ -284,8 +362,9 @@ public sealed class ApuDevice
         // Normal powered-on behaviour from here down.
         switch (addr)
         {
-            case 0xFF10: // NR10 (sweep) - not implemented yet.
+            case 0xFF10: // NR10 (sweep).
                 m_nr10 = value;
+                m_channel1.SetSweep(value);
                 break;
 
             case 0xFF11: // NR11 (duty/length).
@@ -305,12 +384,16 @@ public sealed class ApuDevice
                 break;
 
             case 0xFF14: // NR14 (trigger/freq high).
+            {
+                var wasLengthEnabled = (m_nr14 & 0x40) != 0;
                 m_nr14 = value;
                 m_channel1.SetFrequency(CombineFrequency(m_nr13, m_nr14));
                 m_channel1.SetLengthEnable((value & 0x40) != 0);
                 if ((value & 0x80) != 0)
                     m_channel1.Trigger();
+                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel1.StepLength(true));
                 break;
+            }
 
             case 0xFF16: // NR21 (duty/length).
                 m_nr21 = value;
@@ -329,12 +412,16 @@ public sealed class ApuDevice
                 break;
 
             case 0xFF19: // NR24 (trigger/freq high).
+            {
+                var wasLengthEnabled = (m_nr24 & 0x40) != 0;
                 m_nr24 = value;
                 m_channel2.SetFrequency(CombineFrequency(m_nr23, m_nr24));
                 m_channel2.SetLengthEnable((value & 0x40) != 0);
                 if ((value & 0x80) != 0)
                     m_channel2.Trigger();
+                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel2.StepLength(true));
                 break;
+            }
 
             case 0xFF1A: // NR30 (DAC power).
                 m_nr30 = value;
@@ -357,12 +444,16 @@ public sealed class ApuDevice
                 break;
 
             case 0xFF1E: // NR34 (trigger/freq high).
+            {
+                var wasLengthEnabled = (m_nr34 & 0x40) != 0;
                 m_nr34 = value;
                 m_channel3.SetFrequency(CombineFrequency(m_nr33, m_nr34));
                 m_channel3.SetLengthEnable((value & 0x40) != 0);
                 if ((value & 0x80) != 0)
                     m_channel3.Trigger();
+                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel3.StepLength(true));
                 break;
+            }
 
             case 0xFF20: // NR41 (length).
                 m_nr41 = value;
@@ -380,11 +471,15 @@ public sealed class ApuDevice
                 break;
 
             case 0xFF23: // NR44 (trigger/length enable).
+            {
+                var wasLengthEnabled = (m_nr44 & 0x40) != 0;
                 m_nr44 = value;
                 m_channel4.SetLengthEnable((value & 0x40) != 0);
                 if ((value & 0x80) != 0)
                     m_channel4.Trigger();
+                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel4.StepLength(true));
                 break;
+            }
 
             case 0xFF24: // NR50 (master volume).
                 m_nr50 = value;
@@ -429,6 +524,8 @@ public sealed class ApuDevice
         m_channel3.SetDacEnabled(false);
         m_channel3.Disable();
         m_channel4.Disable();
+        m_frameSequencerTicks = 0;
+        m_frameSequencerStep = 0;
         UpdateStatusFlags();
     }
 
@@ -438,24 +535,23 @@ public sealed class ApuDevice
     private bool IsChannelEnabled(int channel) =>
         m_channelEnabled[channel];
     
-    private sealed class SquareChannel
+    private class SquareChannel
     {
-        private const ulong LengthStepTStates = (ulong)(4194304.0 / 256.0);  // 256 Hz
-        private const ulong EnvelopeStepTStates = (ulong)(4194304.0 / 64.0); // 64 Hz
         private static readonly double[] DutyCycle = { 0.125, 0.25, 0.5, 0.75 };
-        private ushort m_frequency;
-        private double m_frequencyHz;
-        private double m_phase;
-        private byte m_volume;
-        private byte m_initialVolume;
-        public bool Enabled { get; private set; }
+        protected ushort m_frequency;
+        protected double m_frequencyHz;
+        protected double m_phase;
+        protected byte m_volume;
+        protected byte m_initialVolume;
+        protected byte m_envelopePeriod;
+        protected byte m_envelopeTimer;
+        protected bool m_envelopeIncrease;
+        protected bool m_dacEnabled = true;
+        protected bool m_lengthEnabled;
+        protected byte m_lengthCounter;
         private byte m_dutyIndex;
-        private byte m_lengthCounter;
-        private bool m_lengthEnabled;
-        private byte m_envelopePeriod;
-        private bool m_envelopeIncrease;
-        private ulong m_lengthTicks;
-        private ulong m_envelopeTicks;
+
+        public bool Enabled { get; protected set; }
 
         public void SetDuty(byte dutyIndex) =>
             m_dutyIndex = (byte)Math.Min(DutyCycle.Length - 1, dutyIndex);
@@ -473,27 +569,36 @@ public sealed class ApuDevice
         public void SetEnvelope(byte nrx2)
         {
             m_initialVolume = (byte)((nrx2 >> 4) & 0x0F);
-            m_volume = m_initialVolume;
             m_envelopeIncrease = (nrx2 & 0x08) != 0;
             m_envelopePeriod = (byte)(nrx2 & 0x07);
+            m_dacEnabled = (nrx2 & 0xF8) != 0;
+            if (!m_dacEnabled)
+                Disable();
         }
 
         public void SetFrequency(ushort frequency)
         {
             m_frequency = (ushort)(frequency & 0x7FF);
-            m_frequencyHz = m_frequency >= 2048 ? 0.0 : 131072.0 / (2048 - m_frequency);
+            UpdateFrequencyHz();
         }
 
-        public void Trigger()
+        protected void UpdateFrequencyHz() =>
+            m_frequencyHz = m_frequency >= 2048 ? 0.0 : 131072.0 / (2048 - m_frequency);
+
+        public virtual void Trigger()
         {
-            Enabled = m_initialVolume > 0 && m_frequencyHz > 0;
-            m_volume = m_initialVolume;
-            m_phase = 0.0;
+            if (!m_dacEnabled)
+            {
+                Disable();
+                return;
+            }
+
+            Enabled = m_frequencyHz > 0.0;
             if (m_lengthCounter == 0)
                 m_lengthCounter = 64;
-            m_lengthTicks = 0;
-            m_envelopeTicks = 0;
-            // Channel state changed; caller updates NR52.
+            m_volume = m_initialVolume;
+            m_phase = 0.0;
+            m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
         }
 
         public void Disable()
@@ -501,52 +606,49 @@ public sealed class ApuDevice
             Enabled = false;
             m_phase = 0.0;
             m_volume = 0;
-            // Channel state changed; caller updates NR52.
         }
 
-        public bool Advance(ulong tStates)
+        public bool StepLength(bool forceClock = false)
         {
-            var wasEnabled = Enabled;
-            if (Enabled && m_lengthEnabled && m_lengthCounter > 0)
+            if ((!m_lengthEnabled && !forceClock) || m_lengthCounter == 0)
+                return false;
+
+            if (m_lengthCounter > 0)
+                m_lengthCounter--;
+
+            if (m_lengthCounter == 0 && Enabled)
             {
-                m_lengthTicks += tStates;
-                while (m_lengthTicks >= LengthStepTStates && m_lengthCounter > 0)
-                {
-                    m_lengthTicks -= LengthStepTStates;
-                    m_lengthCounter--;
-                    if (m_lengthCounter == 0)
-                    {
-                        Disable();
-                        break;
-                    }
-                }
+                Disable();
+                return true;
             }
 
-            if (Enabled)
-            {
-                m_envelopeTicks += tStates;
-                var periodSteps = (ulong)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
-                var stepPeriod = periodSteps * EnvelopeStepTStates;
-                while (stepPeriod > 0 && m_envelopeTicks >= stepPeriod)
-                {
-                    m_envelopeTicks -= stepPeriod;
-                    if (m_envelopeIncrease && m_volume < 15)
-                    {
-                        m_volume++;
-                    }
-                    else if (!m_envelopeIncrease && m_volume > 0)
-                    {
-                        m_volume--;
-                    }
-                }
-            }
+            return false;
+        }
 
-            return wasEnabled != Enabled;
+        public bool StepEnvelope()
+        {
+            if (!Enabled || !m_dacEnabled)
+                return false;
+
+            if (m_envelopeTimer > 0)
+                m_envelopeTimer--;
+
+            if (m_envelopeTimer > 0)
+                return false;
+
+            m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
+
+            if (m_envelopeIncrease && m_volume < 15)
+                m_volume++;
+            else if (!m_envelopeIncrease && m_volume > 0)
+                m_volume--;
+
+            return false;
         }
 
         public double Sample(ulong tStates)
         {
-            if (!Enabled || m_volume == 0 || m_frequencyHz <= 0.0)
+            if (!Enabled || !m_dacEnabled || m_volume == 0 || m_frequencyHz <= 0.0)
                 return 0.0;
 
             var elapsedSeconds = tStates / Cpu.Hz;
@@ -559,9 +661,92 @@ public sealed class ApuDevice
         }
     }
 
+    private sealed class SquareChannel1 : SquareChannel
+    {
+        private byte m_sweepPeriod;
+        private bool m_sweepNegate;
+        private byte m_sweepShift;
+        private byte m_sweepTimer;
+        private ushort m_sweepShadowFreq;
+        private bool m_sweepEnabled;
+
+        public void SetSweep(byte nr10)
+        {
+            m_sweepPeriod = (byte)((nr10 >> 4) & 0x07);
+            m_sweepNegate = (nr10 & 0x08) != 0;
+            m_sweepShift = (byte)(nr10 & 0x07);
+        }
+
+        public override void Trigger()
+        {
+            base.Trigger();
+
+            m_sweepShadowFreq = m_frequency;
+            m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
+            m_sweepEnabled = m_sweepPeriod != 0 || m_sweepShift != 0;
+
+            if (m_sweepShift != 0)
+            {
+                var target = CalculateSweepTarget();
+                if (target > 2047 || target < 0)
+                {
+                    Disable();
+                    m_sweepEnabled = false;
+                }
+            }
+        }
+
+        public bool StepSweep()
+        {
+            if (!Enabled)
+                return false;
+
+            if (!m_sweepEnabled)
+                return false;
+
+            if (m_sweepTimer > 0)
+                m_sweepTimer--;
+
+            if (m_sweepTimer > 0)
+                return false;
+
+            m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
+
+            var target = CalculateSweepTarget();
+            if (target > 2047 || target < 0)
+            {
+                Disable();
+                return true;
+            }
+
+            if (m_sweepShift != 0)
+            {
+                m_sweepShadowFreq = (ushort)target;
+                SetFrequency((ushort)target);
+
+                // Second overflow check.
+                var nextTarget = CalculateSweepTarget();
+                if (nextTarget > 2047 || nextTarget < 0)
+                {
+                    Disable();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private int CalculateSweepTarget()
+        {
+            var delta = m_sweepShadowFreq >> m_sweepShift;
+            return m_sweepNegate
+                ? m_sweepShadowFreq - delta
+                : m_sweepShadowFreq + delta;
+        }
+    }
+
     private sealed class WaveChannel
     {
-        private const ulong LengthStepTStates = (ulong)(4194304.0 / 256.0);  // 256 Hz.
         private readonly byte[] m_waveRam;
         private ushort m_frequency;
         private double m_frequencyHz;
@@ -570,7 +755,6 @@ public sealed class ApuDevice
         private bool m_dacEnabled = true;
         private ushort m_lengthCounter;
         private bool m_lengthEnabled;
-        private ulong m_lengthTicks;
 
         public bool Enabled { get; private set; }
 
@@ -605,13 +789,18 @@ public sealed class ApuDevice
 
         public void Trigger()
         {
-            Enabled = m_dacEnabled && m_frequencyHz > 0.0;
+            if (!m_dacEnabled)
+            {
+                Disable();
+                return;
+            }
+
+            Enabled = m_frequencyHz > 0.0;
             if (!Enabled)
                 return;
 
             if (m_lengthCounter == 0)
                 m_lengthCounter = 256;
-            m_lengthTicks = 0;
             m_phase = 0.0;
         }
 
@@ -621,30 +810,26 @@ public sealed class ApuDevice
             m_phase = 0.0;
         }
 
-        public bool Advance(ulong tStates)
+        public bool StepLength(bool forceClock = false)
         {
-            var wasEnabled = Enabled;
-            if (Enabled && m_lengthEnabled && m_lengthCounter > 0)
+            if ((!m_lengthEnabled && !forceClock) || m_lengthCounter == 0)
+                return false;
+
+            if (m_lengthCounter > 0)
+                m_lengthCounter--;
+
+            if (m_lengthCounter == 0 && Enabled)
             {
-                m_lengthTicks += tStates;
-                while (m_lengthTicks >= LengthStepTStates && m_lengthCounter > 0)
-                {
-                    m_lengthTicks -= LengthStepTStates;
-                    m_lengthCounter--;
-                    if (m_lengthCounter == 0)
-                    {
-                        Disable();
-                        break;
-                    }
-                }
+                Disable();
+                return true;
             }
 
-            return wasEnabled != Enabled;
+            return false;
         }
 
         public double Sample(ulong tStates)
         {
-            if (!Enabled || m_volumeCode == 0 || m_frequencyHz <= 0.0)
+            if (!Enabled || !m_dacEnabled || m_volumeCode == 0 || m_frequencyHz <= 0.0)
                 return 0.0;
 
             var elapsedSeconds = tStates / Cpu.Hz;
@@ -671,9 +856,6 @@ public sealed class ApuDevice
 
     private sealed class NoiseChannel
     {
-        private const ulong LengthStepTStates = (ulong)(4194304.0 / 256.0);  // 256 Hz.
-        private const ulong EnvelopeStepTStates = (ulong)(4194304.0 / 64.0); // 64 Hz.
-
         private ushort m_lfsr = 0x7FFF;
         private double m_lfsrFrequencyHz;
         private double m_lfsrTimerSeconds;
@@ -681,12 +863,12 @@ public sealed class ApuDevice
         private byte m_volume;
         private byte m_initialVolume;
         private byte m_envelopePeriod;
+        private byte m_envelopeTimer;
         private bool m_envelopeIncrease;
+        private bool m_dacEnabled = true;
 
         private byte m_lengthCounter;
         private bool m_lengthEnabled;
-        private ulong m_lengthTicks;
-        private ulong m_envelopeTicks;
 
         public bool Enabled { get; private set; }
 
@@ -702,9 +884,11 @@ public sealed class ApuDevice
         public void SetEnvelope(byte nrx2)
         {
             m_initialVolume = (byte)((nrx2 >> 4) & 0x0F);
-            m_volume = m_initialVolume;
             m_envelopeIncrease = (nrx2 & 0x08) != 0;
             m_envelopePeriod = (byte)(nrx2 & 0x07);
+            m_dacEnabled = (nrx2 & 0xF8) != 0;
+            if (!m_dacEnabled)
+                Disable();
         }
 
         public void SetPolynomial(byte nr43)
@@ -734,12 +918,17 @@ public sealed class ApuDevice
 
         public void Trigger()
         {
-            Enabled = m_initialVolume > 0 && m_lfsrFrequencyHz > 0.0;
+            if (!m_dacEnabled)
+            {
+                Disable();
+                return;
+            }
+
+            Enabled = m_lfsrFrequencyHz > 0.0;
             m_volume = m_initialVolume;
             if (m_lengthCounter == 0)
                 m_lengthCounter = 64;
-            m_lengthTicks = 0;
-            m_envelopeTicks = 0;
+            m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
             m_lfsr = 0x7FFF;
             m_lfsrTimerSeconds = 0.0;
         }
@@ -750,50 +939,47 @@ public sealed class ApuDevice
             m_volume = 0;
         }
 
-        public bool Advance(ulong tStates)
+        public bool StepLength(bool forceClock = false)
         {
-            var wasEnabled = Enabled;
+            if ((!m_lengthEnabled && !forceClock) || m_lengthCounter == 0)
+                return false;
 
-            if (Enabled && m_lengthEnabled && m_lengthCounter > 0)
+            if (m_lengthCounter > 0)
+                m_lengthCounter--;
+
+            if (m_lengthCounter == 0 && Enabled)
             {
-                m_lengthTicks += tStates;
-                while (m_lengthTicks >= LengthStepTStates && m_lengthCounter > 0)
-                {
-                    m_lengthTicks -= LengthStepTStates;
-                    m_lengthCounter--;
-                    if (m_lengthCounter == 0)
-                    {
-                        Disable();
-                        break;
-                    }
-                }
+                Disable();
+                return true;
             }
 
-            if (Enabled)
-            {
-                m_envelopeTicks += tStates;
-                var periodSteps = (ulong)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
-                var stepPeriod = periodSteps * EnvelopeStepTStates;
-                while (stepPeriod > 0 && m_envelopeTicks >= stepPeriod)
-                {
-                    m_envelopeTicks -= stepPeriod;
-                    if (m_envelopeIncrease && m_volume < 15)
-                    {
-                        m_volume++;
-                    }
-                    else if (!m_envelopeIncrease && m_volume > 0)
-                    {
-                        m_volume--;
-                    }
-                }
-            }
+            return false;
+        }
 
-            return wasEnabled != Enabled;
+        public bool StepEnvelope()
+        {
+            if (!Enabled || !m_dacEnabled)
+                return false;
+
+            if (m_envelopeTimer > 0)
+                m_envelopeTimer--;
+
+            if (m_envelopeTimer > 0)
+                return false;
+
+            m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
+
+            if (m_envelopeIncrease && m_volume < 15)
+                m_volume++;
+            else if (!m_envelopeIncrease && m_volume > 0)
+                m_volume--;
+
+            return false;
         }
 
         public double Sample(ulong tStates)
         {
-            if (!Enabled || m_volume == 0 || m_lfsrFrequencyHz <= 0.0)
+            if (!Enabled || !m_dacEnabled || m_volume == 0 || m_lfsrFrequencyHz <= 0.0)
                 return 0.0;
 
             var elapsedSeconds = tStates / Cpu.Hz;
