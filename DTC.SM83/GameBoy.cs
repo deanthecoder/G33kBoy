@@ -36,7 +36,7 @@ public sealed class GameBoy : IDisposable
     private bool m_shutdownRequested;
     private Cartridge m_loadedCartridge;
     private bool m_lcdEmulationEnabled = true;
-    private readonly GameBoyAudioSink m_audioSink;
+    private readonly SoundDevice m_audioSink;
     private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
     private bool m_isUserSoundEnabled = true;
     private bool m_isRunningAtNormalSpeed = true;
@@ -50,11 +50,11 @@ public sealed class GameBoy : IDisposable
 
     public Joypad Joypad { get; }
 
-    public GameBoy(IGameDataStore gameDataStore = null, int soundLevelResolution = 256)
+    public GameBoy(IGameDataStore gameDataStore = null)
     {
         m_gameDataStore = gameDataStore;
         Joypad = new Joypad();
-        m_audioSink = new GameBoyAudioSink(44100);
+        m_audioSink = new SoundDevice(44100);
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
 
@@ -178,11 +178,11 @@ public sealed class GameBoy : IDisposable
 
     public void Dispose()
     {
+        m_audioSink?.Dispose();
         ShutdownCpuThread();
         DisposeHardware();
         Joypad.Dispose();
         m_screen.Dispose();
-        m_audioSink?.Dispose();
     }
 
     public void SetSpeed(ClockSync.Speed speed)
@@ -380,32 +380,5 @@ public sealed class GameBoy : IDisposable
     {
         m_bus?.ResetClock();
         return 0;
-    }
-
-    private sealed class GameBoyAudioSink : IAudioSink, IDisposable
-    {
-        private readonly SoundDevice m_soundDevice;
-        private Task m_soundTask;
-
-        public GameBoyAudioSink(int sampleRate)
-        {
-            m_soundDevice = new SoundDevice(sampleRate);
-        }
-
-        public void Start() =>
-            m_soundTask = m_soundDevice.StartAsync();
-
-        public void SetEnabled(bool isSoundEnabled) =>
-            m_soundDevice.SetEnabled(isSoundEnabled);
-
-        public void AddSample(double left, double right) =>
-            m_soundDevice.AddSample(left, right);
-
-        public void Dispose()
-        {
-            m_soundDevice.Stop();
-            m_soundTask?.Wait();
-            m_soundDevice.Dispose();
-        }
     }
 }

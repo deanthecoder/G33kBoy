@@ -26,7 +26,7 @@ public sealed class ApuDevice
     private ulong m_frameSequencerTicks;
     private int m_frameSequencerStep;
     private readonly byte[] m_waveRam = new byte[16];
-    private readonly IAudioSink m_audioSink;
+    private readonly SoundDevice m_audioSink;
     private readonly SquareChannel1 m_channel1 = new();
     private readonly SquareChannel m_channel2 = new();
     private readonly WaveChannel m_channel3;
@@ -55,7 +55,7 @@ public sealed class ApuDevice
     private byte m_nr51;
     private byte m_nr52 = 0x80;
 
-    public ApuDevice(IAudioSink audioSink)
+    public ApuDevice(SoundDevice audioSink)
     {
         m_audioSink = audioSink;
         m_channel3 = new WaveChannel(m_waveRam);

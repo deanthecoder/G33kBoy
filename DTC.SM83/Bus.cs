@@ -73,7 +73,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Block
     }
 
-    public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null, IAudioSink audioSink = null)
+    public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null, SoundDevice audioSink = null)
     {
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_devices);
