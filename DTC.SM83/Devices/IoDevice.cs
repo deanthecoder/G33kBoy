@@ -21,14 +21,11 @@ public class IoDevice : IMemDevice, ILcd
     private readonly byte[] m_data = new byte[0x80];
     private readonly Bus m_bus;
     private readonly BootRom m_bootRom;
-    private byte m_joypSelect = 0x30;
-    private readonly Joypad m_joypad;
 
-    public IoDevice(Bus bus, [NotNull] BootRom bootRom, Joypad joypad)
+    public IoDevice(Bus bus, [NotNull] BootRom bootRom)
     {
         m_bus = bus ?? throw new ArgumentNullException(nameof(bus));
         m_bootRom = bootRom ?? throw new ArgumentNullException(nameof(bootRom));
-        m_joypad = joypad;
 
         // STAT bit 7 is always 1; bits 0-2 are read-only (mode + coincidence flag).
         m_data[0x41] = 0x80;
@@ -63,10 +60,6 @@ public class IoDevice : IMemDevice, ILcd
     {
         switch (addr)
         {
-            // Joypad input.
-            case 0xFF00:
-                return ReadJoyp();
-            
             // CGB-specific registers
             case 0xFF4C or 0xFF4D:        // KEY0 and KEY1 - CGB speed switching registers
                 return 0xFF;
@@ -92,13 +85,6 @@ public class IoDevice : IMemDevice, ILcd
         }
         
         m_data[idx] = value;
-
-        // Joypad
-        if (idx == 0x00)
-        {
-            WriteJoyp(value);
-            return;
-        }
 
         // Writing to LY resets the counter, but is otherwise ignored.
         if (idx == 0x44)
@@ -131,41 +117,5 @@ public class IoDevice : IMemDevice, ILcd
             m_bus.Detach(m_bootRom, m_bus.CartridgeRom);
             m_bootRom.Unload();
         }
-    }
-
-    private void WriteJoyp(byte value)
-    {
-        // Only bits 4–5 are writable. Bits 0–3 are button inputs (read-only).
-        // Bits 6–7 read as 1.
-        m_joypSelect = (byte)((m_joypSelect & 0xCF) | (value & 0x30));
-    }
-
-    private byte ReadJoyp()
-    {
-        var result = (byte)(0xC0 | m_joypSelect | 0x0F);
-        if (m_joypad == null)
-            return result;
-
-        var state = m_joypad.GetPressedButtons();
-
-        // P14 low = d-pad selected.
-        if ((m_joypSelect & 0x10) == 0)
-        {
-            if ((state & Joypad.JoypadButtons.Right) != 0) result &= 0b1110;
-            if ((state & Joypad.JoypadButtons.Left) != 0) result &= 0b1101;
-            if ((state & Joypad.JoypadButtons.Up) != 0) result &= 0b1011;
-            if ((state & Joypad.JoypadButtons.Down) != 0) result &= 0b0111;
-        }
-
-        // P15 low = buttons selected.
-        if ((m_joypSelect & 0x20) == 0)
-        {
-            if ((state & Joypad.JoypadButtons.A) != 0) result &= 0b1110;
-            if ((state & Joypad.JoypadButtons.B) != 0) result &= 0b1101;
-            if ((state & Joypad.JoypadButtons.Select) != 0) result &= 0b1011;
-            if ((state & Joypad.JoypadButtons.Start) != 0) result &= 0b0111;
-        }
-
-        return result;
     }
 }

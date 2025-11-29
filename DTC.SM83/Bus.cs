@@ -106,8 +106,11 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(new UnusableRamDevice());
 
             // IO (0xFF00 - 0xFF7F)
-            m_ioDevice = new IoDevice(this, BootRom, joypad);
+            m_ioDevice = new IoDevice(this, BootRom);
             Attach(m_ioDevice);
+
+            // Joypad (0xFF00)
+            Attach(new JoypadDevice(joypad));
             
             // APU
             m_apu = new ApuDevice(audioSink);
