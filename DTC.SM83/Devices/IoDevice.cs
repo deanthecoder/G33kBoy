@@ -23,14 +23,12 @@ public class IoDevice : IMemDevice, ILcd
     private readonly BootRom m_bootRom;
     private byte m_joypSelect = 0x30;
     private readonly Joypad m_joypad;
-    private readonly ApuDevice m_apu;
 
-    public IoDevice(Bus bus, [NotNull] BootRom bootRom, Joypad joypad, ApuDevice apu = null)
+    public IoDevice(Bus bus, [NotNull] BootRom bootRom, Joypad joypad)
     {
         m_bus = bus ?? throw new ArgumentNullException(nameof(bus));
         m_bootRom = bootRom ?? throw new ArgumentNullException(nameof(bootRom));
         m_joypad = joypad;
-        m_apu = apu;
 
         // STAT bit 7 is always 1; bits 0-2 are read-only (mode + coincidence flag).
         m_data[0x41] = 0x80;
@@ -73,17 +71,12 @@ public class IoDevice : IMemDevice, ILcd
             case 0xFF4C or 0xFF4D:        // KEY0 and KEY1 - CGB speed switching registers
                 return 0xFF;
             
-            // APU
-            case >= 0xFF10 and <= 0xFF3F when m_apu != null:
-                return m_apu.Read8(addr);
-            
             default:
             {
                 var idx = addr - FromAddr;
                 return m_data[idx];
             }
         }
-
     }
 
     public void Write8(ushort addr, byte value)
@@ -97,14 +90,7 @@ public class IoDevice : IMemDevice, ILcd
             m_data[idx] = (byte)(0x80 | preserved | (value & 0x78));
             return;
         }
-
-        // APU
-        if (addr is >= 0xFF10 and <= 0xFF3F && m_apu != null)
-        {
-            m_apu.Write8(addr, value);
-            return;
-        }
-
+        
         m_data[idx] = value;
 
         // Joypad

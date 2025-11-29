@@ -17,8 +17,11 @@ namespace DTC.SM83.Devices;
 /// Simplified Game Boy APU. Implements square channels (1 &amp; 2), wave (3) and noise (4)
 /// and feeds mixed stereo output into the audio sink.
 /// </summary>
-public sealed class ApuDevice
+public sealed class ApuDevice : IMemDevice
 {
+    public ushort FromAddr => 0xFF10;
+    public ushort ToAddr => 0xFF3F;
+    
     private const double SampleHz = 44100.0;
     private static readonly double TicksPerSample = Cpu.Hz / SampleHz;
     private const ulong FrameSequencerStepTStates = (ulong)(Cpu.Hz / 512.0); // 512 Hz.

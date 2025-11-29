@@ -86,7 +86,6 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             BootRom = new BootRom();
-            m_apu = new ApuDevice(audioSink);
 
             // V(ideo)RAM (0x8000 - 0x9FFF)
             vram = new VramDevice();
@@ -107,8 +106,12 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(new UnusableRamDevice());
 
             // IO (0xFF00 - 0xFF7F)
-            m_ioDevice = new IoDevice(this, BootRom, joypad, m_apu);
+            m_ioDevice = new IoDevice(this, BootRom, joypad);
             Attach(m_ioDevice);
+            
+            // APU
+            m_apu = new ApuDevice(audioSink);
+            Attach(m_apu);
 
             // High RAM (0xFF80 - 0xFFFE)
             m_hramDevice = new HramDevice();
