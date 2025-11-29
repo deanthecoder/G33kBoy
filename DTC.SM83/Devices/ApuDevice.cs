@@ -141,19 +141,22 @@ public sealed class ApuDevice : IMemDevice
         return changed;
     }
 
-    private void MaybeClockLengthOnEnable(bool wasEnabled, bool isEnabled, Func<bool> stepLength)
+    /// <summary>
+    /// Applies the DMG quirk where enabling the length timer mid-frame clocks it once immediately
+    /// if the current frame sequencer step will not clock length on its own.
+    /// </summary>
+    /// <param name="wasEnabled">Whether length was enabled before the write.</param>
+    /// <param name="isEnabled">Whether length is enabled after the write.</param>
+    /// <param name="nextStepClocksLength">True if the current sequencer step already clocks length.</param>
+    /// <param name="stepLength">Delegate that performs a single length clock.</param>
+    private static void ApplyLengthEnableEdgeClock(bool wasEnabled, bool isEnabled, bool nextStepClocksLength, Func<bool> stepLength)
     {
         if (wasEnabled || !isEnabled)
             return;
 
-        if (!IsLengthClockStep(m_frameSequencerStep))
-            return;
-
-        var inFirstHalfOfStep = m_frameSequencerTicks < FrameSequencerStepTStates / 2;
-        if (!inFirstHalfOfStep)
-            return;
-
-        stepLength();
+        // When enabling length during a non-length sequencer step, clock the counter once immediately.
+        if (!nextStepClocksLength)
+            stepLength();
     }
 
     private static bool IsLengthClockStep(int frameStep) =>
@@ -389,13 +392,14 @@ public sealed class ApuDevice : IMemDevice
 
             case 0xFF14: // NR14 (trigger/freq high).
             {
+                var nextStepClocksLength = IsLengthClockStep(m_frameSequencerStep);
                 var wasLengthEnabled = (m_nr14 & 0x40) != 0;
                 m_nr14 = value;
                 m_channel1.SetFrequency(CombineFrequency(m_nr13, m_nr14));
                 m_channel1.SetLengthEnable((value & 0x40) != 0);
+                ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel1.StepLength(true));
                 if ((value & 0x80) != 0)
-                    m_channel1.Trigger();
-                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel1.StepLength(true));
+                    m_channel1.Trigger(nextStepClocksLength);
                 break;
             }
 
@@ -417,13 +421,14 @@ public sealed class ApuDevice : IMemDevice
 
             case 0xFF19: // NR24 (trigger/freq high).
             {
+                var nextStepClocksLength = IsLengthClockStep(m_frameSequencerStep);
                 var wasLengthEnabled = (m_nr24 & 0x40) != 0;
                 m_nr24 = value;
                 m_channel2.SetFrequency(CombineFrequency(m_nr23, m_nr24));
                 m_channel2.SetLengthEnable((value & 0x40) != 0);
+                ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel2.StepLength(true));
                 if ((value & 0x80) != 0)
-                    m_channel2.Trigger();
-                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel2.StepLength(true));
+                    m_channel2.Trigger(nextStepClocksLength);
                 break;
             }
 
@@ -449,13 +454,14 @@ public sealed class ApuDevice : IMemDevice
 
             case 0xFF1E: // NR34 (trigger/freq high).
             {
+                var nextStepClocksLength = IsLengthClockStep(m_frameSequencerStep);
                 var wasLengthEnabled = (m_nr34 & 0x40) != 0;
                 m_nr34 = value;
                 m_channel3.SetFrequency(CombineFrequency(m_nr33, m_nr34));
                 m_channel3.SetLengthEnable((value & 0x40) != 0);
+                ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel3.StepLength(true));
                 if ((value & 0x80) != 0)
-                    m_channel3.Trigger();
-                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel3.StepLength(true));
+                    m_channel3.Trigger(nextStepClocksLength);
                 break;
             }
 
@@ -476,12 +482,13 @@ public sealed class ApuDevice : IMemDevice
 
             case 0xFF23: // NR44 (trigger/length enable).
             {
+                var nextStepClocksLength = IsLengthClockStep(m_frameSequencerStep);
                 var wasLengthEnabled = (m_nr44 & 0x40) != 0;
                 m_nr44 = value;
                 m_channel4.SetLengthEnable((value & 0x40) != 0);
+                ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel4.StepLength(true));
                 if ((value & 0x80) != 0)
-                    m_channel4.Trigger();
-                MaybeClockLengthOnEnable(wasLengthEnabled, (value & 0x40) != 0, () => m_channel4.StepLength(true));
+                    m_channel4.Trigger(nextStepClocksLength);
                 break;
             }
 
@@ -594,7 +601,7 @@ public sealed class ApuDevice : IMemDevice
         protected void UpdateFrequencyHz() =>
             m_frequencyHz = m_frequency >= 2048 ? 0.0 : 131072.0 / (2048 - m_frequency);
 
-        public virtual void Trigger()
+        public virtual void Trigger(bool nextStepClocksLength)
         {
             if (!m_dacEnabled)
             {
@@ -604,7 +611,11 @@ public sealed class ApuDevice : IMemDevice
 
             Enabled = m_frequencyHz > 0.0;
             if (m_lengthCounter == 0)
+            {
                 m_lengthCounter = 64;
+                if (m_lengthEnabled && !nextStepClocksLength)
+                    m_lengthCounter--;
+            }
             m_volume = m_initialVolume;
             m_phase = 0.0;
             m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
@@ -690,9 +701,9 @@ public sealed class ApuDevice : IMemDevice
             m_sweepShift = (byte)(nr10 & 0x07);
         }
 
-        public override void Trigger()
+        public override void Trigger(bool nextStepClocksLength)
         {
-            base.Trigger();
+            base.Trigger(nextStepClocksLength);
 
             m_sweepShadowFreq = m_frequency;
             m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
@@ -800,7 +811,7 @@ public sealed class ApuDevice : IMemDevice
             m_frequencyHz = m_frequency >= 2048 ? 0.0 : 65536.0 / (2048 - m_frequency);
         }
 
-        public void Trigger()
+        public void Trigger(bool nextStepClocksLength)
         {
             if (!m_dacEnabled)
             {
@@ -813,7 +824,11 @@ public sealed class ApuDevice : IMemDevice
                 return;
 
             if (m_lengthCounter == 0)
+            {
                 m_lengthCounter = 256;
+                if (m_lengthEnabled && !nextStepClocksLength)
+                    m_lengthCounter--;
+            }
             m_phase = 0.0;
         }
 
@@ -929,7 +944,7 @@ public sealed class ApuDevice : IMemDevice
 
         private bool m_useShortMode;
 
-        public void Trigger()
+        public void Trigger(bool nextStepClocksLength)
         {
             if (!m_dacEnabled)
             {
@@ -940,7 +955,11 @@ public sealed class ApuDevice : IMemDevice
             Enabled = m_lfsrFrequencyHz > 0.0;
             m_volume = m_initialVolume;
             if (m_lengthCounter == 0)
+            {
                 m_lengthCounter = 64;
+                if (m_lengthEnabled && !nextStepClocksLength)
+                    m_lengthCounter--;
+            }
             m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
             m_lfsr = 0x7FFF;
             m_lfsrTimerSeconds = 0.0;
