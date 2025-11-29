@@ -62,6 +62,7 @@ public sealed class ApuDevice : IMemDevice
     {
         m_audioSink = audioSink;
         m_channel3 = new WaveChannel(m_waveRam);
+        ResetRegisters();
     }
 
     public void AdvanceT(ulong tStates)
@@ -140,19 +141,19 @@ public sealed class ApuDevice : IMemDevice
         return changed;
     }
 
-    private bool MaybeClockLengthOnEnable(bool wasEnabled, bool isEnabled, Func<bool> stepLength)
+    private void MaybeClockLengthOnEnable(bool wasEnabled, bool isEnabled, Func<bool> stepLength)
     {
         if (wasEnabled || !isEnabled)
-            return false;
+            return;
 
         if (!IsLengthClockStep(m_frameSequencerStep))
-            return false;
+            return;
 
         var inFirstHalfOfStep = m_frameSequencerTicks < FrameSequencerStepTStates / 2;
         if (!inFirstHalfOfStep)
-            return false;
+            return;
 
-        return stepLength();
+        stepLength();
     }
 
     private static bool IsLengthClockStep(int frameStep) =>
@@ -522,6 +523,11 @@ public sealed class ApuDevice : IMemDevice
         m_nr41 = m_nr42 = m_nr43 = m_nr44 = 0;
         m_nr50 = m_nr51 = 0;
 
+        // Sync channel DAC/envelope state with cleared registers.
+        m_channel1.SetEnvelope(m_nr12);
+        m_channel2.SetEnvelope(m_nr22);
+        m_channel4.SetEnvelope(m_nr42);
+
         m_channel1.Disable();
         m_channel2.Disable();
         m_channel3.SetDacEnabled(false);
@@ -549,7 +555,7 @@ public sealed class ApuDevice : IMemDevice
         protected byte m_envelopePeriod;
         protected byte m_envelopeTimer;
         protected bool m_envelopeIncrease;
-        protected bool m_dacEnabled = true;
+        protected bool m_dacEnabled;
         protected bool m_lengthEnabled;
         protected byte m_lengthCounter;
         private byte m_dutyIndex;
@@ -633,13 +639,17 @@ public sealed class ApuDevice : IMemDevice
             if (!Enabled || !m_dacEnabled)
                 return false;
 
+            // Period of 0 means no automatic envelope updates.
+            if (m_envelopePeriod == 0)
+                return false;
+
             if (m_envelopeTimer > 0)
                 m_envelopeTimer--;
 
             if (m_envelopeTimer > 0)
                 return false;
 
-            m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
+            m_envelopeTimer = m_envelopePeriod;
 
             if (m_envelopeIncrease && m_volume < 15)
                 m_volume++;
@@ -964,13 +974,17 @@ public sealed class ApuDevice : IMemDevice
             if (!Enabled || !m_dacEnabled)
                 return false;
 
+            // Period of 0 means no automatic envelope updates.
+            if (m_envelopePeriod == 0)
+                return false;
+
             if (m_envelopeTimer > 0)
                 m_envelopeTimer--;
 
             if (m_envelopeTimer > 0)
                 return false;
 
-            m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
+            m_envelopeTimer = m_envelopePeriod;
 
             if (m_envelopeIncrease && m_volume < 15)
                 m_volume++;
