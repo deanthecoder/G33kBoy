@@ -82,7 +82,7 @@ public class Cpu
     /// <summary>
     /// Captures the state of the CPU for debugging purposes.
     /// </summary>
-    public bool DebugMode { get; set; }
+    public bool IsDebugBuild { get; set; }
 
     public Cpu(Bus bus)
     {
@@ -94,7 +94,7 @@ public class Cpu
 
     public void Step()
     {
-        var isDebugMode = DebugMode;
+        var isDebugMode = IsDebugBuild;
         if (!IsHalted)
         {
             try

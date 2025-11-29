@@ -36,12 +36,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public MruFiles Mru { get; }
 
     public Settings Settings => Settings.Instance;
-
-#if DEBUG
-    public bool IsDebugBuild => true;
-#else
-    public bool IsDebugBuild => false;
-#endif
     
     public string WindowTitle
     {

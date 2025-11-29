@@ -130,7 +130,7 @@
                         <MenuItem Header="Export TileMap..." Command="{Binding ExportTileMap}" />
                     </MenuItem>
 
-                    <MenuItem Header="Debug" IsVisible="{Binding IsDebugBuild}">
+                    <MenuItem Header="Debug" IsVisible="{Binding GameBoy.IsDebugBuild}">
                         <MenuItem Header="Dump CPU History" Command="{Binding DumpCpuHistory}" />
                     </MenuItem>
 

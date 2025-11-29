@@ -282,6 +282,8 @@ public sealed class GameBoy : IDisposable
         !string.IsNullOrEmpty(m_cartridgeKey) &&
         m_bus?.CartridgeRam != null;
 
+    public bool IsDebugBuild => m_cpu?.IsDebugBuild ?? false;
+
     private void PersistCartRamIfDue(bool canPersistGameData)
     {
         if (!canPersistGameData)
@@ -359,11 +361,7 @@ public sealed class GameBoy : IDisposable
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
         {
-#if DEBUG
-            DebugMode = true
-#else
-            DebugMode = false
-#endif
+            IsDebugBuild = false
         };
         m_bus.PPU.FrameRendered += OnFrameRendered;
     }
