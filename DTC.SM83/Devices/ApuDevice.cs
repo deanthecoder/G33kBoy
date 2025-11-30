@@ -737,16 +737,23 @@ public sealed class ApuDevice : IMemDevice
 
             if (m_sweepTimer > 0)
                 m_sweepTimer--;
-
             if (m_sweepTimer > 0)
                 return false;
 
+            // Reload the sweep timer (period 0 treated as 8 for timing)
             m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
 
+            // If sweep period is 0, do not perform periodic sweep (see Pan Docs/gbdev)
+            if (m_sweepPeriod == 0)
+                return false;
+
+            // Always calculate sweep target, even if shift==0
             var target = CalculateSweepTarget();
+
             if (target > 2047 || target < 0)
             {
                 Disable();
+                m_sweepEnabled = false;
                 return true;
             }
 
@@ -754,19 +761,18 @@ public sealed class ApuDevice : IMemDevice
             {
                 m_sweepShadowFreq = (ushort)target;
                 SetFrequency((ushort)target);
-
-                // Second overflow check.
                 var nextTarget = CalculateSweepTarget();
                 if (nextTarget > 2047 || nextTarget < 0)
                 {
                     Disable();
+                    m_sweepEnabled = false;
                     return true;
                 }
             }
 
             return false;
         }
-
+        
         private int CalculateSweepTarget()
         {
             var delta = m_sweepShadowFreq >> m_sweepShift;
