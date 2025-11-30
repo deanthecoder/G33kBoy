@@ -30,9 +30,8 @@ public class SoundDevice
     private readonly int m_transferFrames;
     private readonly int m_targetBufferedFrames;
     private readonly CircularBuffer<byte> m_cpuBuffer;
-    private readonly object m_bufferLock = new();
+    private readonly Lock m_bufferLock = new();
     private readonly ManualResetEventSlim m_dataAvailable = new(false);
-    private readonly Stopwatch m_healthStopwatch = Stopwatch.StartNew();
     private readonly byte[] m_transferBuffer;
     private Task m_loopTask;
     private bool m_isSoundEnabled = true;
@@ -136,14 +135,13 @@ public class SoundDevice
 
     private void WaitForInitialData()
     {
-        var requiredFrames = m_targetBufferedFrames;
         while (!m_isCancelled)
         {
-            var bufferedFrames = 0;
+            int bufferedFrames;
             lock (m_bufferLock)
                 bufferedFrames = m_cpuBuffer.Count / 2;
 
-            if (bufferedFrames >= requiredFrames)
+            if (bufferedFrames >= m_targetBufferedFrames)
                 return;
 
             m_dataAvailable.Wait((int)Math.Max(1, m_bufferDurationMs));
@@ -212,8 +210,8 @@ public class SoundDevice
         byte[] rentedArray = null;
         try
         {
-            Span<byte> sourceSpan = Span<byte>.Empty;
-            var sourceFrames = 0;
+            Span<byte> sourceSpan;
+            int sourceFrames;
 
             lock (m_bufferLock)
             {
