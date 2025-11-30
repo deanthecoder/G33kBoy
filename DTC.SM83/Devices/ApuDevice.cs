@@ -81,6 +81,9 @@ public sealed class ApuDevice : IMemDevice
 
     private void ClockFrameSequencer(ulong tStates)
     {
+        if (!m_isPowered)
+            return;
+
         m_frameSequencerTicks += tStates;
         var channelChanged = false;
         while (m_frameSequencerTicks >= FrameSequencerStepTStates)
@@ -534,6 +537,10 @@ public sealed class ApuDevice : IMemDevice
         m_channel1.SetEnvelope(m_nr12);
         m_channel2.SetEnvelope(m_nr22);
         m_channel4.SetEnvelope(m_nr42);
+        m_channel1.SetLengthEnable(false);
+        m_channel2.SetLengthEnable(false);
+        m_channel3.SetLengthEnable(false);
+        m_channel4.SetLengthEnable(false);
 
         m_channel1.Disable();
         m_channel2.Disable();
