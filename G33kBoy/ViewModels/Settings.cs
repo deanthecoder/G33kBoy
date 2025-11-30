@@ -32,6 +32,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         get => Get<bool>();
         set => Set(value);
     }
+    
+    public bool IsAutoFireEnabled
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
 
     public bool IsAmbientBlurred
     {
@@ -83,6 +89,7 @@ public class Settings : UserSettingsBase, IGameDataStore
     {
         IsAmbientBlurred = true;
         IsSoundEnabled = true;
+        IsAutoFireEnabled = true;
         IsBackgroundVisible = true;
         IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;

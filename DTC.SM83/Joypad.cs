@@ -60,7 +60,7 @@ public sealed class Joypad : IDisposable
     }
 
     /// <summary>
-    /// Enables/disables the auto-fire feature (toggled from UI; not persisted).
+    /// Enables/disables the auto-fire feature.
     /// </summary>
     public bool AutoFireEnabled
     {

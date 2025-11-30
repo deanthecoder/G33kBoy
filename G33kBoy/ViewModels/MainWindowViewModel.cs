@@ -103,7 +103,14 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public bool IsAutoFireEnabled
     {
         get => m_isAutoFireEnabled;
-        private set => SetField(ref m_isAutoFireEnabled, value);
+        private set
+        {
+            if (!SetField(ref m_isAutoFireEnabled, value))
+                return;
+
+            Settings.IsAutoFireEnabled = value;
+            ApplyAutoFireSetting();
+        }
     }
 
     public void ClearAllGameData()
@@ -125,7 +132,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void ToggleAutoFire()
     {
         IsAutoFireEnabled = !IsAutoFireEnabled;
-        GameBoy.SetAutoFireEnabled(IsAutoFireEnabled);
     }
 
     public void ToggleSoundChannel1()
@@ -166,6 +172,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
                 WindowTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : $"G33kBoy - {title}";
                 ApplyDisplayVisibilitySettings();
             });
+        IsAutoFireEnabled = Settings.IsAutoFireEnabled;
         ApplyDisplayVisibilitySettings();
         ApplySoundEnabledSetting();
         ApplySoundChannelSettings();
@@ -292,10 +299,15 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
     }
 
+    private void ApplyAutoFireSetting() =>
+        GameBoy.SetAutoFireEnabled(IsAutoFireEnabled);
+
     private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Settings.IsSoundEnabled))
             ApplySoundEnabledSetting();
+        else if (e.PropertyName == nameof(Settings.IsAutoFireEnabled))
+            IsAutoFireEnabled = Settings.IsAutoFireEnabled;
     }
 
     internal void LoadRomFile(FileInfo romFile, bool addToMru = true)
@@ -308,14 +320,11 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        // Auto-fire is not persisted and resets per cartridge load.
-        if (IsAutoFireEnabled)
-            ToggleAutoFire();
-
         if (addToMru)
             Mru.Add(romFile);
 
         GameBoy.PowerOnAsync(romFile);
+        ApplyAutoFireSetting(); // PowerOnAsync resets auto-fire to its default state.
         Settings.LastRomFile = romFile;
     }
 
