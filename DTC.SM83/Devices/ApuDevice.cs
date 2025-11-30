@@ -560,21 +560,21 @@ public sealed class ApuDevice : IMemDevice
     
     private class SquareChannel
     {
-        private static readonly double[] DutyCycle = { 0.125, 0.25, 0.5, 0.75 };
+        private static readonly double[] DutyCycle = [0.125, 0.25, 0.5, 0.75];
         protected ushort m_frequency;
-        protected double m_frequencyHz;
-        protected double m_phase;
-        protected byte m_volume;
-        protected byte m_initialVolume;
-        protected byte m_envelopePeriod;
-        protected byte m_envelopeTimer;
-        protected bool m_envelopeIncrease;
-        protected bool m_dacEnabled;
-        protected bool m_lengthEnabled;
-        protected byte m_lengthCounter;
+        private double m_frequencyHz;
+        private double m_phase;
+        private byte m_volume;
+        private byte m_initialVolume;
+        private byte m_envelopePeriod;
+        private byte m_envelopeTimer;
+        private bool m_envelopeIncrease;
+        private bool m_dacEnabled;
+        private bool m_lengthEnabled;
+        private byte m_lengthCounter;
         private byte m_dutyIndex;
 
-        public bool Enabled { get; protected set; }
+        public bool Enabled { get; private set; }
 
         public void SetDuty(byte dutyIndex) =>
             m_dutyIndex = (byte)Math.Min(DutyCycle.Length - 1, dutyIndex);
@@ -605,7 +605,7 @@ public sealed class ApuDevice : IMemDevice
             UpdateFrequencyHz();
         }
 
-        protected void UpdateFrequencyHz() =>
+        private void UpdateFrequencyHz() =>
             m_frequencyHz = m_frequency >= 2048 ? 0.0 : 131072.0 / (2048 - m_frequency);
 
         public virtual void Trigger(bool nextStepClocksLength)
@@ -700,14 +700,33 @@ public sealed class ApuDevice : IMemDevice
         private byte m_sweepTimer;
         private ushort m_sweepShadowFreq;
         private bool m_sweepEnabled;
+        private bool m_sweepPerformedNegate;
 
         public void SetSweep(byte nr10)
         {
+            // Store old settings.
+            var oldNegate = m_sweepNegate;
+
+            // Decode NR10.
             m_sweepPeriod = (byte)((nr10 >> 4) & 0x07);
             m_sweepNegate = (nr10 & 0x08) != 0;
             m_sweepShift = (byte)(nr10 & 0x07);
-        }
 
+            // Hardware "sweep enabled" definition: period != 0 or shift != 0.
+            // (Independent of the negate bit.)
+            m_sweepEnabled = m_sweepPeriod != 0 || m_sweepShift != 0;
+
+            // DMG quirk:
+            // If a negative sweep calculation has occurred, and NR10 is later written
+            // with the negate bit cleared while sweep is enabled (with the *new* NR10),
+            // the channel is immediately disabled.
+            if (oldNegate && !m_sweepNegate && m_sweepEnabled && m_sweepPerformedNegate)
+            {
+                Disable();
+                m_sweepEnabled = false;
+            }
+        }
+        
         public override void Trigger(bool nextStepClocksLength)
         {
             base.Trigger(nextStepClocksLength);
@@ -716,10 +735,17 @@ public sealed class ApuDevice : IMemDevice
             m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
             m_sweepEnabled = m_sweepPeriod != 0 || m_sweepShift != 0;
 
+            // New trigger starts a fresh sweep sequence; no negate calculation has occurred yet.
+            m_sweepPerformedNegate = false;
+
             if (m_sweepShift != 0)
             {
+                // Initial pre-calculation for overflow check; does not count as a "performed"
+                // negate calculation for the NR10 negate->clear quirk.
                 var target = CalculateSweepTarget();
-                if (target > 2047 || target < 0)
+
+                // Only addition mode can overflow and disable the channel; a decreasing sweep cannot underflow.
+                if (!m_sweepNegate && target > 2047)
                 {
                     Disable();
                     m_sweepEnabled = false;
@@ -740,17 +766,17 @@ public sealed class ApuDevice : IMemDevice
             if (m_sweepTimer > 0)
                 return false;
 
-            // Reload the sweep timer (period 0 treated as 8 for timing)
+            // Reload the sweep timer (period 0 treated as 8 for timing).
             m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
 
-            // If sweep period is 0, do not perform periodic sweep (see Pan Docs/gbdev)
+            // If sweep period is 0, do not perform periodic sweep (see Pan Docs/gbdev).
             if (m_sweepPeriod == 0)
                 return false;
 
-            // Always calculate sweep target, even if shift==0
             var target = CalculateSweepTarget();
 
-            if (target > 2047 || target < 0)
+            // Only addition mode can overflow and disable the channel; a decreasing sweep cannot underflow.
+            if (!m_sweepNegate && target > 2047)
             {
                 Disable();
                 m_sweepEnabled = false;
@@ -761,8 +787,9 @@ public sealed class ApuDevice : IMemDevice
             {
                 m_sweepShadowFreq = (ushort)target;
                 SetFrequency((ushort)target);
+
                 var nextTarget = CalculateSweepTarget();
-                if (nextTarget > 2047 || nextTarget < 0)
+                if (!m_sweepNegate && nextTarget > 2047)
                 {
                     Disable();
                     m_sweepEnabled = false;
@@ -772,13 +799,30 @@ public sealed class ApuDevice : IMemDevice
 
             return false;
         }
-        
+
         private int CalculateSweepTarget()
         {
             var delta = m_sweepShadowFreq >> m_sweepShift;
-            return m_sweepNegate
-                ? m_sweepShadowFreq - delta
-                : m_sweepShadowFreq + delta;
+
+            if (m_sweepNegate)
+            {
+                // Any negate sweep calculation (trigger pre-check or periodic sweep step)
+                // counts as having "performed" a negate calculation for the NR10
+                // negate->clear quirk. The shift must be non-zero for sweep to be active.
+                if (m_sweepShift != 0)
+                    m_sweepPerformedNegate = true;
+
+                // Subtract mode uses 11-bit two's complement arithmetic; wrap within 0x000-0x7FF.
+                var raw = m_sweepShadowFreq - delta;
+                var result = raw & 0x7FF;
+
+                return result;
+            }
+
+            // Addition mode: let caller perform overflow check on the raw value.
+            var target = m_sweepShadowFreq + delta;
+
+            return target;
         }
     }
 
