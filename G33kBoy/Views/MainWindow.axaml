@@ -70,6 +70,14 @@
                                                            IsVisible="{Binding Settings.IsLcdEmulationEnabled}" />
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
+                                <MenuItem.Effect>
+                                    <BlurEffect Radius="2"/>
+                                </MenuItem.Effect>
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsAmbientBlurred}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                             <Separator />
                             <MenuItem Header="Background Tiles" Command="{Binding ToggleBackgroundVisibility}">
                                 <MenuItem.Icon>
@@ -111,13 +119,17 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
-                        <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
-                            <MenuItem.Effect>
-                                <BlurEffect Radius="2"/>
-                            </MenuItem.Effect>
-                            <MenuItem.Icon>
-                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsAmbientBlurred}" />
-                            </MenuItem.Icon>
+                        <MenuItem Header="Boot ROM">
+                            <MenuItem Header="Standard" Command="{Binding SetBootRomStandard}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsBootRomStandard}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="None" Command="{Binding SetBootRomNone}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsBootRomNone}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </MenuItem>
                         <Separator />
                         <MenuItem Header="Reset Device" Command="{Binding ResetDevice}"

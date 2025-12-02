@@ -57,6 +57,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
+    public bool IsBootRomSkipped
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     public bool IsLcdEmulationEnabled
     {
         get => Get<bool>();
@@ -93,6 +99,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsBackgroundVisible = true;
         IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;
+        IsBootRomSkipped = false;
         GameDataStates = [];
         MruFiles = string.Empty;
         LastRomFile = null;
