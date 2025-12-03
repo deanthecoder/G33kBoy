@@ -67,8 +67,13 @@ public class SoundDevice
         m_bufferDurationMs = 1000.0 * m_transferFrames / m_sampleRate;
     }
 
-    public void Start() =>
+    public void Start()
+    {
+        if (m_loopTask != null)
+            return; // Already started.
+        
         m_loopTask = Task.Run(SoundLoop);
+    }
 
     private void SoundLoop()
     {
