@@ -9,10 +9,12 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using DTC.Core;
 using G33kBoy.ViewModels;
@@ -29,6 +31,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(DragDrop.DropEvent, OnDrop);
+        AddHandler(DragDrop.DragOverEvent, OnDragOver);
     }
 
     private void OnAboutDialogClicked(object sender, PointerPressedEventArgs e) =>
@@ -63,6 +67,18 @@ public partial class MainWindow : Window
         };
     }
 
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        e.DragEffects = TryGetRomFile(e, out _) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnDrop(object sender, DragEventArgs e)
+    {
+        if (TryGetRomFile(e, out var romFile))
+            ViewModel.LoadRomFile(romFile);
+    }
+
     private static void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (!IsDirectionalKey(e.Key))
@@ -72,6 +88,33 @@ public partial class MainWindow : Window
             return;
 
         e.Handled = true;
+    }
+
+    private static bool TryGetRomFile(DragEventArgs e, out FileInfo romFile)
+    {
+        romFile = null;
+
+        var files = e.Data.GetFiles();
+        if (files == null)
+            return false;
+
+        foreach (var file in files)
+        {
+            var path = file.TryGetLocalPath();
+            if (string.IsNullOrWhiteSpace(path) || !IsSupportedRom(path))
+                continue;
+            romFile = new FileInfo(path);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsSupportedRom(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return extension.Equals(".gb", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".zip", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsDirectionalKey(Key key) =>

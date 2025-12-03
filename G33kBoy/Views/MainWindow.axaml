@@ -13,6 +13,7 @@
         Width="1066" Height="768"
         MinWidth="520" MinHeight="320"
         Icon="/Assets/app.ico"
+        DragDrop.AllowDrop="True"
         Title="{Binding WindowTitle}">
     <Design.DataContext>
         <viewModels:MainWindowViewModel />
