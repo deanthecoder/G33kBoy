@@ -20,19 +20,47 @@ namespace UnitTests;
 public class BlarggTests : TestsBase
 {
     private const ulong OneSecondTicks = 4_194_304; // 4.194304 MHz DMG clock.
+    private const ulong TimeoutTicks = OneSecondTicks * 20;
 
     public static IEnumerable<TestCaseData> CpuTestRomFiles =>
-        ProjectDir.GetFiles("../external/blargg-test-roms/cpu_instrs/individual/*.gb")
-            .Select(f => new TestCaseData(f).SetName(f.Name));
-
-    public static IEnumerable<TestCaseData> SoundTestRomFiles =>
-        ProjectDir.GetDir("../external/blargg-test-roms/dmg_sound/rom_singles")
-            .TryGetFiles("*.gb")
+        new[]
+            {
+                "cpu_instrs/individual/*.gb",
+                "instr_timing/*.gb",
+                "mem_timing/*.gb"
+                }
+            .SelectMany(o => ProjectDir.GetFiles($"../external/blargg-test-roms/{o}"))
             .OrderBy(f => f.Name)
-            .Select(f => new TestCaseData(f).SetName($"Sound_{f.Name}"));
+            .Select(f => new TestCaseData(f).SetName(GetTestName(f)));
 
+    public static IEnumerable<TestCaseData> MoreTestRomFiles =>
+        new[]
+            {
+                "oam_bug/rom_singles/*.gb",
+                "dmg_sound/rom_singles/*.gb"
+            }
+            .SelectMany(o => ProjectDir.GetFiles($"../external/blargg-test-roms/{o}"))
+            .OrderBy(f => f.Name)
+            .Select(f => new TestCaseData(f).SetName(GetTestName(f)));
+
+    private static string GetTestName(FileInfo f)
+    {
+        var names = new List<string>();
+        var d = f.Directory;
+        while (d != null && d.Name != "blargg-test-roms")
+        {
+            if (d.Name != "rom_singles" && d.Name != "individual")
+                names.Add(d.Name);
+            d = d.Parent;
+        }
+        return string.Join('/', names) + '/' + f.Name;
+    }
+
+    /// <summary>
+    /// These tests monitor the serial output.
+    /// </summary>
     [TestCaseSource(nameof(CpuTestRomFiles))]
-    public void RunCpuRoms(FileInfo romFile)
+    public void RunTestRoms(FileInfo romFile)
     {
         using var bus = new Bus(0x10000, Bus.BusType.Minimal);
         var cpu = new Cpu(bus);
@@ -43,7 +71,7 @@ public class BlarggTests : TestsBase
         bus.Attach(serialBus);
         cpu.Reg.PC = 0x0100;
 
-        while (true)
+        while (bus.ClockTicks < TimeoutTicks)
         {
             var oldPC = cpu.Reg.PC;
             cpu.Step();
@@ -51,12 +79,16 @@ public class BlarggTests : TestsBase
                 break;
         }
 
+        Assert.That(bus.ClockTicks, Is.LessThanOrEqualTo(TimeoutTicks), $"Time-out. Serial output: {serialBus.Output}");
         Assert.That(serialBus.Output, Does.Contain("Passed"));
     }
-
-    [TestCaseSource(nameof(SoundTestRomFiles))]
+    
+    /// <summary>
+    /// These tests monitor output using address 0xA004.
+    /// </summary>
+    [TestCaseSource(nameof(MoreTestRomFiles))]
     [NonParallelizable]
-    public void RunSoundRoms(FileInfo romFile)
+    public void RunMoreRoms(FileInfo romFile)
     {
         Assert.That(romFile, Does.Exist, $"Missing Blargg sound ROM at {romFile.FullName}");
 
@@ -68,7 +100,6 @@ public class BlarggTests : TestsBase
         var serialBus = new SerialDevice();
         bus.Attach(serialBus);
 
-        const ulong timeoutTicks = OneSecondTicks * 10;
         const ushort statusAddr = 0xA000;      // 0x80 while running; result code (0 = pass) when done.
         const ushort signatureAddr = 0xA001;   // 0xDE,0xB0,0x61 indicates valid test output.
         const ushort outputAddr = 0xA004;
@@ -76,7 +107,7 @@ public class BlarggTests : TestsBase
         byte status = 0x80;
         var hasSignature = false;
         var hasSeenRunning = false;
-        while (bus.ClockTicks < timeoutTicks)
+        while (bus.ClockTicks < TimeoutTicks)
         {
             cpu.Step();
 
@@ -91,10 +122,10 @@ public class BlarggTests : TestsBase
 
         var output = hasSignature ? ReadOutput(bus, outputAddr) : string.Empty;
 
-        Assert.That(hasSignature, Is.True, $"Sound test never wrote signature before timeout ({bus.ClockTicks}/{timeoutTicks} T ticks). Serial output: {serialBus.Output}");
-        Assert.That(hasSeenRunning, Is.True, $"Sound test never entered running state (0x80) within {timeoutTicks} T ticks. Output: {output} Serial output: {serialBus.Output}");
-        Assert.That(status, Is.Not.EqualTo((byte)0x80), $"Sound test did not complete within {timeoutTicks} T ticks. Output: {output} Serial output: {serialBus.Output}");
-        Assert.That(status, Is.EqualTo((byte)0x00), $"Sound test failed with code {status}. Output: {output} Serial output: {serialBus.Output}");
+        Assert.That(hasSignature, Is.True, $"Time-out. Serial output: {serialBus.Output}");
+        Assert.That(hasSeenRunning, Is.True, $"Test never entered running state (0x80) within {TimeoutTicks} T ticks. Output: {output} Serial output: {serialBus.Output}");
+        Assert.That(status, Is.Not.EqualTo((byte)0x80), $"Test did not complete within {TimeoutTicks} T ticks. Output: {output} Serial output: {serialBus.Output}");
+        Assert.That(status, Is.EqualTo((byte)0x00), $"Test failed with code {status}. Output: {output} Serial output: {serialBus.Output}");
     }
 
     private static bool HasSignature(Bus bus, ushort signatureAddr) =>
