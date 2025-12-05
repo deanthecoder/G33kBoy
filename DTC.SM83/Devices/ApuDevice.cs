@@ -696,12 +696,14 @@ public sealed class ApuDevice : IMemDevice
         private byte m_sweepTimer;
         private ushort m_sweepShadowFreq;
         private bool m_sweepEnabled;
+        private bool m_sweepWasEnabledOnTrigger;
         private bool m_sweepPerformedNegate;
 
         public void SetSweep(byte nr10)
         {
             // Store old settings.
             var oldNegate = m_sweepNegate;
+            var wasEnabled = m_sweepEnabled;
 
             // Decode NR10.
             m_sweepPeriod = (byte)((nr10 >> 4) & 0x07);
@@ -710,7 +712,10 @@ public sealed class ApuDevice : IMemDevice
 
             // Hardware "sweep enabled" definition: period != 0 or shift != 0.
             // (Independent of the negate bit.)
-            m_sweepEnabled = m_sweepPeriod != 0 || m_sweepShift != 0;
+            var sweepDefined = m_sweepPeriod != 0 || m_sweepShift != 0;
+            
+            // Sweep can only run if it was active when the channel was last triggered.
+            m_sweepEnabled = m_sweepWasEnabledOnTrigger && sweepDefined;
 
             // DMG quirk:
             // If a negative sweep calculation has occurred, and NR10 is later written
@@ -721,6 +726,13 @@ public sealed class ApuDevice : IMemDevice
                 Disable();
                 m_sweepEnabled = false;
             }
+
+            // If sweep becomes enabled via NR10 (after being disabled), reset the timer using the new period.
+            if (!wasEnabled && m_sweepEnabled)
+            {
+                // Start a fresh sweep timer so the first calculation occurs promptly after enabling sweep via NR10.
+                m_sweepTimer = 0;
+            }
         }
         
         public override void Trigger(bool nextStepClocksLength)
@@ -729,10 +741,14 @@ public sealed class ApuDevice : IMemDevice
 
             m_sweepShadowFreq = m_frequency;
             m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
-            m_sweepEnabled = m_sweepPeriod != 0 || m_sweepShift != 0;
+            m_sweepWasEnabledOnTrigger = m_sweepPeriod != 0 || m_sweepShift != 0;
+            m_sweepEnabled = m_sweepWasEnabledOnTrigger;
 
             // New trigger starts a fresh sweep sequence; no negate calculation has occurred yet.
             m_sweepPerformedNegate = false;
+
+            if (!m_sweepEnabled)
+                return;
 
             if (m_sweepShift != 0)
             {
@@ -754,9 +770,6 @@ public sealed class ApuDevice : IMemDevice
             if (!Enabled)
                 return false;
 
-            if (!m_sweepEnabled)
-                return false;
-
             if (m_sweepTimer > 0)
                 m_sweepTimer--;
             if (m_sweepTimer > 0)
@@ -764,6 +777,9 @@ public sealed class ApuDevice : IMemDevice
 
             // Reload the sweep timer (period 0 treated as 8 for timing).
             m_sweepTimer = (byte)(m_sweepPeriod == 0 ? 8 : m_sweepPeriod);
+
+            if (!m_sweepEnabled)
+                return false;
 
             // If sweep period is 0, do not perform periodic sweep (see Pan Docs/gbdev).
             if (m_sweepPeriod == 0)
