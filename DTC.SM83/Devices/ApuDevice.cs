@@ -68,6 +68,7 @@ public sealed class ApuDevice : IMemDevice
     public void AdvanceT(ulong tStates)
     {
         ClockFrameSequencer(tStates);
+        m_channel3.AdvanceT(tStates);
 
         // Accumulate CPU time towards the next audio sample.
         m_ticksUntilSample -= tStates;
@@ -169,7 +170,7 @@ public sealed class ApuDevice : IMemDevice
     {
         var ch1 = m_channel1.Sample(sampleTicks);
         var ch2 = m_channel2.Sample(sampleTicks);
-        var ch3 = m_channel3.Sample(sampleTicks);
+        var ch3 = m_channel3.Sample();
         var ch4 = m_channel4.Sample(sampleTicks);
 
         // Route channels according to NR51.
@@ -220,7 +221,7 @@ public sealed class ApuDevice : IMemDevice
     public byte Read8(ushort addr)
     {
         if (addr is >= 0xFF30 and <= 0xFF3F)
-            return m_waveRam[addr - 0xFF30];
+            return m_channel3.ReadWaveRam(addr);
 
         var raw = addr switch
         {
@@ -294,7 +295,7 @@ public sealed class ApuDevice : IMemDevice
         // Wave RAM is unaffected by APU power state.
         if (addr is >= 0xFF30 and <= 0xFF3F)
         {
-            m_waveRam[addr - 0xFF30] = value;
+            m_channel3.WriteWaveRam(addr, value);
             return;
         }
 
@@ -333,6 +334,7 @@ public sealed class ApuDevice : IMemDevice
                 m_nr52 = 0x80;
                 m_frameSequencerTicks = 0;
                 m_frameSequencerStep = 0;
+                m_channel3.ResetState();
                 UpdateStatusFlags();
             }
 
@@ -545,7 +547,7 @@ public sealed class ApuDevice : IMemDevice
         m_channel1.Disable();
         m_channel2.Disable();
         m_channel3.SetDacEnabled(false);
-        m_channel3.Disable();
+        m_channel3.ResetState();
         m_channel4.Disable();
         m_frameSequencerTicks = 0;
         m_frameSequencerStep = 0;
@@ -828,19 +830,82 @@ public sealed class ApuDevice : IMemDevice
 
     private sealed class WaveChannel
     {
+        private const int FirstSampleDelayTicks = 6;
         private readonly byte[] m_waveRam;
-        private ushort m_frequency;
-        private double m_frequencyHz;
-        private double m_phase;
+        private ushort m_pendingFrequency;
+        private int m_timerPeriod;
+        private int m_pendingTimerPeriod;
+        private int m_sampleIndex;
+        private byte m_sampleBuffer;
         private byte m_volumeCode;
         private bool m_dacEnabled = true;
         private ushort m_lengthCounter;
         private bool m_lengthEnabled;
-
+        private bool m_frequencyChangePending;
+        private ulong m_ticks;
+        private ulong m_nextSampleTick;
+        private ulong m_lastWaveReadTick;
         public bool Enabled { get; private set; }
 
         public WaveChannel(byte[] waveRam) =>
             m_waveRam = waveRam ?? throw new ArgumentNullException(nameof(waveRam));
+
+        /// <summary>
+        /// Advance the wave timer using CPU T-states so reads align with CPU accesses.
+        /// </summary>
+        public void AdvanceT(ulong tStates)
+        {
+            if (tStates == 0)
+                return;
+
+            var targetTick = m_ticks + tStates;
+
+            if (Enabled && m_timerPeriod > 0 && m_nextSampleTick != 0)
+            {
+                while (m_nextSampleTick <= targetTick)
+                {
+                    ClockSample(m_nextSampleTick);
+                    if (!Enabled || m_timerPeriod <= 0)
+                        break;
+
+                    m_nextSampleTick += (ulong)m_timerPeriod;
+                }
+            }
+
+            m_ticks = targetTick;
+        }
+
+        /// <summary>
+        /// Wave RAM is only readable while CH3 is actively fetching a byte; otherwise returns 0xFF.
+        /// </summary>
+        public byte ReadWaveRam(ushort addr)
+        {
+            var index = (addr - 0xFF30) & 0x0F;
+
+            if (!Enabled)
+                return m_waveRam[index];
+
+            return IsWaveRamAccessible()
+                ? m_waveRam[m_sampleIndex >> 1]
+                : (byte)0xFF;
+        }
+
+        /// <summary>
+        /// Writes are ignored while CH3 is active unless they occur on the fetch cycle.
+        /// </summary>
+        public void WriteWaveRam(ushort addr, byte value)
+        {
+            var index = (addr - 0xFF30) & 0x0F;
+
+            if (Enabled && !IsWaveRamAccessible())
+                return;
+
+            var targetIndex = Enabled ? m_sampleIndex >> 1 : index;
+            m_waveRam[targetIndex] = value;
+        }
+
+        private bool IsWaveRamAccessible() =>
+            Enabled && m_lastWaveReadTick == m_ticks;
 
         public void SetDacEnabled(bool enabled)
         {
@@ -864,8 +929,13 @@ public sealed class ApuDevice : IMemDevice
 
         public void SetFrequency(ushort frequency)
         {
-            m_frequency = (ushort)(frequency & 0x7FF);
-            m_frequencyHz = m_frequency >= 2048 ? 0.0 : 65536.0 / (2048 - m_frequency);
+            m_pendingFrequency = (ushort)(frequency & 0x7FF);
+            m_pendingTimerPeriod = CalculateTimerPeriod(m_pendingFrequency);
+
+            if (!Enabled)
+                ApplyPendingFrequency();
+            else
+                m_frequencyChangePending = true;
         }
 
         public void Trigger(bool nextStepClocksLength)
@@ -876,7 +946,9 @@ public sealed class ApuDevice : IMemDevice
                 return;
             }
 
-            Enabled = m_frequencyHz > 0.0;
+            ApplyPendingFrequency();
+
+            Enabled = m_timerPeriod > 0;
             if (!Enabled)
                 return;
 
@@ -886,13 +958,37 @@ public sealed class ApuDevice : IMemDevice
                 if (m_lengthEnabled && !nextStepClocksLength)
                     m_lengthCounter--;
             }
-            m_phase = 0.0;
+
+            // Start from sample #1 (lower nibble of byte 0). Buffer is intentionally preserved.
+            m_sampleIndex = 0;
+            m_nextSampleTick = m_ticks + (ulong)(m_timerPeriod + FirstSampleDelayTicks);
+            m_frequencyChangePending = false;
         }
 
-        public void Disable()
+        /// <summary>
+        /// Clears playback state (sample buffer/timers) without touching wave RAM.
+        /// </summary>
+        public void ResetState()
+        {
+            m_pendingFrequency = 0;
+            m_timerPeriod = CalculateTimerPeriod(0);
+            m_pendingTimerPeriod = m_timerPeriod;
+            m_sampleIndex = 0;
+            m_sampleBuffer = 0;
+            m_lengthCounter = 0;
+            m_lengthEnabled = false;
+            m_frequencyChangePending = false;
+            m_nextSampleTick = 0;
+            m_lastWaveReadTick = 0;
+            Enabled = false;
+        }
+
+        private void Disable()
         {
             Enabled = false;
-            m_phase = 0.0;
+            m_nextSampleTick = 0;
+            if (m_frequencyChangePending)
+                ApplyPendingFrequency();
         }
 
         public bool StepLength(bool forceClock = false)
@@ -912,30 +1008,50 @@ public sealed class ApuDevice : IMemDevice
             return false;
         }
 
-        public double Sample(ulong tStates)
+        public double Sample()
         {
-            if (!Enabled || !m_dacEnabled || m_volumeCode == 0 || m_frequencyHz <= 0.0)
+            if (!Enabled || !m_dacEnabled || m_volumeCode == 0 || m_timerPeriod <= 0)
                 return 0.0;
 
-            var elapsedSeconds = tStates / Cpu.Hz;
-            m_phase += m_frequencyHz * elapsedSeconds;
-            m_phase -= Math.Floor(m_phase);
+            var waveByte = m_sampleBuffer;
+            var sample4 = (m_sampleIndex & 1) == 0 ? waveByte >> 4 : waveByte & 0x0F;
 
-            var sampleIndex = (int)(m_phase * 32.0);
-            sampleIndex = Math.Clamp(sampleIndex, 0, 31);
-            var waveByte = m_waveRam[sampleIndex >> 1];
-            var sample4 = (sampleIndex & 1) == 0 ? waveByte >> 4 : waveByte & 0x0F;
-            if (sample4 == 0)
-                return 0.0;
-
-            var volumeFactor = m_volumeCode switch
+            var shifted = m_volumeCode switch
             {
-                1 => 1.0,
-                2 => 0.5,
-                3 => 0.25,
-                _ => 0.0
+                1 => sample4,
+                2 => (byte)(sample4 >> 1),
+                3 => (byte)(sample4 >> 2),
+                _ => 0
             };
-            return (sample4 / 15.0) * volumeFactor;
+
+            return shifted / 15.0;
+        }
+
+        private void ClockSample(ulong tick)
+        {
+            m_lastWaveReadTick = tick;
+            m_sampleIndex = (m_sampleIndex + 1) & 0x1F;
+
+            var waveByte = m_waveRam[m_sampleIndex >> 1];
+            m_sampleBuffer = waveByte;
+
+            if (m_frequencyChangePending)
+                ApplyPendingFrequency();
+
+            if (m_timerPeriod <= 0)
+                Disable();
+        }
+
+        private void ApplyPendingFrequency()
+        {
+            m_timerPeriod = m_pendingTimerPeriod;
+            m_frequencyChangePending = false;
+        }
+
+        private static int CalculateTimerPeriod(ushort frequency)
+        {
+            var period = 2048 - (frequency & 0x7FF);
+            return period <= 0 ? 0 : period * 2;
         }
     }
 
