@@ -28,7 +28,6 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly TimerDevice m_timer;
     private readonly IoDevice m_ioDevice;
     private readonly InterruptDevice m_interruptDevice;
-    private readonly ApuDevice m_apu;
     private readonly HramDevice m_hramDevice;
     private readonly OamDevice m_oam;
     private readonly Dma m_dma;
@@ -38,6 +37,7 @@ public sealed class Bus : IMemDevice, IDisposable
 
     public BootRom BootRom { get; }
     public PPU PPU { get; }
+    public ApuDevice APU { get; }
     public Dma Dma => m_dma;
     public CartridgeRamDevice CartridgeRam { get; private set; }
     public CartridgeRomDevice CartridgeRom { get; private set; }
@@ -116,8 +116,8 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(new JoypadDevice(joypad));
             
             // APU
-            m_apu = new ApuDevice(audioSink);
-            Attach(m_apu);
+            APU = new ApuDevice(audioSink);
+            Attach(APU);
 
             // High RAM (0xFF80 - 0xFFFE)
             m_hramDevice = new HramDevice();
@@ -185,7 +185,7 @@ public sealed class Bus : IMemDevice, IDisposable
     }
 
     public void SetSoundChannelEnabled(int channel, bool isEnabled) =>
-        m_apu?.SetChannelEnabled(channel, isEnabled);
+        APU?.SetChannelEnabled(channel, isEnabled);
 
     public byte Read8(ushort addr) =>
         GetMemoryAccess(addr) == MemoryAccess.Allow ? UncheckedRead(addr) : (byte)0xFF;
@@ -262,7 +262,7 @@ public sealed class Bus : IMemDevice, IDisposable
         // Update the devices.
         m_dma?.AdvanceT(tCycles);
         m_timer?.AdvanceT(tCycles);
-        m_apu?.AdvanceT(tCycles);
+        APU?.AdvanceT(tCycles);
         PPU?.AdvanceT(tCycles);
     }
 

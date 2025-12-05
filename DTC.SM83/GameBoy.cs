@@ -98,7 +98,7 @@ public sealed class GameBoy : IDisposable
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
         if (m_skipBootRom)
-            m_cpu.SkipBootRom();
+            m_cpu.SkipBootRom(disableDevices: true);
 
         RestoreSavedGameData();
 

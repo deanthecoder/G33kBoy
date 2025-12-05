@@ -82,7 +82,7 @@ public static class CpuExtensions
     /// <summary>
     /// Mimic the state the CPU and IO registers are left in once the DMG boot ROM hands off to the cartridge.
     /// </summary>
-    public static Cpu SkipBootRom(this Cpu cpu)
+    public static Cpu SkipBootRom(this Cpu cpu, bool disableDevices = false)
     {
         if (cpu == null)
             throw new ArgumentNullException(nameof(cpu));
@@ -97,8 +97,15 @@ public static class CpuExtensions
         cpu.PendingIME = false;
         cpu.IsHalted = false;
 
+        if (disableDevices)
+        {
+            cpu.Bus.Dma.IsEnabled = false;
+            cpu.Bus.APU.SuppressTriggers = true;
+        }
         foreach (var (address, value) in BootIoDefaults)
             cpu.Bus.Write8(address, value);
+        cpu.Bus.Dma.IsEnabled = false;
+        cpu.Bus.APU.SuppressTriggers = false;
 
         cpu.Bus.ResetClock();
         cpu.Fetch8(); // Prime the pipeline with the opcode at 0x0100.

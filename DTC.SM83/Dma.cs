@@ -37,10 +37,17 @@ public class Dma
     public bool IsTransferActive { get; private set; }
 
     /// <summary>
+    /// Allows us to turn of DMA transfers whilst the hardware ROM/RAM content is first initialized.
+    /// </summary>
+    public bool IsEnabled { get; set; } = true;
+
+    /// <summary>
     /// Begin a new DMA transfer from the supplied high byte page.
     /// </summary>
     public void Start(byte sourceHighByte)
     {
+        if (!IsEnabled)
+            return;
         m_sourceAddr = (ushort)(sourceHighByte << 8);
         m_destAddr = 0xFE00;
         m_bytesRemaining = TransferLength;

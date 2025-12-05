@@ -21,7 +21,7 @@ public sealed class ApuDevice : IMemDevice
 {
     public ushort FromAddr => 0xFF10;
     public ushort ToAddr => 0xFF3F;
-    
+
     private const double SampleHz = 44100.0;
     private static readonly double TicksPerSample = Cpu.Hz / SampleHz;
     private const ulong FrameSequencerStepTStates = (ulong)(Cpu.Hz / 512.0); // 512 Hz.
@@ -57,6 +57,8 @@ public sealed class ApuDevice : IMemDevice
     private byte m_nr50;
     private byte m_nr51;
     private byte m_nr52 = 0x80;
+
+    public bool SuppressTriggers { get; set; }
 
     public ApuDevice(SoundDevice audioSink)
     {
@@ -292,6 +294,9 @@ public sealed class ApuDevice : IMemDevice
     
     public void Write8(ushort addr, byte value)
     {
+        if (SuppressTriggers)
+            return;
+        
         // Wave RAM is unaffected by APU power state.
         if (addr is >= 0xFF30 and <= 0xFF3F)
         {
