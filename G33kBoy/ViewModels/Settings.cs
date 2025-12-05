@@ -63,6 +63,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
+    public bool IsCpuHistoryTracked
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     public string MruFiles
     {
         get => Get<string>();
@@ -93,6 +99,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsBackgroundVisible = true;
         IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;
+        IsCpuHistoryTracked = false;
         GameDataStates = [];
         MruFiles = string.Empty;
         LastRomFile = null;

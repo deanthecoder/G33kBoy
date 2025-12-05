@@ -131,7 +131,12 @@
                     </MenuItem>
 
                     <MenuItem Header="Debug" IsVisible="{Binding GameBoy.IsDebugBuild}">
-                        <MenuItem Header="Dump CPU History" Command="{Binding DumpCpuHistory}" />
+                        <MenuItem Header="Track CPU History" Command="{Binding TrackCpuHistory}">
+                            <MenuItem.Icon>
+                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsCpuHistoryTracked}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Dump CPU History" Command="{Binding DumpCpuHistory}" IsEnabled="{Binding IsCpuHistoryTracked}" />
                     </MenuItem>
 
                     <MenuItem Header="Help">

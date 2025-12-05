@@ -9,7 +9,6 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 using DTC.Core;
-using DTC.Core.Extensions;
 using DTC.SM83.Instructions;
 
 namespace DTC.SM83;
@@ -18,11 +17,11 @@ public class Cpu
 {
     public const double Hz = 4194304.0;
     
-    private readonly CircularBuffer<string> m_instructionLog = new(2048);
-    private readonly Lock m_instructionLogLock = new();
     private string m_instructionState;
     private byte m_fetchedOpcode;
     private bool m_isHalted;
+
+    public InstructionLogger InstructionLogger { get; } = new();
 
     /// <summary>
     /// Reference to the system bus for memory and IO operations.
@@ -38,7 +37,7 @@ public class Cpu
             if (m_isHalted == value)
                 return;
             m_isHalted = value;
-            WriteInstructionLog(value ? "HALT" : "Resuming from HALT");
+            InstructionLogger?.Write(() => (value ? "HALTing" : "Resuming from HALT") + $"│T:{Bus.ClockTicks}");
         }
     }
 
@@ -79,14 +78,10 @@ public class Cpu
     /// </remarks>
     public byte IF => (byte)(Bus.UncheckedRead(0xFF0F) & 0x1F);
 
-    /// <summary>
-    /// Captures the state of the CPU for debugging purposes.
-    /// </summary>
-    public bool IsDebugBuild { get; set; }
-
     public Cpu(Bus bus)
     {
         Bus = bus ?? throw new ArgumentNullException(nameof(bus));
+        Bus.SetInstructionLogger(InstructionLogger);
 
         // Pre-load first opcode.
         Fetch8();
@@ -94,20 +89,19 @@ public class Cpu
 
     public void Step()
     {
-        var isDebugMode = IsDebugBuild;
+        var isDebugMode = InstructionLogger.IsEnabled;
         if (!IsHalted)
         {
             try
             {
-                if (isDebugMode)
-                {
-                    if (Bus.IsUninitializedWorkRam(Reg.PC))
-                        WriteInstructionLog($"WARN: Executing from uninitialized WRAM at {Reg.PC:X4} - This is probably a CPU/interrupt/RET bug.");
-                    else if (Bus.IsOamOrUnusable(Reg.PC))
-                        WriteInstructionLog($"WARN: Executing from OAM/unusable region at {Reg.PC:X4} - This is not typical.");
-                    else if (Bus.IsIo(Reg.PC))
-                        WriteInstructionLog($"WARN: Executing from IO region at {Reg.PC:X4} - This is not typical.");
-                }
+#if DEBUG
+                if (Bus.IsUninitializedWorkRam(Reg.PC))
+                    Logger.Instance.Warn($"Executing from uninitialized WRAM at {Reg.PC:X4} - This is probably a CPU/interrupt/RET bug.");
+                else if (Bus.IsOamOrUnusable(Reg.PC))
+                    Logger.Instance.Warn($"Executing from OAM/unusable region at {Reg.PC:X4} - This is not typical.");
+                else if (Bus.IsIo(Reg.PC))
+                    Logger.Instance.Warn($"Executing from IO region at {Reg.PC:X4} - This is not typical.");
+#endif
 
                 // Decode instruction.
                 Instruction instruction;
@@ -126,15 +120,15 @@ public class Cpu
                 }
 
                 if (isDebugMode && m_instructionState != null)
-                    WriteInstructionLog(m_instructionState.Replace("xxx", $"{instruction,-12}"));
+                    InstructionLogger?.Write(() => m_instructionState.Replace("xxx", $"{instruction,-12}"));
 
                 // Execute instruction.
                 instruction.Execute(this);
             }
             catch (Exception ex)
             {
-                WriteInstructionLog($"Exception: {ex.Message} (Halting...)");
-                DumpInstructionHistory();
+                InstructionLogger?.Write(() => $"Exception: {ex.Message} (Halting...)");
+                InstructionLogger.DumpToConsole();
                 IsHalted = true;
                 throw;
             }
@@ -158,7 +152,7 @@ public class Cpu
         }
 
         if (isDebugMode)
-            m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2} │ {Reg,-32} │ {Reg.FlagsAsString()} │ Tick: {Bus.ClockTicks}";
+            m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2}│{Reg,-32}│{Reg.FlagsAsString()}│T:{Bus.ClockTicks}";
         Fetch8();
     }
     
@@ -194,7 +188,7 @@ public class Cpu
         if ((pending & 0x01) != 0)
         {
             // VBlank
-            WriteInstructionLog("Service VBlank interrupt");
+            InstructionLogger?.Write(() => "Service VBlank interrupt");
             Service(0x0040, 0x01);
             return;
         }
@@ -202,7 +196,7 @@ public class Cpu
         if ((pending & 0x02) != 0)
         {
             // LCD STAT
-            WriteInstructionLog("Service LCD STAT interrupt");
+            InstructionLogger?.Write(() => "Service LCD STAT interrupt");
             Service(0x0048, 0x02);
             return;
         }
@@ -210,7 +204,7 @@ public class Cpu
         if ((pending & 0x04) != 0)
         {
             // Timer
-            WriteInstructionLog("Service Timer interrupt");
+            InstructionLogger?.Write(() => "Service Timer interrupt");
             Service(0x0050, 0x04);
             return;
         }
@@ -218,7 +212,7 @@ public class Cpu
         if ((pending & 0x08) != 0)
         {
             // Serial
-            WriteInstructionLog("Service Serial interrupt");
+            InstructionLogger?.Write(() => "Service Serial interrupt");
             Service(0x0058, 0x08);
             return;
         }
@@ -226,7 +220,7 @@ public class Cpu
         if ((pending & 0x10) != 0)
         {
             // Joypad
-            WriteInstructionLog("Service Joypad interrupt");
+            InstructionLogger?.Write(() => "Service Joypad interrupt");
             Service(0x0060, 0x10);
         }
         
@@ -303,18 +297,5 @@ public class Cpu
     {
         Write8(addr, (byte)(value & 0xFF));
         Write8((ushort)(addr + 1), (byte)(value >> 8));   
-    }
-
-    public void DumpInstructionHistory()
-    {
-        Console.WriteLine($"----- CPU instruction history @ {DateTime.Now:O} -----");
-        lock (m_instructionLogLock)
-            m_instructionLog.ForEach(o => Console.WriteLine(o));
-    }
-
-    private void WriteInstructionLog(string message)
-    {
-        lock (m_instructionLogLock)
-            m_instructionLog.Write(message);
     }
 }

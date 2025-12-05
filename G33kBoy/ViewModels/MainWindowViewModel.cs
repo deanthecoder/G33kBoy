@@ -31,6 +31,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private bool m_isSoundChannel2Enabled = true;
     private bool m_isSoundChannel3Enabled = true;
     private bool m_isSoundChannel4Enabled = true;
+    private bool m_isCpuHistoryTracked;
 
     public GameBoy GameBoy { get; }
     public MruFiles Mru { get; }
@@ -98,6 +99,18 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         get => m_isSoundChannel4Enabled;
         private set => SetField(ref m_isSoundChannel4Enabled, value);
+    }
+
+    public bool IsCpuHistoryTracked
+    {
+        get => m_isCpuHistoryTracked;
+        private set
+        {
+            if (!SetField(ref m_isCpuHistoryTracked, value))
+                return;
+            Settings.IsCpuHistoryTracked = value;
+            GameBoy.SetCpuHistoryTracking(value);
+        }
     }
 
     public bool IsAutoFireEnabled
@@ -173,6 +186,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
                 ApplyDisplayVisibilitySettings();
         });
         IsAutoFireEnabled = Settings.IsAutoFireEnabled;
+        IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
         ApplyDisplayVisibilitySettings();
         ApplySoundEnabledSetting();
         ApplySoundChannelSettings();
@@ -281,6 +295,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void DumpCpuHistory() =>
         GameBoy.DumpCpuHistory();
 
+    public void TrackCpuHistory() =>
+        IsCpuHistoryTracked = !IsCpuHistoryTracked;
+
     private void ApplyDisplayVisibilitySettings()
     {
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
@@ -308,6 +325,8 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             ApplySoundEnabledSetting();
         else if (e.PropertyName == nameof(Settings.IsAutoFireEnabled))
             IsAutoFireEnabled = Settings.IsAutoFireEnabled;
+        else if (e.PropertyName == nameof(Settings.IsCpuHistoryTracked))
+            IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
     }
 
     internal void LoadRomFile(FileInfo romFile, bool addToMru = true)

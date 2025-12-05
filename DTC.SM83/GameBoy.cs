@@ -40,6 +40,7 @@ public sealed class GameBoy : IDisposable
     private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
     private bool m_isUserSoundEnabled = true;
     private bool m_isRunningAtNormalSpeed = true;
+    private bool m_isCpuHistoryTracked;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -127,7 +128,7 @@ public sealed class GameBoy : IDisposable
         catch (Exception e)
         {
             // Shut down gracefully.
-            Logger.Instance.Error($"Stopping CPU loop due to exception: {e.Message}");
+            Logger.Instance.Error($"Stopping CPU loop at T:{m_bus.ClockTicks} due to exception: {e.Message}");
         }
         
         Logger.Instance.Info("CPU loop stopped.");
@@ -249,7 +250,14 @@ public sealed class GameBoy : IDisposable
     }
 
     public void DumpCpuHistory() =>
-        m_cpu?.DumpInstructionHistory();
+        m_cpu?.InstructionLogger.DumpToConsole();
+
+    public void SetCpuHistoryTracking(bool isEnabled)
+    {
+        m_isCpuHistoryTracked = isEnabled;
+        if (m_cpu != null)
+            m_cpu.InstructionLogger.IsEnabled = isEnabled;
+    }
     
     public void ClearAllGameData() =>
         m_gameDataStore?.ClearAllGameData();
@@ -282,7 +290,17 @@ public sealed class GameBoy : IDisposable
         !string.IsNullOrEmpty(m_cartridgeKey) &&
         m_bus?.CartridgeRam != null;
 
-    public bool IsDebugBuild => m_cpu?.IsDebugBuild ?? false;
+    public bool IsDebugBuild
+    {
+        get
+        {
+#if DEBUG
+            return true;
+#else
+            return false;
+#endif
+        }
+    }
 
     private void PersistCartRamIfDue(bool canPersistGameData)
     {
@@ -361,7 +379,10 @@ public sealed class GameBoy : IDisposable
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
         {
-            IsDebugBuild = false
+            InstructionLogger =
+            {
+                IsEnabled = m_isCpuHistoryTracked && IsDebugBuild
+            }
         };
         m_bus.PPU.FrameRendered += OnFrameRendered;
     }

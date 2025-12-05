@@ -92,7 +92,7 @@ public sealed class Registers
         ToString().GetHashCode();
 
     public override string ToString() =>
-        $"A:{A:X2} F:{F:X2} BC:{B:X2}{C:X2} DE:{D:X2}{E:X2} HL:{H:X2}{L:X2} SP:{SP:X4} PC:{PC:X4}";
+        $"A:{A:X2} BC:{B:X2}{C:X2} DE:{D:X2}{E:X2} HL:{H:X2}{L:X2} SP:{SP:X4} PC:{PC:X4}";
 
     /// <summary>
     /// Call before an add/inc math operation.
@@ -109,5 +109,5 @@ public sealed class Registers
         Hf = (value & 0x0F) < (dec & 0x0F);
     
     public string FlagsAsString() =>
-        $"{(Zf ? "Z" : "z")}{(Nf ? "N" : "n")}{(Hf ? "H" : "h")}{(Cf ? "C" : "c")}";
+        $"{(Zf ? "Z" : "-")}{(Nf ? "N" : "-")}{(Hf ? "H" : "-")}{(Cf ? "C" : "-")}";
 }

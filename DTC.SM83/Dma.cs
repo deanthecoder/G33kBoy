@@ -31,6 +31,8 @@ public class Dma
         m_bus = bus ?? throw new ArgumentNullException(nameof(bus));
     }
 
+    public InstructionLogger InstructionLogger { get; set; }
+
     /// <summary>
     /// True while a DMA transfer is underway.
     /// </summary>
@@ -53,6 +55,8 @@ public class Dma
         m_bytesRemaining = TransferLength;
         m_cycleBudget = 0;
         IsTransferActive = true;
+
+        InstructionLogger?.Write(() => $"DMA start: source={m_sourceAddr:X4} dest={m_destAddr:X4} length={TransferLength}");
     }
 
     /// <summary>
@@ -68,13 +72,18 @@ public class Dma
         {
             m_cycleBudget -= CyclesPerByte;
 
-            var data = m_bus.UncheckedRead(m_sourceAddr++);
-            m_bus.UncheckedWrite(m_destAddr++, data);
+            var sourceAddr = m_sourceAddr++;
+            var destAddr = m_destAddr++;
+            var data = m_bus.UncheckedRead(sourceAddr);
+            m_bus.UncheckedWrite(destAddr, data);
+
+            InstructionLogger?.Write(() => $"DMA copy: {sourceAddr:X4} -> {destAddr:X4} = {data:X2}");
 
             if (--m_bytesRemaining == 0)
             {
                 IsTransferActive = false;
                 m_cycleBudget = 0;
+                InstructionLogger?.Write(() => "DMA complete");
             }
         }
     }

@@ -59,6 +59,7 @@ public sealed class ApuDevice : IMemDevice
     private byte m_nr52 = 0x80;
 
     public bool SuppressTriggers { get; set; }
+    public InstructionLogger InstructionLogger { get; set; }
 
     public ApuDevice(SoundDevice audioSink)
     {
@@ -297,7 +298,7 @@ public sealed class ApuDevice : IMemDevice
     {
         if (SuppressTriggers)
             return;
-        
+
         // Wave RAM is unaffected by APU power state.
         if (addr is >= 0xFF30 and <= 0xFF3F)
         {
@@ -321,6 +322,7 @@ public sealed class ApuDevice : IMemDevice
             }
 
             m_isPowered = powerOn;
+            InstructionLogger?.Write(() => powerOn ? "APU power on" : "APU power off");
 
             if (!powerOn)
             {
@@ -410,7 +412,10 @@ public sealed class ApuDevice : IMemDevice
                 m_channel1.SetLengthEnable((value & 0x40) != 0);
                 ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel1.StepLength(true));
                 if ((value & 0x80) != 0)
+                {
+                    InstructionLogger?.Write(() => $"APU CH1 trigger freq={CombineFrequency(m_nr13, m_nr14):X3}");
                     m_channel1.Trigger(nextStepClocksLength);
+                }
                 break;
             }
 
@@ -439,7 +444,10 @@ public sealed class ApuDevice : IMemDevice
                 m_channel2.SetLengthEnable((value & 0x40) != 0);
                 ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel2.StepLength(true));
                 if ((value & 0x80) != 0)
+                {
+                    InstructionLogger?.Write(() => $"APU CH2 trigger freq={CombineFrequency(m_nr23, m_nr24):X3}");
                     m_channel2.Trigger(nextStepClocksLength);
+                }
                 break;
             }
 
@@ -474,6 +482,7 @@ public sealed class ApuDevice : IMemDevice
                 if ((value & 0x80) != 0)
                 {
                     m_channel3.ApplyDmgTriggerCorruptionIfReading();
+                    InstructionLogger?.Write(() => $"APU CH3 trigger freq={CombineFrequency(m_nr33, m_nr34):X3}");
                     m_channel3.Trigger(nextStepClocksLength);
                 }
                 break;
@@ -502,7 +511,10 @@ public sealed class ApuDevice : IMemDevice
                 m_channel4.SetLengthEnable((value & 0x40) != 0);
                 ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel4.StepLength(true));
                 if ((value & 0x80) != 0)
+                {
+                    InstructionLogger?.Write(() => $"APU CH4 trigger poly={m_nr43:X2}");
                     m_channel4.Trigger(nextStepClocksLength);
+                }
                 break;
             }
 

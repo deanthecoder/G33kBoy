@@ -97,6 +97,8 @@ public class PPU
 
     public bool SpritesVisible { get; set; } = true;
 
+    public InstructionLogger InstructionLogger { get; set; }
+
     public bool LcdEmulationEnabled
     {
         get => m_lcdEmulationEnabled;
@@ -197,7 +199,7 @@ public class PPU
                     continue;
 
                 m_tCycles = 0;
-                CurrentState = FrameState.OAMScan; // Enter mode 2 after the enable delay.
+                EnterOamScan(); // Enter mode 2 after the enable delay.
                 continue;
             }
 
@@ -249,18 +251,21 @@ public class PPU
                         continue;
 
                     m_tCycles -= HBlankCycles;
+                    LogScanlineEnd(m_lcd.LY);
                     UpdateLineIndex(true);
                     
                     if (m_lcd.LY == FrameHeight)
                     {
+                        InstructionLogger?.Write(() => "PPU entering VBlank");
                         CurrentState = FrameState.FrameWait;
                         FrameRendered?.Invoke(this, m_frameBuffer);
                         m_motionBlurPrimed = m_motionBlurEnabled;
                         RaiseInterrupt(InterruptDevice.InterruptType.VBlank);
+                        LogScanlineStart();
                     }
                     else
                     {
-                        CurrentState = FrameState.OAMScan;
+                        EnterOamScan();
                     }
                     break;
                 }
@@ -294,17 +299,27 @@ public class PPU
                         continue;
 
                     m_tCycles -= TicksPerScanline;
+                    var currentLine = m_line153Wrapped ? 153 : m_lcd.LY;
+                    LogScanlineEnd(currentLine);
 
                     if (m_line153Wrapped)
                     {
                         m_line153Wrapped = false;
-                        CurrentState = FrameState.OAMScan; // Start of line 0.
+                        InstructionLogger?.Write(() => "PPU VBlank end");
+                        EnterOamScan(); // Start of line 0.
                     }
                     else
                     {
                         UpdateLineIndex(true);
                         if (m_lcd.LY == 0)
-                            CurrentState = FrameState.OAMScan;
+                        {
+                            InstructionLogger?.Write(() => "PPU VBlank end");
+                            EnterOamScan();
+                        }
+                        else
+                        {
+                            LogScanlineStart();
+                        }
                     }
                     break;
                 }
@@ -618,6 +633,18 @@ public class PPU
         
         UpdateLycAndMaybeStatIrq();
     }
+
+    private void EnterOamScan()
+    {
+        CurrentState = FrameState.OAMScan;
+        LogScanlineStart();
+    }
+
+    private void LogScanlineStart() =>
+        InstructionLogger?.Write(() => $"PPU scanline start: LY={m_lcd.LY}");
+
+    private void LogScanlineEnd(int line) =>
+        InstructionLogger?.Write(() => $"PPU scanline end: LY={line}");
 
     public void ResetLyCounter() =>
         UpdateLineIndex(false);

@@ -62,6 +62,9 @@ public class ClockSync
 
     public void SyncWithRealTime()
     {
+        if (m_speed == Speed.Maximum)
+            return; // Don't delay.
+        
         lock (m_realTime)
         {
             var emulatedUptimeSecs = (m_ticksSinceCpuStart() - m_tStateCountAtStart) / m_emulatedTicksPerSecond;
