@@ -471,7 +471,10 @@ public sealed class ApuDevice : IMemDevice
                 m_channel3.SetLengthEnable((value & 0x40) != 0);
                 ApplyLengthEnableEdgeClock(wasLengthEnabled, (value & 0x40) != 0, nextStepClocksLength, () => m_channel3.StepLength(true));
                 if ((value & 0x80) != 0)
+                {
+                    m_channel3.ApplyDmgTriggerCorruptionIfReading();
                     m_channel3.Trigger(nextStepClocksLength);
+                }
                 break;
             }
 
@@ -951,6 +954,32 @@ public sealed class ApuDevice : IMemDevice
                 ApplyPendingFrequency();
             else
                 m_frequencyChangePending = true;
+        }
+
+        /// <summary>
+        /// DMG quirk: retriggering CH3 while it is fetching a sample byte corrupts the first bytes of wave RAM.
+        /// </summary>
+        public void ApplyDmgTriggerCorruptionIfReading()
+        {
+            if (!Enabled || m_nextSampleTick == 0 || m_timerPeriod <= 0)
+                return;
+
+            // Treat a sample fetch occurring within the current 4T CPU machine cycle as overlapping the trigger.
+            var ticksUntilRead = m_nextSampleTick > m_ticks ? m_nextSampleTick - m_ticks : 0;
+            if (ticksUntilRead > 3)
+                return;
+
+            // The byte being fetched is the next one the channel will step to.
+            var byteIndex = ((m_sampleIndex + 1) & 0x1F) >> 1;
+            if (byteIndex < 4)
+            {
+                m_waveRam[0] = m_waveRam[byteIndex];
+                return;
+            }
+
+            var blockStart = byteIndex & ~0x03;
+            for (var i = 0; i < 4; i++)
+                m_waveRam[i] = m_waveRam[blockStart + i];
         }
 
         public void Trigger(bool nextStepClocksLength)
