@@ -54,8 +54,6 @@ public class IoDevice : IMemDevice, ILcd
     public byte WY => m_data[0x4A];
     public byte WX => m_data[0x4B];
 
-    public bool IsDMATransferActive { get; private set; }
-
     public byte Read8(ushort addr)
     {
         switch (addr)
@@ -96,18 +94,7 @@ public class IoDevice : IMemDevice, ILcd
         // OAM DMA Transfer request?
         if (idx == 0x46)
         {
-            var src = (ushort)(value << 8);
-
-            IsDMATransferActive = true;
-            const int oamSize = 0xA0; // 160 bytes.
-            var dest = 0xFE00;
-            for (var i = 0; i < oamSize; i++)
-            {
-                var b = m_bus.UncheckedRead(src++);
-                m_bus.UncheckedWrite((ushort)dest++, b);
-                m_bus.AdvanceT(4); // Four T-cycles per byte.
-            }
-            IsDMATransferActive = false;
+            m_bus.Dma?.Start(value);
             return;
         }
         

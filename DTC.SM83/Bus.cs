@@ -31,12 +31,14 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly ApuDevice m_apu;
     private readonly HramDevice m_hramDevice;
     private readonly OamDevice m_oam;
+    private readonly Dma m_dma;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
 
     public BootRom BootRom { get; }
     public PPU PPU { get; }
+    public Dma Dma => m_dma;
     public CartridgeRamDevice CartridgeRam { get; private set; }
     public CartridgeRomDevice CartridgeRom { get; private set; }
     private IMemoryBankController m_memoryBankController;
@@ -81,6 +83,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Array.Clear(m_ram);
         m_written = ArrayPool<bool>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_written);
+        m_dma = new Dma(this);
 
         VramDevice vram = null;
         if (busType == BusType.GameBoy)
@@ -200,7 +203,7 @@ public sealed class Bus : IMemDevice, IDisposable
         }
 
         // DMG OAM bug approximation: writes during modes 2/3 corrupt a pair of bytes.
-        if (PPU is {CanAccessOam: false} && m_oam?.Contains(addr) == true && m_ioDevice?.IsDMATransferActive != true)
+        if (PPU is { CanAccessOam: false } && m_oam?.Contains(addr) == true && m_dma?.IsTransferActive != true)
         {
             var baseAddr = (ushort)(addr & 0xFFFE);
             if (m_oam.Contains(baseAddr))
@@ -237,7 +240,7 @@ public sealed class Bus : IMemDevice, IDisposable
     /// </remarks>
     private MemoryAccess GetMemoryAccess(ushort addr)
     {
-        if (m_ioDevice?.IsDMATransferActive == true)
+        if (m_dma?.IsTransferActive == true)
         {
             var isSafeRegion = m_hramDevice?.Contains(addr) == true;
             if (!isSafeRegion)
@@ -257,6 +260,7 @@ public sealed class Bus : IMemDevice, IDisposable
         ClockTicks += tCycles;
         
         // Update the devices.
+        m_dma?.AdvanceT(tCycles);
         m_timer?.AdvanceT(tCycles);
         m_apu?.AdvanceT(tCycles);
         PPU?.AdvanceT(tCycles);
