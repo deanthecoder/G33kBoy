@@ -64,6 +64,7 @@ public sealed class ApuDevice : IMemDevice
     {
         m_audioSink = audioSink;
         m_channel3 = new WaveChannel(m_waveRam);
+        m_channel1.OnFrequencyWritten = UpdateChannel1FrequencyRegisters;
         ResetRegisters();
     }
 
@@ -564,6 +565,12 @@ public sealed class ApuDevice : IMemDevice
 
     private static ushort CombineFrequency(byte low, byte high) =>
         (ushort)(low | ((high & 0x07) << 8));
+
+    private void UpdateChannel1FrequencyRegisters(ushort frequency)
+    {
+        m_nr13 = (byte)(frequency & 0xFF);
+        m_nr14 = (byte)((m_nr14 & 0xF8) | ((frequency >> 8) & 0x07));
+    }
     
     private bool IsChannelEnabled(int channel) =>
         m_channelEnabled[channel];
@@ -706,6 +713,8 @@ public sealed class ApuDevice : IMemDevice
         private bool m_sweepEnabled;
         private bool m_sweepWasEnabledOnTrigger;
         private bool m_sweepPerformedNegate;
+        
+        public Action<ushort> OnFrequencyWritten { get; set; }
 
         public void SetSweep(byte nr10)
         {
@@ -728,8 +737,9 @@ public sealed class ApuDevice : IMemDevice
             // DMG quirk:
             // If a negative sweep calculation has occurred, and NR10 is later written
             // with the negate bit cleared while sweep is enabled (with the *new* NR10),
-            // the channel is immediately disabled.
-            if (oldNegate && !m_sweepNegate && m_sweepEnabled && m_sweepPerformedNegate)
+            // the channel is immediately disabled. The quirk still applies even if the new
+            // NR10 would disable sweep (period=0 and shift=0).
+            if (oldNegate && !m_sweepNegate && m_sweepPerformedNegate)
             {
                 Disable();
                 m_sweepEnabled = false;
@@ -807,6 +817,7 @@ public sealed class ApuDevice : IMemDevice
             {
                 m_sweepShadowFreq = (ushort)target;
                 SetFrequency((ushort)target);
+                OnFrequencyWritten?.Invoke((ushort)target);
 
                 var nextTarget = CalculateSweepTarget();
                 if (!m_sweepNegate && nextTarget > 2047)
@@ -828,9 +839,8 @@ public sealed class ApuDevice : IMemDevice
             {
                 // Any negate sweep calculation (trigger pre-check or periodic sweep step)
                 // counts as having "performed" a negate calculation for the NR10
-                // negate->clear quirk. The shift must be non-zero for sweep to be active.
-                if (m_sweepShift != 0)
-                    m_sweepPerformedNegate = true;
+                // negate->clear quirk.
+                m_sweepPerformedNegate = true;
 
                 // Subtract mode uses 11-bit two's complement arithmetic; wrap within 0x000-0x7FF.
                 var raw = m_sweepShadowFreq - delta;
