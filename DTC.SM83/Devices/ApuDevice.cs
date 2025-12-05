@@ -327,7 +327,7 @@ public sealed class ApuDevice : IMemDevice
                 //  - Clear all sound registers (except NR52 bit 7, which is now 0).
                 //  - Disable all channels.
                 //  - Keep wave RAM as-is.
-                ResetRegisters(); // Make sure this does NOT clear m_waveRam.
+                ResetRegisters(resetLengthCounters: false); // Preserve length counters (DMG quirk).
                 m_nr52 = 0; // Bit 7 now off, lower bits already cleared.
             }
             else
@@ -339,7 +339,7 @@ public sealed class ApuDevice : IMemDevice
                 m_nr52 = 0x80;
                 m_frameSequencerTicks = 0;
                 m_frameSequencerStep = 0;
-                m_channel3.ResetState();
+                m_channel3.ResetState(resetLengthCounter: false);
                 UpdateStatusFlags();
             }
 
@@ -532,7 +532,7 @@ public sealed class ApuDevice : IMemDevice
         m_nr52 = (byte)(0x70 | (m_isPowered ? 0x80 : 0x00) | active);
     }
 
-    private void ResetRegisters()
+    private void ResetRegisters(bool resetLengthCounters = true)
     {
         m_nr10 = m_nr11 = m_nr12 = m_nr13 = m_nr14 = 0;
         m_nr21 = m_nr22 = m_nr23 = m_nr24 = 0;
@@ -552,7 +552,7 @@ public sealed class ApuDevice : IMemDevice
         m_channel1.Disable();
         m_channel2.Disable();
         m_channel3.SetDacEnabled(false);
-        m_channel3.ResetState();
+        m_channel3.ResetState(resetLengthCounters);
         m_channel4.Disable();
         m_frameSequencerTicks = 0;
         m_frameSequencerStep = 0;
@@ -978,14 +978,15 @@ public sealed class ApuDevice : IMemDevice
         /// <summary>
         /// Clears playback state (sample buffer/timers) without touching wave RAM.
         /// </summary>
-        public void ResetState()
+        public void ResetState(bool resetLengthCounter = true)
         {
             m_pendingFrequency = 0;
             m_timerPeriod = CalculateTimerPeriod(0);
             m_pendingTimerPeriod = m_timerPeriod;
             m_sampleIndex = 0;
             m_sampleBuffer = 0;
-            m_lengthCounter = 0;
+            if (resetLengthCounter)
+                m_lengthCounter = 0;
             m_lengthEnabled = false;
             m_frequencyChangePending = false;
             m_nextSampleTick = 0;
