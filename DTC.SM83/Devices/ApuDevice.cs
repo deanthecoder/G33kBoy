@@ -612,13 +612,6 @@ public sealed class ApuDevice : IMemDevice
 
         public virtual void Trigger(bool nextStepClocksLength)
         {
-            if (!m_dacEnabled)
-            {
-                Disable();
-                return;
-            }
-
-            Enabled = m_frequencyHz > 0.0;
             if (m_lengthCounter == 0)
             {
                 m_lengthCounter = 64;
@@ -628,6 +621,7 @@ public sealed class ApuDevice : IMemDevice
             m_volume = m_initialVolume;
             m_phase = 0.0;
             m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
+            Enabled = m_dacEnabled && m_frequencyHz > 0.0;
         }
 
         public void Disable()
@@ -940,17 +934,10 @@ public sealed class ApuDevice : IMemDevice
 
         public void Trigger(bool nextStepClocksLength)
         {
-            if (!m_dacEnabled)
-            {
-                Disable();
-                return;
-            }
-
             ApplyPendingFrequency();
 
-            Enabled = m_timerPeriod > 0;
-            if (!Enabled)
-                return;
+            var timerActive = m_timerPeriod > 0;
+            Enabled = m_dacEnabled && timerActive;
 
             if (m_lengthCounter == 0)
             {
@@ -961,7 +948,9 @@ public sealed class ApuDevice : IMemDevice
 
             // Start from sample #1 (lower nibble of byte 0). Buffer is intentionally preserved.
             m_sampleIndex = 0;
-            m_nextSampleTick = m_ticks + (ulong)(m_timerPeriod + FirstSampleDelayTicks);
+            m_nextSampleTick = Enabled && timerActive
+                ? m_ticks + (ulong)(m_timerPeriod + FirstSampleDelayTicks)
+                : 0;
             m_frequencyChangePending = false;
         }
 
@@ -1119,23 +1108,17 @@ public sealed class ApuDevice : IMemDevice
 
         public void Trigger(bool nextStepClocksLength)
         {
-            if (!m_dacEnabled)
-            {
-                Disable();
-                return;
-            }
-
-            Enabled = m_lfsrFrequencyHz > 0.0;
-            m_volume = m_initialVolume;
             if (m_lengthCounter == 0)
             {
                 m_lengthCounter = 64;
                 if (m_lengthEnabled && !nextStepClocksLength)
                     m_lengthCounter--;
             }
+            m_volume = m_initialVolume;
             m_envelopeTimer = (byte)(m_envelopePeriod == 0 ? 8 : m_envelopePeriod);
             m_lfsr = 0x7FFF;
             m_lfsrTimerSeconds = 0.0;
+            Enabled = m_dacEnabled && m_lfsrFrequencyHz > 0.0;
         }
 
         public void Disable()
