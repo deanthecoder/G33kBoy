@@ -21,6 +21,12 @@ public class Cpu
     private byte m_fetchedOpcode;
     private bool m_isHalted;
 
+#if DEBUG
+    private int m_nopStreak;
+    private int m_maxNopStreak;
+    private const int NopStreakThreshold = 64;
+#endif
+
     public InstructionLogger InstructionLogger { get; } = new();
 
     /// <summary>
@@ -90,11 +96,41 @@ public class Cpu
     public void Step()
     {
         var isDebugMode = InstructionLogger.IsEnabled;
+#if DEBUG
+        if (!IsHalted)
+        {
+            if (m_fetchedOpcode == 0x00)
+            {
+                m_nopStreak++;
+
+                // Track the maximum NOP streak seen so far.
+                if (m_nopStreak > m_maxNopStreak)
+                {
+                    m_maxNopStreak = m_nopStreak;
+                    Logger.Instance.Info($"[WATCHDOG] New max NOP streak: {m_maxNopStreak} instructions. PC={Reg.PC:X4}");
+                }
+
+                if (m_nopStreak == NopStreakThreshold)
+                {
+                    Logger.Instance.Warn($"[WATCHDOG] {NopStreakThreshold} consecutive NOPs executed. PC={Reg.PC:X4} IE={IE:X2} IF={IF:X2} IME={IME}.");
+                    InstructionLogger?.DumpToConsole();
+                }
+            }
+            else
+            {
+                if (m_nopStreak > 0)
+                    Logger.Instance.Info($"[WATCHDOG] NOP streak ended at {m_nopStreak} instructions. Last PC={Reg.PC:X4}. Max so far: {m_maxNopStreak}.");
+
+                m_nopStreak = 0;
+            }
+        }
+#endif
         if (!IsHalted)
         {
             try
             {
 #if DEBUG
+                // Runtime checks to help identify potential bugs.
                 if (Bus.IsUninitializedWorkRam(Reg.PC))
                     Logger.Instance.Warn($"Executing from uninitialized WRAM at {Reg.PC:X4} - This is probably a CPU/interrupt/RET bug.");
                 else if (Bus.IsOamOrUnusable(Reg.PC))
@@ -128,7 +164,7 @@ public class Cpu
             catch (Exception ex)
             {
                 InstructionLogger?.Write(() => $"Exception: {ex.Message} (Halting...)");
-                InstructionLogger.DumpToConsole();
+                InstructionLogger?.DumpToConsole();
                 IsHalted = true;
                 throw;
             }
