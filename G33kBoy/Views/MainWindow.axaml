@@ -120,19 +120,6 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
-                        <MenuItem Header="Boot ROM">
-                            <MenuItem Header="Standard" Command="{Binding SetBootRomStandard}">
-                                <MenuItem.Icon>
-                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsBootRomStandard}" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="None" Command="{Binding SetBootRomNone}">
-                                <MenuItem.Icon>
-                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsBootRomNone}" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                        </MenuItem>
-                        <Separator />
                         <MenuItem Header="Reset Device" Command="{Binding ResetDevice}"
                                   InputGesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
                     </MenuItem>

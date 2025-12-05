@@ -100,9 +100,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         private set => SetField(ref m_isSoundChannel4Enabled, value);
     }
 
-    public bool IsBootRomStandard => !Settings.IsBootRomSkipped;
-    public bool IsBootRomNone => Settings.IsBootRomSkipped;
-
     public bool IsAutoFireEnabled
     {
         get => m_isAutoFireEnabled;
@@ -179,7 +176,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         ApplyDisplayVisibilitySettings();
         ApplySoundEnabledSetting();
         ApplySoundChannelSettings();
-        ApplyBootRomSetting();
     }
 
     public void LoadGameRom()
@@ -284,18 +280,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void DumpCpuHistory() =>
         GameBoy.DumpCpuHistory();
-    
-    public void SetBootRomStandard()
-    {
-        Settings.IsBootRomSkipped = false;
-        ApplyBootRomSetting();
-    }
-
-    public void SetBootRomNone()
-    {
-        Settings.IsBootRomSkipped = true;
-        ApplyBootRomSetting();
-    }
 
     private void ApplyDisplayVisibilitySettings()
     {
@@ -324,8 +308,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             ApplySoundEnabledSetting();
         else if (e.PropertyName == nameof(Settings.IsAutoFireEnabled))
             IsAutoFireEnabled = Settings.IsAutoFireEnabled;
-        else if (e.PropertyName == nameof(Settings.IsBootRomSkipped))
-            ApplyBootRomSetting();
     }
 
     internal void LoadRomFile(FileInfo romFile, bool addToMru = true)
@@ -355,11 +337,4 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     private static string SanitizeFileName(string input) =>
         string.IsNullOrWhiteSpace(input) ? "G33kBoy" : input.ToSafeFileName();
-
-    private void ApplyBootRomSetting()
-    {
-        GameBoy.SetSkipBootRom(Settings.IsBootRomSkipped);
-        OnPropertyChanged(nameof(IsBootRomStandard));
-        OnPropertyChanged(nameof(IsBootRomNone));
-    }
 }

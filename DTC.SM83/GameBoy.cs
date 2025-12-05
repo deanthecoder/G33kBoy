@@ -36,7 +36,6 @@ public sealed class GameBoy : IDisposable
     private bool m_shutdownRequested;
     private Cartridge m_loadedCartridge;
     private bool m_lcdEmulationEnabled = true;
-    private bool m_skipBootRom;
     private readonly SoundDevice m_audioSink;
     private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
     private bool m_isUserSoundEnabled = true;
@@ -97,8 +96,6 @@ public sealed class GameBoy : IDisposable
         m_loadedCartridge = cartridge;
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
-        if (m_skipBootRom)
-            m_cpu.SkipBootRom(disableDevices: true);
 
         RestoreSavedGameData();
 
@@ -225,9 +222,6 @@ public sealed class GameBoy : IDisposable
 
     public void SetAutoFireEnabled(bool isEnabled) =>
         Joypad.AutoFireEnabled = isEnabled;
-
-    public void SetSkipBootRom(bool isSkipped) =>
-        m_skipBootRom = isSkipped;
     
     public void SetSoundChannelEnabled(int channel, bool isEnabled)
     {

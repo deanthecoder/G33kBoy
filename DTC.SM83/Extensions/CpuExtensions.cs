@@ -105,7 +105,8 @@ public static class CpuExtensions
         foreach (var (address, value) in BootIoDefaults)
             cpu.Bus.Write8(address, value);
         cpu.Bus.Dma.IsEnabled = false;
-        cpu.Bus.APU.SuppressTriggers = false;
+        if (cpu.Bus.APU != null)
+            cpu.Bus.APU.SuppressTriggers = false;
 
         cpu.Bus.ResetClock();
         cpu.Fetch8(); // Prime the pipeline with the opcode at 0x0100.
