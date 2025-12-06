@@ -37,6 +37,8 @@ public class InstructionLogger
         {
             Console.WriteLine($"----- CPU instruction history @ {DateTime.Now:O} -----");
             m_instructionLog.ForEach(o => Console.WriteLine(o));
+            
+            m_instructionLog.Clear();
         }
     }
 }

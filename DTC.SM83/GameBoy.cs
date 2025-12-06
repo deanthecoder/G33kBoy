@@ -128,7 +128,7 @@ public sealed class GameBoy : IDisposable
         catch (Exception e)
         {
             // Shut down gracefully.
-            Logger.Instance.Error($"Stopping CPU loop at T:{m_bus.ClockTicks} due to exception: {e.Message}");
+            Logger.Instance.Error($"Stopping CPU loop due to exception: {e.Message}");
         }
         
         Logger.Instance.Info("CPU loop stopped.");

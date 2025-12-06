@@ -1155,7 +1155,7 @@ public static class Instructions
         ),
         new Instruction(
             "RET", // 0xC9
-            static cpu => { DoRET(cpu); }
+            DoRET
         ),
         new Instruction(
             "JP Z,a16", // 0xCA nn nn
@@ -1441,7 +1441,11 @@ public static class Instructions
         ),
         new Instruction(
             "DI", // 0xF3
-            static cpu => { cpu.IME = false; }
+            static cpu =>
+            {
+                cpu.IME = false;
+                cpu.PendingIME = false;
+            }
         ),
         new Instruction(
             "#INV_F4",
@@ -1499,8 +1503,7 @@ public static class Instructions
         ),
         new Instruction(
             "EI", // 0xFB
-            static cpu => { cpu.PendingIME = true; }
-        ),
+            static cpu => cpu.PendingIME = true),
         new Instruction(
             "#INV_FC",
             _ => throw new InvalidOperationException("Invalid instruction.")),

@@ -19,11 +19,9 @@ public class Cpu
     
     private string m_instructionState;
     private byte m_fetchedOpcode;
-    private bool m_isHalted;
 
 #if DEBUG
     private int m_nopStreak;
-    private int m_maxNopStreak;
     private const int NopStreakThreshold = 64;
 #endif
 
@@ -33,19 +31,9 @@ public class Cpu
     /// Reference to the system bus for memory and IO operations.
     /// </summary>
     public Bus Bus { get; }
+    
     public Registers Reg { get; } = new Registers();
-
-    public bool IsHalted
-    {
-        get => m_isHalted;
-        set
-        {
-            if (m_isHalted == value)
-                return;
-            m_isHalted = value;
-            InstructionLogger?.Write(() => (value ? "HALTing" : "Resuming from HALT") + $"│T:{Bus.ClockTicks}");
-        }
-    }
+    public bool IsHalted { get; set; }
 
     /// <summary>
     /// Allows implementation of the delayed HALT bug behavior.
@@ -102,14 +90,6 @@ public class Cpu
             if (m_fetchedOpcode == 0x00)
             {
                 m_nopStreak++;
-
-                // Track the maximum NOP streak seen so far.
-                if (m_nopStreak > m_maxNopStreak)
-                {
-                    m_maxNopStreak = m_nopStreak;
-                    Logger.Instance.Info($"[WATCHDOG] New max NOP streak: {m_maxNopStreak} instructions. PC={Reg.PC:X4}");
-                }
-
                 if (m_nopStreak == NopStreakThreshold)
                 {
                     Logger.Instance.Warn($"[WATCHDOG] {NopStreakThreshold} consecutive NOPs executed. PC={Reg.PC:X4} IE={IE:X2} IF={IF:X2} IME={IME}.");
@@ -118,9 +98,6 @@ public class Cpu
             }
             else
             {
-                if (m_nopStreak > 0)
-                    Logger.Instance.Info($"[WATCHDOG] NOP streak ended at {m_nopStreak} instructions. Last PC={Reg.PC:X4}. Max so far: {m_maxNopStreak}.");
-
                 m_nopStreak = 0;
             }
         }
@@ -170,15 +147,15 @@ public class Cpu
             }
         }
 
+        // Check/wake/service interrupts
+        HandleInterrupts();
+
         // Enable interrupts if necessary.
         if (PendingIME)
         {
             IME = true;
             PendingIME = false;
         }
-
-        // Check/wake/service interrupts
-        HandleInterrupts();
 
         // Fetch opcode.
         if (IsHalted)
@@ -188,7 +165,7 @@ public class Cpu
         }
 
         if (isDebugMode)
-            m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2}│{Reg,-32}│{Reg.FlagsAsString()}│T:{Bus.ClockTicks}";
+            m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2}│{Reg,-32}│{Reg.FlagsAsString()}";
         Fetch8();
     }
     

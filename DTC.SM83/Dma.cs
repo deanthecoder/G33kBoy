@@ -77,8 +77,6 @@ public class Dma
             var data = m_bus.UncheckedRead(sourceAddr);
             m_bus.UncheckedWrite(destAddr, data);
 
-            InstructionLogger?.Write(() => $"DMA copy: {sourceAddr:X4} -> {destAddr:X4} = {data:X2}");
-
             if (--m_bytesRemaining == 0)
             {
                 IsTransferActive = false;
