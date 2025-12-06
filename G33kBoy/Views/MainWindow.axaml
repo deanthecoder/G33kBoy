@@ -141,6 +141,7 @@
 
                     <MenuItem Header="Help">
                         <MenuItem Header="_Open Project Page..." Command="{Binding OpenProjectPage}" />
+                        <MenuItem Header="_Open Log..." Command="{Binding OpenLog}" />
                         <MenuItem Header="_About..."
                                   Command="{Binding OpenDialogCommand, ElementName=Host}">
                             <MenuItem.CommandParameter>

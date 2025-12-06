@@ -254,6 +254,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         command.Execute(null);
     }
     
+    public void OpenLog() =>
+        Logger.Instance.File.OpenWithDefaultViewer();
+
     public void OpenProjectPage() =>
         new Uri("https://github.com/deanthecoder/G33kBoy").Open();
 

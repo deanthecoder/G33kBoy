@@ -33,6 +33,8 @@ public partial class MainWindow : Window
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         AddHandler(DragDrop.DropEvent, OnDrop);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        
+        Logger.Instance.SysInfo();
     }
 
     private void OnAboutDialogClicked(object sender, PointerPressedEventArgs e) =>
