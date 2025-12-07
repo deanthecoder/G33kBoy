@@ -17,7 +17,7 @@ namespace DTC.SM83;
 /// </summary>
 public class InstructionLogger
 {
-    private readonly CircularBuffer<string> m_instructionLog = new(2048);
+    private readonly CircularBuffer<string> m_instructionLog = new(1024);
     private readonly Lock m_instructionLogLock = new();
 
     public bool IsEnabled { get; set; }

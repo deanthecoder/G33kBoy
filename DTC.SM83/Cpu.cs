@@ -8,7 +8,9 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+using System.Diagnostics;
 using DTC.Core;
+using DTC.SM83.Debuggers;
 using DTC.SM83.Instructions;
 
 namespace DTC.SM83;
@@ -19,6 +21,8 @@ public class Cpu
     
     private string m_instructionState;
     private byte m_fetchedOpcode;
+    private readonly List<ICpuDebugger> m_debuggers = new();
+    private ushort m_currentInstructionAddress;
 
 #if DEBUG
     private int m_nopStreak;
@@ -72,6 +76,11 @@ public class Cpu
     /// </remarks>
     public byte IF => (byte)(Bus.UncheckedRead(0xFF0F) & 0x1F);
 
+    /// <summary>
+    /// The address of the instruction currently being executed.
+    /// </summary>
+    public ushort CurrentInstructionAddress => m_currentInstructionAddress;
+
     public Cpu(Bus bus)
     {
         Bus = bus ?? throw new ArgumentNullException(nameof(bus));
@@ -81,8 +90,25 @@ public class Cpu
         Fetch8();
     }
 
+    /// <summary>
+    /// Registers a debugger that will be notified of CPU activity.
+    /// </summary>
+    /// <example>
+    /// cpu.AddDebugger(new PcBreakpointDebugger(0x0150, breakIntoIde: true));
+    /// cpu.AddDebugger(new MemoryWriteDebugger(0xC123, 0x42));
+    /// cpu.AddDebugger(new IncrementingCounterDebugger(0x00, 0x05, breakWhenResolved: true));
+    /// </example>
+    public void AddDebugger(ICpuDebugger debugger)
+    {
+        if (debugger == null)
+            throw new ArgumentNullException(nameof(debugger));
+
+        m_debuggers.Add(debugger);
+    }
+
     public void Step()
     {
+        m_currentInstructionAddress = (ushort)(Reg.PC - 1);
         var isDebugMode = InstructionLogger.IsEnabled;
 #if DEBUG
         if (!IsHalted)
@@ -104,6 +130,8 @@ public class Cpu
 #endif
         if (!IsHalted)
         {
+            NotifyBeforeInstruction(m_currentInstructionAddress, m_fetchedOpcode);
+
             try
             {
 #if DEBUG
@@ -161,12 +189,14 @@ public class Cpu
         if (IsHalted)
         {
             Bus.AdvanceT(4); // Re-queue the HALT instruction.
+            NotifyAfterStep();
             return;
         }
 
         if (isDebugMode)
             m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2}│{Reg,-32}│{Reg.FlagsAsString()}";
         Fetch8();
+        NotifyAfterStep();
     }
     
     public void InternalWaitM(ulong m = 1) =>
@@ -301,6 +331,7 @@ public class Cpu
     {
         Bus.Write8(addr, value);
         Bus.AdvanceT(4);
+        NotifyMemoryWrite(addr, value);
     }
     
     /// <summary>
@@ -310,5 +341,35 @@ public class Cpu
     {
         Write8(addr, (byte)(value & 0xFF));
         Write8((ushort)(addr + 1), (byte)(value >> 8));   
+    }
+
+    [Conditional("DEBUG")]
+    private void NotifyBeforeInstruction(ushort opcodeAddress, byte opcode)
+    {
+        if (m_debuggers.Count == 0)
+            return;
+
+        foreach (var debugger in m_debuggers)
+            debugger.BeforeInstruction(this, opcodeAddress, opcode);
+    }
+
+    [Conditional("DEBUG")]
+    private void NotifyAfterStep()
+    {
+        if (m_debuggers.Count == 0)
+            return;
+
+        foreach (var debugger in m_debuggers)
+            debugger.AfterStep(this);
+    }
+
+    [Conditional("DEBUG")]
+    private void NotifyMemoryWrite(ushort address, byte value)
+    {
+        if (m_debuggers.Count == 0)
+            return;
+
+        foreach (var debugger in m_debuggers)
+            debugger.OnMemoryWrite(this, address, value);
     }
 }
