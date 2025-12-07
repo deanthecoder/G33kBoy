@@ -321,6 +321,7 @@ public class Cpu
     {
         var value = Bus.Read8(addr);
         Bus.AdvanceT(4);
+        NotifyMemoryRead(addr, value);
         return value;
     }
     
@@ -361,6 +362,16 @@ public class Cpu
 
         foreach (var debugger in m_debuggers)
             debugger.AfterStep(this);
+    }
+
+    [Conditional("DEBUG")]
+    private void NotifyMemoryRead(ushort address, byte value)
+    {
+        if (m_debuggers.Count == 0)
+            return;
+
+        foreach (var debugger in m_debuggers)
+            debugger.OnMemoryRead(this, address, value);
     }
 
     [Conditional("DEBUG")]

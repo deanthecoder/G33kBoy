@@ -15,5 +15,6 @@ public interface ICpuDebugger
 {
     void BeforeInstruction(Cpu cpu, ushort opcodeAddress, byte opcode);
     void AfterStep(Cpu cpu);
+    void OnMemoryRead(Cpu cpu, ushort address, byte value);
     void OnMemoryWrite(Cpu cpu, ushort address, byte value);
 }

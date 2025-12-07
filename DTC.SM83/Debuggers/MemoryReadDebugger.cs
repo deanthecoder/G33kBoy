@@ -13,28 +13,25 @@ using System.Diagnostics;
 
 namespace DTC.SM83.Debuggers;
 
-public sealed class MemoryWriteDebugger : CpuDebuggerBase
+public sealed class MemoryReadDebugger : CpuDebuggerBase
 {
     private readonly ushort m_targetAddress;
     private readonly byte? m_targetValue;
     private readonly bool m_breakIntoIde;
-    private readonly Action m_onWrite;
     private bool m_pendingDump;
     private ulong m_dumpAtClock;
 
-    public MemoryWriteDebugger(ushort targetAddress, byte targetValue, Action onWrite = null, bool breakIntoIde = false)
+    public MemoryReadDebugger(ushort targetAddress, byte targetValue, bool breakIntoIde = false)
     {
         m_targetAddress = targetAddress;
         m_targetValue = targetValue;
-        m_onWrite = onWrite;
         m_breakIntoIde = breakIntoIde;
     }
 
-    public MemoryWriteDebugger(ushort targetAddress, Action onWrite = null, bool breakIntoIde = false)
+    public MemoryReadDebugger(ushort targetAddress, bool breakIntoIde = false)
     {
         m_targetAddress = targetAddress;
         m_targetValue = null;
-        m_onWrite = onWrite;
         m_breakIntoIde = breakIntoIde;
     }
 
@@ -53,16 +50,15 @@ public sealed class MemoryWriteDebugger : CpuDebuggerBase
         }
     }
 
-    public override void OnMemoryWrite(Cpu cpu, ushort address, byte value)
+    public override void OnMemoryRead(Cpu cpu, ushort address, byte value)
     {
         if (address != m_targetAddress)
             return;
 
         if (m_targetValue.HasValue && value != m_targetValue.Value)
             return;
-        
-        cpu.InstructionLogger.Write(() => $"[Debugger] Write {address:X4} <= {value:X2} at PC {cpu.CurrentInstructionAddress:X4}.");
-        m_onWrite?.Invoke();
+
+        cpu.InstructionLogger.Write(() => $"[Debugger] Read {address:X4} => {value:X2} at PC {cpu.CurrentInstructionAddress:X4}.");
 
         m_pendingDump = true;
         m_dumpAtClock = cpu.Bus.ClockTicks + 96; // Dump the CPU history after a few more cycles.

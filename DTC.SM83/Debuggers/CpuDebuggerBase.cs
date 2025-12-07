@@ -21,6 +21,10 @@ public abstract class CpuDebuggerBase : ICpuDebugger
     {
     }
 
+    public virtual void OnMemoryRead(Cpu cpu, ushort address, byte value)
+    {
+    }
+
     public virtual void OnMemoryWrite(Cpu cpu, ushort address, byte value)
     {
     }
