@@ -51,6 +51,8 @@ public sealed class GameBoy : IDisposable
 
     public Joypad Joypad { get; }
 
+    public bool WriteDisassemblyOnLoad { get; set; }
+
     public GameBoy(IGameDataStore gameDataStore = null)
     {
         m_gameDataStore = gameDataStore;
@@ -60,6 +62,8 @@ public sealed class GameBoy : IDisposable
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
 
         m_clockSync = new ClockSync(Cpu.Hz, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
+
+        // WriteDisassemblyOnLoad = true;
     }
 
     public void PowerOnAsync(FileInfo romFile)
@@ -98,6 +102,7 @@ public sealed class GameBoy : IDisposable
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
 
+        WriteDisassemblyIfEnabled(romFile, romData, cartridgeKey);
         RestoreSavedGameData();
 
         m_audioSink?.Start();
@@ -356,6 +361,34 @@ public sealed class GameBoy : IDisposable
         {
             Logger.Instance.Warn($"Failed to restore cartridge RAM: {ex.Message}");
         }
+    }
+
+    private void WriteDisassemblyIfEnabled(FileInfo romFile, byte[] romData, string cartridgeKey)
+    {
+        if (!WriteDisassemblyOnLoad || romFile == null || romData == null || romData.Length == 0)
+            return;
+
+        try
+        {
+            var asmFile = BuildAsmFilePath(romFile, cartridgeKey);
+            var lines = Disassembler.DisassembleRom(romData);
+            File.WriteAllLines(asmFile.FullName, lines);
+            Logger.Instance.Info($"Disassembled ROM to '{asmFile.FullName}'.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Warn($"Failed to write ROM disassembly: {ex.Message}");
+        }
+    }
+
+    private static FileInfo BuildAsmFilePath(FileInfo romFile, string cartridgeKey)
+    {
+        var directory = romFile.DirectoryName ?? Environment.CurrentDirectory;
+        var baseName = romFile.Extension.Equals(".zip", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(cartridgeKey)
+            ? Path.GetFileNameWithoutExtension(cartridgeKey)
+            : Path.GetFileNameWithoutExtension(romFile.Name);
+
+        return new FileInfo(Path.Combine(directory, $"{baseName}.asm"));
     }
 
     private void ShutdownCpuThread()
