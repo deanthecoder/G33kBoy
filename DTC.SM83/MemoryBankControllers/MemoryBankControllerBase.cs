@@ -61,7 +61,7 @@ internal abstract class MemoryBankControllerBase : IMemoryBankController
             ram[offset] = value;
     }
 
-    public byte[] GetRamSnapshot()
+    public virtual byte[] GetRamSnapshot()
     {
         if (m_ramBanks.Length == 0)
             return [];
@@ -72,7 +72,7 @@ internal abstract class MemoryBankControllerBase : IMemoryBankController
         return snapshot;
     }
 
-    public void LoadRamSnapshot(ReadOnlySpan<byte> data)
+    public virtual void LoadRamSnapshot(ReadOnlySpan<byte> data)
     {
         if (m_ramBanks.Length == 0 || data.IsEmpty)
             return;

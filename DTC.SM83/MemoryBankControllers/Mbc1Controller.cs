@@ -53,15 +53,48 @@ internal sealed class Mbc1Controller : MemoryBankControllerBase
         }
     }
 
-    protected override int GetRamBankIndex() =>
-        m_ramBankingMode ? m_romBankHigh2 : 0;
+    protected override int GetRamBankIndex()
+    {
+        if (!m_ramBankingMode || m_ramBanks.Length == 0)
+            return 0;
 
-    private int GetBank0() =>
-        m_ramBankingMode ? (m_romBankHigh2 << 5) : 0;
+        return m_romBankHigh2 % m_ramBanks.Length;
+    }
+
+    private int GetBank0()
+    {
+        if (!m_ramBankingMode)
+        {
+            // In ROM banking mode, 0000-3FFF always maps to bank 0.
+            return 0;
+        }
+
+        // In RAM banking mode, 0000-3FFF uses the high two bits as the upper ROM bank bits.
+        var bank = m_romBankHigh2 << 5;
+
+        if (m_cartridge.RomBankCount > 0)
+            bank %= m_cartridge.RomBankCount;
+
+        return bank;
+    }
 
     private int GetBankX()
     {
-        var bank = m_romBankLow5 | (m_romBankHigh2 << 5);
-        return bank % m_cartridge.RomBankCount == 0 ? 1 : bank;
+        var bank = m_ramBankingMode
+            ? m_romBankLow5
+            : (m_romBankHigh2 << 5) | m_romBankLow5;
+
+        if (m_cartridge.RomBankCount > 0)
+        {
+            bank %= m_cartridge.RomBankCount;
+        }
+
+        if (bank == 0)
+        {
+            // Bank 0 is not allowed in 4000-7FFF; map it to bank 1.
+            bank = 1;
+        }
+
+        return bank;
     }
 }
