@@ -96,8 +96,7 @@ internal abstract class MemoryBankControllerBase : IMemoryBankController
         if (bank < 0)
             return 0xFF;
 
-        var normalizedBank = bank % Math.Max(1, m_cartridge.RomBankCount);
-        var offset = (normalizedBank * 0x4000) + (addr & 0x3FFF);
+        var offset = (bank * 0x4000) + (addr & 0x3FFF);
         return offset < m_rom.Length ? m_rom[offset] : (byte)0xFF;
     }
 
