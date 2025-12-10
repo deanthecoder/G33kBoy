@@ -419,8 +419,10 @@ public sealed class GameBoy : IDisposable
 
     private void RecreateHardware()
     {
+        var debuggers = m_cpu?.Debuggers;
         DisposeHardware();
         CreateHardware();
+        debuggers?.ForEach(d => m_cpu.AddDebugger(d));
     }
 
     private void CreateHardware()

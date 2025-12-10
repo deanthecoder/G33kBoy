@@ -30,6 +30,7 @@ public class Cpu
     private const int NopStreakThreshold = 64;
 #endif
 
+    public IReadOnlyCollection<ICpuDebugger> Debuggers => m_debuggers.AsReadOnly();
     public InstructionLogger InstructionLogger { get; } = new();
 
     /// <summary>

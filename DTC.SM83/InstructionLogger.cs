@@ -31,12 +31,12 @@ public class InstructionLogger
             m_instructionLog.Write(message());
     }
 
-    public void DumpToConsole()
+    public void DumpToConsole(int maxLines = -1)
     {
         lock (m_instructionLogLock)
         {
             Console.WriteLine($"----- CPU instruction history @ {DateTime.Now:O} -----");
-            m_instructionLog.ForEach(o => Console.WriteLine(o));
+            m_instructionLog.Take(maxLines < 0 ? m_instructionLog.Count : maxLines).ForEach(o => Console.WriteLine(o));
             
             m_instructionLog.Clear();
         }

@@ -15,8 +15,6 @@ public sealed class MemoryReadDebugger : CpuDebuggerBase
 {
     private readonly ushort m_targetAddress;
     private readonly byte? m_targetValue;
-    private bool m_pendingDump;
-    private ulong m_dumpAtClock;
     private readonly Action<byte> m_onRead;
 
     public MemoryReadDebugger(ushort targetAddress, byte targetValue, Action<byte> onRead)
@@ -33,18 +31,6 @@ public sealed class MemoryReadDebugger : CpuDebuggerBase
         m_onRead = onRead;
     }
 
-    public override void AfterStep(Cpu cpu)
-    {
-        if (!m_pendingDump)
-            return;
-
-        if (cpu.Bus.ClockTicks >= m_dumpAtClock)
-        {
-            m_pendingDump = false;
-            cpu.InstructionLogger.DumpToConsole();
-        }
-    }
-
     public override void OnMemoryRead(Cpu cpu, ushort address, byte value)
     {
         if (address != m_targetAddress)
@@ -55,8 +41,6 @@ public sealed class MemoryReadDebugger : CpuDebuggerBase
 
         cpu.InstructionLogger.Write(() => $"[Debugger] Read {address:X4} => {value:X2} at PC {cpu.CurrentInstructionAddress:X4}.");
 
-        m_pendingDump = true;
-        m_dumpAtClock = cpu.Bus.ClockTicks + 96; // Dump the CPU history after a few more cycles.
         m_onRead?.Invoke(value);
     }
 }
