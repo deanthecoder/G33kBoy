@@ -9,33 +9,28 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using System.Diagnostics;
-
 namespace DTC.SM83.Debuggers;
 
 public sealed class MemoryWriteDebugger : CpuDebuggerBase
 {
     private readonly ushort m_targetAddress;
     private readonly byte? m_targetValue;
-    private readonly bool m_breakIntoIde;
     private readonly Action m_onWrite;
     private bool m_pendingDump;
     private ulong m_dumpAtClock;
 
-    public MemoryWriteDebugger(ushort targetAddress, byte targetValue, Action onWrite = null, bool breakIntoIde = false)
+    public MemoryWriteDebugger(ushort targetAddress, byte targetValue, Action onWrite)
     {
         m_targetAddress = targetAddress;
         m_targetValue = targetValue;
         m_onWrite = onWrite;
-        m_breakIntoIde = breakIntoIde;
     }
 
-    public MemoryWriteDebugger(ushort targetAddress, Action onWrite = null, bool breakIntoIde = false)
+    public MemoryWriteDebugger(ushort targetAddress, Action onWrite)
     {
         m_targetAddress = targetAddress;
         m_targetValue = null;
         m_onWrite = onWrite;
-        m_breakIntoIde = breakIntoIde;
     }
 
     public override void AfterStep(Cpu cpu)
@@ -47,9 +42,6 @@ public sealed class MemoryWriteDebugger : CpuDebuggerBase
         {
             m_pendingDump = false;
             cpu.InstructionLogger.DumpToConsole();
-
-            if (m_breakIntoIde)
-                Debugger.Break();
         }
     }
 

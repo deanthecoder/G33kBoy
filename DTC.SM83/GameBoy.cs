@@ -64,6 +64,11 @@ public sealed class GameBoy : IDisposable
         m_clockSync = new ClockSync(Cpu.Hz, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
 
         // WriteDisassemblyOnLoad = true;
+        // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, () => Console.WriteLine("Memory write detected!")));
+        // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, targetValue: 0x34, () => Console.WriteLine("Memory write detected!")));
+        // m_cpu.AddDebugger(new MemoryReadDebugger(0x1234, value => Console.WriteLine($"Memory read detected! (0x{value:X2})")));
+        // m_cpu.AddDebugger(new MemoryReadDebugger(0x1234, targetValue: 0x34, value => Console.WriteLine($"Memory read detected! (0x{value:X2})")));
+        // m_cpu.AddDebugger(new PcBreakpointDebugger(0x1234, () => Console.WriteLine("PC breakpoint hit!")));
     }
 
     public void PowerOnAsync(FileInfo romFile)

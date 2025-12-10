@@ -17,22 +17,22 @@ public sealed class MemoryReadDebugger : CpuDebuggerBase
 {
     private readonly ushort m_targetAddress;
     private readonly byte? m_targetValue;
-    private readonly bool m_breakIntoIde;
     private bool m_pendingDump;
     private ulong m_dumpAtClock;
+    private readonly Action<byte> m_onRead;
 
-    public MemoryReadDebugger(ushort targetAddress, byte targetValue, bool breakIntoIde = false)
+    public MemoryReadDebugger(ushort targetAddress, byte targetValue, Action<byte> onRead)
     {
         m_targetAddress = targetAddress;
         m_targetValue = targetValue;
-        m_breakIntoIde = breakIntoIde;
+        m_onRead = onRead;
     }
 
-    public MemoryReadDebugger(ushort targetAddress, bool breakIntoIde = false)
+    public MemoryReadDebugger(ushort targetAddress, Action<byte> onRead)
     {
         m_targetAddress = targetAddress;
         m_targetValue = null;
-        m_breakIntoIde = breakIntoIde;
+        m_onRead = onRead;
     }
 
     public override void AfterStep(Cpu cpu)
@@ -44,9 +44,6 @@ public sealed class MemoryReadDebugger : CpuDebuggerBase
         {
             m_pendingDump = false;
             cpu.InstructionLogger.DumpToConsole();
-
-            if (m_breakIntoIde)
-                Debugger.Break();
         }
     }
 
@@ -62,5 +59,6 @@ public sealed class MemoryReadDebugger : CpuDebuggerBase
 
         m_pendingDump = true;
         m_dumpAtClock = cpu.Bus.ClockTicks + 96; // Dump the CPU history after a few more cycles.
+        m_onRead?.Invoke(value);
     }
 }

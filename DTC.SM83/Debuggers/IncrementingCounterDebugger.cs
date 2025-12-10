@@ -9,7 +9,6 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using System.Diagnostics;
 using DTC.Core;
 
 namespace DTC.SM83.Debuggers;
@@ -24,7 +23,6 @@ public sealed class IncrementingCounterDebugger : CpuDebuggerBase
         (0xC000, 0xFDFF), // Work RAM + echo.
         (0xFF80, 0xFFFE)  // High RAM.
     ];
-    private readonly bool m_breakWhenResolved;
     private readonly byte m_startValue;
     private readonly byte m_targetValue;
     private int m_lastCandidateCount = -1;
@@ -41,11 +39,10 @@ public sealed class IncrementingCounterDebugger : CpuDebuggerBase
     private bool m_reportedSingleCandidate;
     private ushort m_singleCandidate;
 
-    public IncrementingCounterDebugger(byte startValue, byte targetValue, bool breakWhenResolved = false)
+    public IncrementingCounterDebugger(byte startValue, byte targetValue)
     {
         m_startValue = startValue;
         m_targetValue = targetValue;
-        m_breakWhenResolved = breakWhenResolved;
     }
 
     public override void AfterStep(Cpu cpu)
@@ -103,7 +100,7 @@ public sealed class IncrementingCounterDebugger : CpuDebuggerBase
         var delta = (byte)(value - previous);
         if (delta != 1)
         {
-            RemoveCandidate(cpu, address);
+            RemoveCandidate(address);
             return;
         }
 
@@ -141,7 +138,7 @@ public sealed class IncrementingCounterDebugger : CpuDebuggerBase
         m_isInitialized = true;
     }
 
-    private void RemoveCandidate(Cpu cpu, ushort address)
+    private void RemoveCandidate(ushort address)
     {
         m_candidates.Remove(address);
         m_states.Remove(address);
@@ -169,7 +166,7 @@ public sealed class IncrementingCounterDebugger : CpuDebuggerBase
             var delta = (byte)(current - previous);
             if (delta != 1)
             {
-                RemoveCandidate(cpu, candidate);
+                RemoveCandidate(candidate);
                 continue;
             }
 
@@ -216,8 +213,6 @@ public sealed class IncrementingCounterDebugger : CpuDebuggerBase
             var targetMessage = $"[Counter Detector] {address:X4} reached target {m_targetValue:X2}.";
             cpu.InstructionLogger.Write(() => targetMessage);
             Logger.Instance.Info(targetMessage);
-            if (m_breakWhenResolved)
-                Debugger.Break();
         }
     }
 
