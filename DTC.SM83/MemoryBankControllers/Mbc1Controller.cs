@@ -73,7 +73,7 @@ internal sealed class Mbc1Controller : MemoryBankControllerBase
         var bank = m_romBankHigh2 << 5;
 
         if (m_cartridge.RomBankCount > 0)
-            bank %= m_cartridge.RomBankCount;
+            bank %= m_cartridge.RomBankCount; // Allow mirroring to bank 0 on small ROMs.
 
         return bank;
     }
@@ -85,15 +85,7 @@ internal sealed class Mbc1Controller : MemoryBankControllerBase
             : (m_romBankHigh2 << 5) | m_romBankLow5;
 
         if (m_cartridge.RomBankCount > 0)
-        {
             bank %= m_cartridge.RomBankCount;
-        }
-
-        if (bank == 0)
-        {
-            // Bank 0 is not allowed in 4000-7FFF; map it to bank 1.
-            bank = 1;
-        }
 
         return bank;
     }
