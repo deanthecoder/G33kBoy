@@ -8,11 +8,12 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System.Numerics;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using DTC.Core.Extensions;
-using System.Runtime.CompilerServices;
+using Vector = Avalonia.Vector;
 
 namespace DTC.SM83;
 
@@ -23,9 +24,12 @@ public sealed class LcdScreen : IDisposable
     private readonly int m_sourceHeight;
     private readonly int m_destWidth;
     private readonly int m_destHeight;
-    private readonly double[] m_redBoostPerPixel;
-    private readonly double[] m_grainWithShadow;
+    private readonly float[] m_redBoostPerPixel;
+    private readonly float[] m_grainWithShadow;
     private uint m_previousFrameBufferHash;
+    private readonly Vector3 m_inv255 = new Vector3(1.0f / 255.0f);
+    private readonly Vector3 m_redBoostMult = new Vector3(0.25f, 0.07f, 0.0f);
+    private readonly Vector3 m_outlineColor = new Vector3(0x81 / 255.0f, 0x7D / 255.0f, 0x15 / 255.0f);
 
     public WriteableBitmap Display { get; }
     public bool LcdEmulationEnabled { get; set; } = true;
@@ -41,8 +45,8 @@ public sealed class LcdScreen : IDisposable
         Display = new WriteableBitmap(pixelSize, new Vector(96, 96), PixelFormat.Rgba8888);
 
         // Pre-build the screen grain and static spatial effects.
-        m_redBoostPerPixel = new double[m_sourceWidth * m_sourceHeight];
-        m_grainWithShadow = new double[m_destWidth * m_destHeight];
+        m_redBoostPerPixel = new float[m_sourceWidth * m_sourceHeight];
+        m_grainWithShadow = new float[m_destWidth * m_destHeight];
 
         PrecomputeRedBoost();
         PrecomputeGrainWithShadow();
@@ -64,7 +68,7 @@ public sealed class LcdScreen : IDisposable
                 var redBoostRight = (1.0 - (m_sourceWidth - x) / 3.0).Clamp(0.0, 1.0);
                 var redBoost = Math.Max(redBoostTop, Math.Max(redBoostBottom, Math.Max(redBoostLeft, redBoostRight)));
 
-                m_redBoostPerPixel[y * m_sourceWidth + x] = redBoost;
+                m_redBoostPerPixel[y * m_sourceWidth + x] = (float)redBoost;
             }
         }
     }
@@ -86,7 +90,7 @@ public sealed class LcdScreen : IDisposable
                 var shadow = Math.Min(shadowL, shadowR);
                 var grain = 1.0 + 0.03 * (random.NextDouble() * 2.0 - 1.0);
 
-                m_grainWithShadow[rowOffset + destX] = grain * (0.6 + 0.4 * shadow);
+                m_grainWithShadow[rowOffset + destX] = (float)(grain * (0.6 + 0.4 * shadow) * 255.0);
             }
         }
     }
@@ -114,19 +118,6 @@ public sealed class LcdScreen : IDisposable
     }
 
     /// <summary>
-    /// Fast clamp‑to‑byte helper.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte ToByte(double value)
-    {
-        if (value <= 0.0)
-            return 0;
-        if (value >= 255.0)
-            return 255;
-        return (byte)value;
-    }
-
-    /// <summary>
     /// Renders the framebuffer with no LCD effects applied — just a straight nearest‑neighbour scale.
     /// </summary>
     private unsafe void RenderSimple(byte[] frameBuffer, byte* destPtr, int destStride)
@@ -148,7 +139,6 @@ public sealed class LcdScreen : IDisposable
                         var r = src[0];
                         var g = src[1];
                         var b = src[2];
-                        var a = src[3];
 
                         var destBaseX = x * Scale;
                         for (var px = 0; px < Scale; px++)
@@ -157,7 +147,7 @@ public sealed class LcdScreen : IDisposable
                             destOffset[0] = r;
                             destOffset[1] = g;
                             destOffset[2] = b;
-                            destOffset[3] = a;
+                            destOffset[3] = 255;
                         }
                     }
                 }
@@ -166,7 +156,7 @@ public sealed class LcdScreen : IDisposable
     }
 
     /// <summary>
-    /// Renders the framebuffer using grain, edge tinge, per‑pixel shading and outlines to simulate a Game Boy LCD panel.
+    /// Renders the framebuffer using grain, edge tinge, per‑pixel shading, and outlines to simulate a Game Boy LCD panel.
     /// </summary>
     private unsafe void RenderWithLcdEffects(byte[] frameBuffer, byte* destPtr, int destStride)
     {
@@ -177,63 +167,70 @@ public sealed class LcdScreen : IDisposable
                 var sourceRowOffset = y * m_sourceWidth * 4;
                 var destBaseY = y * Scale;
                 var redBoostRowOffset = y * m_sourceWidth;
+                var grainBaseRowIndex = destBaseY * m_destWidth;
 
                 for (var x = 0; x < m_sourceWidth; x++)
                 {
-                    // Get source RGBA.
+                    // Load source RGB and normalize to 0..1.
                     var src = srcPtr + sourceRowOffset + x * 4;
-                    var r = src[0];
-                    var g = src[1];
-                    var b = src[2];
-                    var a = src[3];
-
-                    var destBaseX = x * Scale;
-                    var grainBaseIndex = destBaseY * m_destWidth + destBaseX;
-
-                    // Convert RGB to [0.0, 1.0].
-                    var redBase = r / 255.0;
-                    var greenBase = g / 255.0;
-                    var blueBase = b / 255.0;
+                    var r = src[0] * m_inv255.X;
+                    var g = src[1] * m_inv255.X;
+                    var b = src[2] * m_inv255.X;
 
                     // Precomputed red boost (top/bottom/left/right tinge).
                     var redBoost = m_redBoostPerPixel[redBoostRowOffset + x];
-                    redBase *= 1.0 + redBoost * 0.25;
-                    greenBase *= 1.0 + redBoost * 0.07;
+                    r *= 1.0f + m_redBoostMult.X * redBoost;
+                    g *= 1.0f + m_redBoostMult.Y * redBoost;
+
+                    // Precompute outline colour once per source pixel.
+                    var bright = 0.6f + r * (1.5f - 0.6f);
+                    var outlineR = (r + m_outlineColor.X * bright) * 0.5f;
+                    var outlineG = (g + m_outlineColor.Y * bright) * 0.5f;
+                    var outlineB = (b + m_outlineColor.Z * bright) * 0.5f;
+
+                    var destBaseX = x * Scale;
+                    var destBaseXBytes = destBaseX * 4;
+                    var grainBaseIndex = grainBaseRowIndex + destBaseX;
 
                     for (var py = 0; py < Scale; py++)
                     {
-                        var destRowStart = destPtr + (destBaseY + py) * destStride;
+                        var destRowStart = destPtr + (destBaseY + py) * destStride + destBaseXBytes;
                         var grainRowStart = grainBaseIndex + py * m_destWidth;
 
-                        for (var px = 0; px < Scale; px++)
+                        // py == 0 => whole top row uses outline color.
+                        if (py == 0)
                         {
-                            var red = redBase;
-                            var green = greenBase;
-                            var blue = blueBase;
-
-                            // Pixel outlines.
-                            if (px == 0 || py == 0)
+                            for (var px = 0; px < Scale; px++)
                             {
-                                var bright = red.Lerp(0.6, 1.5);
-                                const double s = 0.5;
-                                red = s.Lerp(red, 0x81 / 255.0 * bright);
-                                green = s.Lerp(green, 0x7D / 255.0 * bright);
-                                blue = s.Lerp(blue, 0x15 / 255.0 * bright);
+                                var grain = m_grainWithShadow[grainRowStart + px];
+                                var destOffset = destRowStart + px * 4;
+                                destOffset[0] = (byte)(outlineR * grain);
+                                destOffset[1] = (byte)(outlineG * grain);
+                                destOffset[2] = (byte)(outlineB * grain);
+                                destOffset[3] = 255;
                             }
+                            continue;
+                        }
 
-                            // Left/right shadow.
-                            var destX = destBaseX + px;
-                            var grain = m_grainWithShadow[grainRowStart + px];
-                            red *= grain;
-                            green *= grain;
-                            blue *= grain;
+                        // py > 0 => left column uses outline, remaining pixels use base colour.
+                        {
+                            // px == 0 (outline).
+                            var grain0 = m_grainWithShadow[grainRowStart];
+                            destRowStart[0] = (byte)(outlineR * grain0);
+                            destRowStart[1] = (byte)(outlineG * grain0);
+                            destRowStart[2] = (byte)(outlineB * grain0);
+                            destRowStart[3] = 255;
 
-                            // Set target pixel.
-                            var destOffset = destRowStart + destX * 4;
-                            destOffset[0] = ToByte(red * 255.0);
-                            destOffset[1] = ToByte(green * 255.0);
-                            destOffset[2] = ToByte(blue * 255.0);
-                            destOffset[3] = a;
+                            // px == 1..3 (base colour).
+                            for (var px = 1; px < Scale; px++)
+                            {
+                                var grain = m_grainWithShadow[grainRowStart + px];
+                                var destOffset = destRowStart + px * 4;
+                                destOffset[0] = (byte)(r * grain);
+                                destOffset[1] = (byte)(g * grain);
+                                destOffset[2] = (byte)(b * grain);
+                                destOffset[3] = 255;
+                            }
                         }
                     }
                 }
@@ -251,8 +248,7 @@ public sealed class LcdScreen : IDisposable
         var hash = fnvOffset;
         for (var i = 0; i < buffer.Length; i++)
         {
-            var b = buffer[i];
-            hash ^= b;
+            hash ^= buffer[i];
             hash *= fnvPrime;
         }
 
