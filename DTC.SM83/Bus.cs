@@ -63,7 +63,7 @@ public sealed class Bus : IMemDevice, IDisposable
         Minimal,
 
         /// <summary>
-        /// Full GameBoy implementation with all devices.
+        /// Full Game Boy implementation with all devices.
         /// </summary>
         GameBoy
     }

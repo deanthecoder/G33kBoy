@@ -162,7 +162,7 @@ public class Cpu
                 }
 
                 if (isDebugMode && m_instructionState != null)
-                    InstructionLogger?.Write(() => m_instructionState.Replace("xxx", $"{instruction,-12}"));
+                    InstructionLogger?.Write(() => m_instructionState);
 
                 // Execute instruction.
                 instruction.Execute(this);
@@ -195,7 +195,7 @@ public class Cpu
         }
 
         if (isDebugMode)
-            m_instructionState = $"xxx  {Bus.Read8(Reg.PC):X2} {Bus.Read8((ushort)(Reg.PC + 1)):X2} {Bus.Read8((ushort)(Reg.PC + 2)):X2}│{Reg,-32}│{Reg.FlagsAsString()}";
+            m_instructionState = $"{Disassembler.GetInstructionWithOperands(Bus, Reg.PC),-19}|{Reg,-32}|{Reg.FlagsAsString()}";
         Fetch8();
         NotifyAfterStep();
     }

@@ -36,6 +36,43 @@ public static class Disassembler
         return instruction?.Mnemonic ?? $"DB ${opcode:X2}";
     }
 
+    /// <summary>
+    /// Gets the mnemonic for the instruction at the supplied address, with any immediate operands resolved.
+    /// </summary>
+    /// <remarks>
+    /// Useful for logging and debugging live CPU execution.
+    /// </remarks>
+    public static string GetInstructionWithOperands(Bus memory, ushort address)
+    {
+        if (memory == null)
+            throw new ArgumentNullException(nameof(memory));
+
+        var opcode = memory.Read8(address);
+        if (opcode == 0xCB)
+        {
+            var cbOpcode = memory.Read8((ushort)(address + 1));
+            var mnemonic = PrefixedInstructions.Table[cbOpcode]?.Mnemonic ?? $"CB ${cbOpcode:X2}";
+            var length = Math.Max(InstructionLengths.GetLength(cbOpcode, isCbPrefixed: true), 2);
+            Span<byte> instructionBytes = stackalloc byte[2];
+            instructionBytes[0] = opcode;
+            instructionBytes[1] = cbOpcode;
+            return ResolveImmediateOperands(mnemonic, instructionBytes, length, isCbPrefixed: true, address);
+        }
+
+        var unprefixedInstruction = Instructions.Instructions.Table[opcode];
+        var unprefixedMnemonic = unprefixedInstruction?.Mnemonic ?? $"DB ${opcode:X2}";
+        var unprefixedLength = Math.Max(InstructionLengths.GetLength(opcode, isCbPrefixed: false), 1);
+
+        Span<byte> bytes = stackalloc byte[3];
+        bytes[0] = opcode;
+        if (unprefixedLength > 1)
+            bytes[1] = memory.Read8((ushort)(address + 1));
+        if (unprefixedLength > 2)
+            bytes[2] = memory.Read8((ushort)(address + 2));
+
+        return ResolveImmediateOperands(unprefixedMnemonic, bytes[..Math.Min(unprefixedLength, bytes.Length)], unprefixedLength, isCbPrefixed: false, address);
+    }
+
     public static IReadOnlyList<string> DisassembleRom(byte[] romData)
     {
         if (romData == null)
@@ -90,12 +127,7 @@ public static class Disassembler
         };
 
         var hex = available == 1 ? $"${value:X2}" : $"${value:X4}";
-        var resolved = mnemonic
-            .Replace("a16", hex, StringComparison.Ordinal)
-            .Replace("a8", hex, StringComparison.Ordinal)
-            .Replace("nn", hex, StringComparison.Ordinal)
-            .Replace("e8", hex, StringComparison.Ordinal)
-            .Replace("n", hex, StringComparison.Ordinal);
+        var resolved = ReplaceImmediatePlaceholders(mnemonic, hex);
 
         if (!mnemonic.StartsWith("JR", StringComparison.Ordinal))
             return resolved;
@@ -109,6 +141,34 @@ public static class Disassembler
         return $"{resolved} -> {(targetDisplay.Contains(':') ? targetDisplay : $"${targetDisplay}")}";
     }
 
+    private static string ResolveImmediateOperands(string mnemonic, ReadOnlySpan<byte> instructionData, int declaredLength, bool isCbPrefixed, ushort instructionAddress)
+    {
+        var opcodeBytes = isCbPrefixed ? 2 : 1;
+        var immediateLength = Math.Max(0, declaredLength - opcodeBytes);
+        if (immediateLength == 0)
+            return mnemonic;
+
+        var available = Math.Max(0, Math.Min(immediateLength, instructionData.Length - opcodeBytes));
+        if (available == 0)
+            return mnemonic;
+
+        var value = available switch
+        {
+            1 => instructionData[opcodeBytes],
+            _ => instructionData[opcodeBytes] | (instructionData[Math.Min(opcodeBytes + 1, instructionData.Length - 1)] << 8)
+        };
+
+        var hex = available == 1 ? $"${value:X2}" : $"${value:X4}";
+        var resolved = ReplaceImmediatePlaceholders(mnemonic, hex);
+
+        if (!mnemonic.StartsWith("JR", StringComparison.Ordinal))
+            return resolved;
+
+        var displacement = unchecked((sbyte)instructionData[opcodeBytes]);
+        var targetPc = (ushort)(instructionAddress + declaredLength + displacement);
+        return $"{resolved} -> ${targetPc:X4}";
+    }
+
     private static string FormatAddress(int offset)
     {
         var bank = offset / 0x4000;
@@ -118,4 +178,12 @@ public static class Disassembler
 
     private static int GetProgramCounter(int offset) =>
         offset < 0x4000 ? offset & 0xFFFF : (0x4000 + offset % 0x4000) & 0xFFFF;
+
+    private static string ReplaceImmediatePlaceholders(string mnemonic, string hex) =>
+        mnemonic
+            .Replace("a16", hex, StringComparison.Ordinal)
+            .Replace("a8", hex, StringComparison.Ordinal)
+            .Replace("nn", hex, StringComparison.Ordinal)
+            .Replace("e8", hex, StringComparison.Ordinal)
+            .Replace("n", hex, StringComparison.Ordinal);
 }
