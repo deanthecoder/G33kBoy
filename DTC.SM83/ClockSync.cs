@@ -19,12 +19,16 @@ public class ClockSync
     private readonly double m_emulatedTicksPerSecond;
     private readonly Func<long> m_ticksSinceCpuStart;
     private readonly Func<long> m_resetCpuTicks;
+    private readonly Lock m_lock = new();
     private Speed m_speed = Speed.Actual;
 
     /// <summary>
     /// Number of T states when this stopwatch was started.
     /// </summary>
     private long m_tStateCountAtStart;
+
+    private long m_tStateCountAtLastSync;
+    private long m_ticksSinceLastSync;
 
     public enum Speed { Actual, Fast, Maximum, Pause }
 
@@ -40,7 +44,7 @@ public class ClockSync
     /// Operations external to emulation (such as loading a ROM) should pause
     /// emulated machine whilst they're 'busy'.
     /// </summary>
-    public IDisposable CreatePauser() => new Pauser(m_realTime);
+    public IDisposable CreatePauser() => new Pauser(m_realTime, m_lock);
 
     /// <summary>
     /// Call to set whether the emulator is running at 100% emulated speed,
@@ -48,14 +52,17 @@ public class ClockSync
     /// </summary>
     public void SetSpeed(Speed speed)
     {
-        lock (m_realTime)
+        lock (m_lock)
         {
             if (m_speed == speed)
                 return;
             m_speed = speed;
-            
+
             // Reset the timing variables when re-enabling 100% emulated speed.
-            m_tStateCountAtStart = m_ticksSinceCpuStart();
+            var currentTicks = m_ticksSinceCpuStart();
+            m_tStateCountAtStart = currentTicks;
+            m_tStateCountAtLastSync = currentTicks;
+            m_ticksSinceLastSync = 0;
             m_realTime.Restart();
         }
     }
@@ -64,29 +71,51 @@ public class ClockSync
     {
         if (m_speed == Speed.Maximum)
             return; // Don't delay.
-        
-        lock (m_realTime)
+
+        // For pause mode, always sleep every tick
+        if (m_speed == Speed.Pause)
         {
-            var emulatedUptimeSecs = (m_ticksSinceCpuStart() - m_tStateCountAtStart) / m_emulatedTicksPerSecond;
+            Thread.Sleep(50);
+            return;
+        }
 
-            switch (m_speed)
+        // Accumulate actual T-states executed since last sync (robust against call frequency changes)
+        var currentTicks = m_ticksSinceCpuStart();
+        var delta = currentTicks - m_tStateCountAtLastSync;
+        m_tStateCountAtLastSync = currentTicks;
+        m_ticksSinceLastSync += delta;
+
+        // For non-pause modes, only sync every 2048 ticks for efficiency
+        if (m_ticksSinceLastSync < 2048)
+            return;
+
+        m_ticksSinceLastSync = 0;
+
+        // Compute target time while holding the lock
+        long targetRealElapsedTicks;
+        lock (m_lock)
+        {
+            var emulatedUptimeSecs = (currentTicks - m_tStateCountAtStart) / m_emulatedTicksPerSecond;
+
+            var speedMultiplier = m_speed switch
             {
-                case Speed.Actual:
-                    // No change required.
-                    break;
-                case Speed.Fast:
-                    emulatedUptimeSecs *= 0.66;
-                    break;
-                case Speed.Maximum:
-                    // Don't delay.
-                    return;
-                case Speed.Pause:
-                    // Not quite paused, but veeeery slow.
-                    Thread.Sleep(50);
-                    return;
-            }
+                Speed.Fast => 1.6,
+                _ => 1.0
+            };
 
-            var targetRealElapsedTicks = Stopwatch.Frequency * emulatedUptimeSecs;
+            targetRealElapsedTicks = (long)(Stopwatch.Frequency * emulatedUptimeSecs / speedMultiplier);
+        }
+
+        // Wait outside the lock (hybrid sleep + spin for efficiency)
+        var remaining = targetRealElapsedTicks - m_realTime.ElapsedTicks;
+        if (remaining > 0)
+        {
+            // If we need to wait more than ~2ms, sleep to avoid pegging the CPU
+            var remainingMs = remaining * 1000.0 / Stopwatch.Frequency;
+            if (remainingMs > 2.0)
+                Thread.Sleep((int)(remainingMs - 1.0)); // Sleep most of it, leave 1ms for spin
+
+            // Spin for the last bit for tight timing
             var spinWait = new SpinWait();
             while (m_realTime.ElapsedTicks < targetRealElapsedTicks)
                 spinWait.SpinOnce();
@@ -95,10 +124,12 @@ public class ClockSync
 
     public void Reset()
     {
-        lock (m_realTime)
+        lock (m_lock)
         {
             m_realTime.Restart();
             m_tStateCountAtStart = 0;
+            m_tStateCountAtLastSync = 0;
+            m_ticksSinceLastSync = 0;
             m_resetCpuTicks();
         }
     }
@@ -106,13 +137,20 @@ public class ClockSync
     private class Pauser : IDisposable
     {
         private readonly Stopwatch m_stopwatch;
-        
-        public Pauser(Stopwatch stopwatch)
+        private readonly Lock m_lock;
+
+        public Pauser(Stopwatch stopwatch, Lock lockObj)
         {
             m_stopwatch = stopwatch;
-            stopwatch.Stop();
+            m_lock = lockObj;
+            lock (m_lock)
+                stopwatch.Stop();
         }
 
-        public void Dispose() => m_stopwatch.Start();
+        public void Dispose()
+        {
+            lock (m_lock)
+                m_stopwatch.Start();
+        }
     }
 }

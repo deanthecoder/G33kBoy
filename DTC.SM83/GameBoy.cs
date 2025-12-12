@@ -29,6 +29,7 @@ public sealed class GameBoy : IDisposable
     private readonly Stopwatch m_ramPersistStopwatch = new();
     private readonly LcdScreen m_screen;
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
+    private long m_lastFrameClockTicks;
     private Bus m_bus;
     private Cpu m_cpu;
     private string m_cartridgeKey;
@@ -41,17 +42,21 @@ public sealed class GameBoy : IDisposable
     private bool m_isUserSoundEnabled = true;
     private bool m_isRunningAtNormalSpeed = true;
     private bool m_isCpuHistoryTracked;
+    private double m_relativeSpeedRaw;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
 
     public WriteableBitmap Display => m_screen.Display;
 
-    public double RelativeSpeed { get; private set; }
+    public double RelativeSpeed => Math.Round(m_relativeSpeedRaw / 0.2) * 0.2;
 
     public Joypad Joypad { get; }
 
-    public bool WriteDisassemblyOnLoad { get; set; }
+    /// <summary>
+    /// Debugging aid.
+    /// </summary>
+    private static bool WriteDisassemblyOnLoad => false;
 
     public GameBoy(IGameDataStore gameDataStore = null)
     {
@@ -63,7 +68,6 @@ public sealed class GameBoy : IDisposable
 
         m_clockSync = new ClockSync(Cpu.Hz, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
 
-        // WriteDisassemblyOnLoad = true;
         // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, () => Console.WriteLine("Memory write detected!")));
         // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, targetValue: 0x34, () => Console.WriteLine("Memory write detected!")));
         // m_cpu.AddDebugger(new MemoryReadDebugger(0x1234, value => Console.WriteLine($"Memory read detected! (0x{value:X2})")));
@@ -169,20 +173,29 @@ public sealed class GameBoy : IDisposable
 
     private void OnFrameRendered(object sender, byte[] frameBuffer)
     {
-        var didUpdate = m_screen.Update(frameBuffer);
+        // Calculate relative speed based on emulated CPU clock ticks
+        // GameBoy runs at ~59.7Hz, which is 70,224 ticks per frame at 4.19MHz
+        var currentClockTicks = (long)(m_bus?.ClockTicks ?? 0);
+        var ticksDelta = currentClockTicks - m_lastFrameClockTicks;
+        m_lastFrameClockTicks = currentClockTicks;
 
-        // Calculate relative speed based on frame frequency (60Hz = 100%)
-        var elapsedMs = m_frameStopwatch.Elapsed.TotalMilliseconds;
-        if (elapsedMs > 0)
+        if (ticksDelta > 0)
         {
-            var currentFrequency = 1000.0 / elapsedMs;
-            var speedPercentage = currentFrequency / 60.0;
+            var elapsedSecs = m_frameStopwatch.Elapsed.TotalSeconds;
+            m_frameStopwatch.Restart();
+            
+            if (elapsedSecs > 0)
+            {
+                // Calculate actual emulated Hz based on ticks executed vs real time elapsed
+                var emulatedHz = ticksDelta / elapsedSecs;
+                var speedPercentage = emulatedHz / Cpu.Hz;
 
-            // Apply filtering to smooth out the value
-            RelativeSpeed = Math.Round(speedPercentage / 0.2) * 0.2;
+                // Apply exponential moving average filter to smooth out the value
+                m_relativeSpeedRaw = m_relativeSpeedRaw * 0.98 + speedPercentage * 0.02;
+            }
         }
-        m_frameStopwatch.Restart();
 
+        var didUpdate = m_screen.Update(frameBuffer);
         if (didUpdate)
             DisplayUpdated?.Invoke(this, EventArgs.Empty);
     }
