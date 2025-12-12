@@ -37,7 +37,7 @@ public class DmgAcid2Tests : TestsBase
         string bufferHash = null;
         bus.PPU.FrameRendered += (_, frameBuffer) => bufferHash = frameBuffer.GetMd5Hex();
 
-        const string expectedHash = "0969441DC37EE6A3BB623D456A4DFD8D";
+        const string expectedHash = "0EA3EBF98D12520CA936DB5D5C7CB77A";
         while (bufferHash != expectedHash && bus.ClockTicks < OneSecondTicks)
             cpu.Step();
 

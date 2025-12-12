@@ -9,8 +9,6 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using System.Diagnostics;
-
 namespace DTC.SM83.Debuggers;
 
 public sealed class MemoryReadDebugger : CpuDebuggerBase

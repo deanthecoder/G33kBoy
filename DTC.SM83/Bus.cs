@@ -264,15 +264,13 @@ public sealed class Bus : IMemDevice, IDisposable
     /// <summary>
     /// Advance the clock by T cycles (4T = 1M).
     /// </summary>
-    public void AdvanceT(ulong tCycles)
+    public void AdvanceM()
     {
-        ClockTicks += tCycles;
-        
-        // Update the devices.
-        Dma?.AdvanceT(tCycles);
-        m_timer?.AdvanceT(tCycles);
-        APU?.AdvanceT(tCycles);
-        PPU?.AdvanceT(tCycles);
+        ClockTicks += 4;
+        Dma?.AdvanceT(4);
+        m_timer?.AdvanceT(4);
+        APU?.AdvanceT(4);
+        PPU?.AdvanceT(4);
     }
 
     public void ResetClock() =>
@@ -297,7 +295,7 @@ public sealed class Bus : IMemDevice, IDisposable
     {
         m_written[addr] = true;
 
-        // Keep WRAM and its echo in sync for write tracking.
+        // Keep WRAM and its echo in sync for write-tracking.
         if (addr is >= 0xC000 and <= 0xDFFF)
             m_written[addr + 0x2000] = true;
         else if (addr is >= 0xE000 and <= 0xFDFF)

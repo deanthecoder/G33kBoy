@@ -9,6 +9,7 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using DTC.Core;
 using DTC.SM83.Debuggers;
 using DTC.SM83.Instructions;
@@ -188,7 +189,7 @@ public class Cpu
         // Fetch opcode.
         if (IsHalted)
         {
-            Bus.AdvanceT(4); // Re-queue the HALT instruction.
+            Bus.AdvanceM(); // Re-queue the HALT instruction.
             NotifyAfterStep();
             return;
         }
@@ -199,8 +200,9 @@ public class Cpu
         NotifyAfterStep();
     }
     
-    public void InternalWaitM(ulong m = 1) =>
-        Bus.AdvanceT(4 * m);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void InternalWaitM() =>
+        Bus.AdvanceM();
 
     /// <summary>
     /// Check and service pending interrupts if enabled.
@@ -281,7 +283,8 @@ public class Cpu
             Reg.PC = vector;
             
             // Advance the remaining 8T (2M) to ensure the interrupt takes 5M total.
-            Bus.AdvanceT(8); 
+            Bus.AdvanceM(); 
+            Bus.AdvanceM(); 
         }
     }
     
@@ -320,7 +323,7 @@ public class Cpu
     public byte Read8(ushort addr)
     {
         var value = Bus.Read8(addr);
-        Bus.AdvanceT(4);
+        Bus.AdvanceM();
         NotifyMemoryRead(addr, value);
         return value;
     }
@@ -331,7 +334,7 @@ public class Cpu
     public void Write8(ushort addr, byte value)
     {
         Bus.Write8(addr, value);
-        Bus.AdvanceT(4);
+        Bus.AdvanceM();
         NotifyMemoryWrite(addr, value);
     }
     

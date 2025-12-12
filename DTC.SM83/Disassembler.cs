@@ -97,18 +97,16 @@ public static class Disassembler
             .Replace("e8", hex, StringComparison.Ordinal)
             .Replace("n", hex, StringComparison.Ordinal);
 
-        if (mnemonic.StartsWith("JR", StringComparison.Ordinal) && available >= 1)
-        {
-            var displacement = unchecked((sbyte)romData[immediateStart]);
-            var currentPc = GetProgramCounter(offset);
-            var targetPc = (ushort)(currentPc + actualLength + displacement);
-            var bank = offset / 0x4000;
-            var targetOffset = targetPc < 0x4000 ? targetPc : bank * 0x4000 + (targetPc - 0x4000);
-            var targetDisplay = FormatAddress(targetOffset);
-            resolved = $"{resolved} -> {(targetDisplay.Contains(':') ? targetDisplay : $"${targetDisplay}")}";
-        }
-
-        return resolved;
+        if (!mnemonic.StartsWith("JR", StringComparison.Ordinal))
+            return resolved;
+        
+        var displacement = unchecked((sbyte)romData[immediateStart]);
+        var currentPc = GetProgramCounter(offset);
+        var targetPc = (ushort)(currentPc + actualLength + displacement);
+        var bank = offset / 0x4000;
+        var targetOffset = targetPc < 0x4000 ? targetPc : bank * 0x4000 + (targetPc - 0x4000);
+        var targetDisplay = FormatAddress(targetOffset);
+        return $"{resolved} -> {(targetDisplay.Contains(':') ? targetDisplay : $"${targetDisplay}")}";
     }
 
     private static string FormatAddress(int offset)

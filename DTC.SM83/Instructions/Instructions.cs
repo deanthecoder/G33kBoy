@@ -1386,7 +1386,8 @@ public static class Instructions
                 cpu.Reg.Nf = false;
                 cpu.Reg.Hf = (sp & 0x000F) + (imm & 0x0F) > 0x0F;
                 cpu.Reg.Cf = (sp & 0x00FF) + imm > 0xFF;
-                cpu.InternalWaitM(2);
+                cpu.InternalWaitM();
+                cpu.InternalWaitM();
             }
         ),
         new Instruction(
