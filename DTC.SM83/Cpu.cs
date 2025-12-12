@@ -214,7 +214,7 @@ public class Cpu
         if (IsHalted && iff != 0)
             IsHalted = false;
 
-        var pending = (byte)((ie & iff) & 0x1F);
+        var pending = (byte)(ie & iff & 0x1F);
         if (pending == 0)
             return;
 
@@ -272,16 +272,16 @@ public class Cpu
         // Interrupt priority: VBlank, STAT, Timer, Serial, Joypad
         void Service(ushort vector, byte bitMask)
         {
-            PushPC();
+            PushPC();  // Cost: 8T (2M)
 
             // Clear IF bit
-            Write8(0xFF0F, (byte)(IF & ~bitMask));
+            Write8(0xFF0F, (byte)(IF & ~bitMask)); // Cost: 1T (1M)
             
             // Jump to vector
             Reg.PC = vector;
             
-            // Interrupt entry takes 5 M-cycles
-            Bus.AdvanceT(20);
+            // Advance the remaining 8T (2M) to ensure the interrupt takes 5M total.
+            Bus.AdvanceT(8); 
         }
     }
     
