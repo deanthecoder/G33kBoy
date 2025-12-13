@@ -705,11 +705,17 @@ public sealed class ApuDevice : IMemDevice
             if (!Enabled || !m_dacEnabled || m_volume == 0 || m_frequencyHz <= 0.0)
                 return 0.0;
 
+            // Frequencies above Nyquist alias badly at the host sample rate; approximate them by
+            // their DC average so ultrasonic PCM writes don't produce an audible whine.
+            var nyquist = SampleHz * 0.5;
+            var duty = DutyCycle[m_dutyIndex];
+            if (m_frequencyHz >= nyquist)
+                return duty * (m_volume / 15.0);
+
             var elapsedSeconds = tStates / Cpu.Hz;
             m_phase += m_frequencyHz * elapsedSeconds;
             m_phase -= Math.Floor(m_phase);
 
-            var duty = DutyCycle[m_dutyIndex];
             var high = m_phase < duty;
             return high ? m_volume / 15.0 : 0.0;
         }
