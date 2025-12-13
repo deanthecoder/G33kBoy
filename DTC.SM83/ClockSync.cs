@@ -20,6 +20,7 @@ public class ClockSync
     private readonly Func<long> m_ticksSinceCpuStart;
     private readonly Func<long> m_resetCpuTicks;
     private readonly Lock m_lock = new();
+    private SpinWait m_spinWait;
     private Speed m_speed = Speed.Actual;
 
     /// <summary>
@@ -92,33 +93,16 @@ public class ClockSync
         m_ticksSinceLastSync = 0;
 
         // Compute target time while holding the lock
-        long targetRealElapsedTicks;
         lock (m_lock)
         {
             var emulatedUptimeSecs = (currentTicks - m_tStateCountAtStart) / m_emulatedTicksPerSecond;
+            var targetRealElapsedMs = emulatedUptimeSecs * 1000.0;
 
-            var speedMultiplier = m_speed switch
-            {
-                Speed.Fast => 1.6,
-                _ => 1.0
-            };
-
-            targetRealElapsedTicks = (long)(Stopwatch.Frequency * emulatedUptimeSecs / speedMultiplier);
-        }
-
-        // Wait outside the lock (hybrid sleep + spin for efficiency)
-        var remaining = targetRealElapsedTicks - m_realTime.ElapsedTicks;
-        if (remaining > 0)
-        {
-            // If we need to wait more than ~2ms, sleep to avoid pegging the CPU
-            var remainingMs = remaining * 1000.0 / Stopwatch.Frequency;
-            if (remainingMs > 2.0)
-                Thread.Sleep((int)(remainingMs - 1.0)); // Sleep most of it, leave 1ms for spin
-
-            // Spin for the last bit for tight timing
-            var spinWait = new SpinWait();
-            while (m_realTime.ElapsedTicks < targetRealElapsedTicks)
-                spinWait.SpinOnce();
+            // Spin for the last bit for tight timing.
+            if (m_speed == Speed.Fast)
+                targetRealElapsedMs /= 1.6;
+            while (m_realTime.ElapsedMilliseconds < targetRealElapsedMs)
+                m_spinWait.SpinOnce();
         }
     }
 
