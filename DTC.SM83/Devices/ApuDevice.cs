@@ -201,23 +201,15 @@ public sealed class ApuDevice : IMemDevice
             (ch3R && IsChannelEnabled(2) ? ch3 : 0.0) +
             (ch4R && IsChannelEnabled(3) ? ch4 : 0.0);
 
-        // NR50: left and right master volumes (0–7).
-        var so1 = m_nr50 & 0x07;        // right
-        var so2 = (m_nr50 >> 4) & 0x07; // left
+        // Normalize by max possible channels (4) and convert to -1..1
+        left = (left / 4.0) * 2.0 - 1.0;
+        right = (right / 4.0) * 2.0 - 1.0;
 
-        var leftVol = so2 / 7.0;
-        var rightVol = so1 / 7.0;
-
+        // Apply NR50 master volume (0-7, each adds +1 to the multiplier)
+        var leftVol = (((m_nr50 >> 4) & 0x07) + 1) / 8.0;
+        var rightVol = ((m_nr50 & 0x07) + 1) / 8.0;
         left *= leftVol;
         right *= rightVol;
-
-        // Normalize for "up to 4 loud channels".
-        left /= 4.0;
-        right /= 4.0;
-
-        // Clamp and send to the audio sink.
-        left = Math.Clamp(left, -1.0, 1.0);
-        right = Math.Clamp(right, -1.0, 1.0);
 
         m_audioSink?.AddSample(left, right);
     }

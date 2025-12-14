@@ -317,7 +317,7 @@ public class SoundDevice
     {
         if (!m_isSoundEnabled)
         {
-            // Silence: centre both channels.
+            // Silence: center both channels.
             leftSample = 0.0;
             rightSample = 0.0;
         }
