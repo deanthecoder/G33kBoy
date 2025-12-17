@@ -50,8 +50,13 @@ public class PPU
     private const int OamCycles = 80;
     private const int Mode3Cycles = 172;
     private const int HBlankCycles = TicksPerScanline - OamCycles - Mode3Cycles; // 204
-    private const int LcdEnableDelayCycles = 4;
+    // Blargg oam_bug/1-lcd_sync expects LY to increment ~110 M-cycles after LCD is enabled from off.
+    // That matches the first scanline starting a few M-cycles "late" (i.e. the scanline counter is already part-way through).
+    private const int LcdEnableDelayCycles = 0;
+    private const int LcdEnableScanlineOffsetCycles = 6; // T-cycles (1.5 M-cycles)
     private ulong m_tCycles;
+    private ulong m_stateCycles;
+    private bool m_hblankEndsScanline = true;
     private ulong m_lcdStartDelay;
     private bool m_statInterruptsEnabled = true;
     private bool m_line153Wrapped;
@@ -163,7 +168,7 @@ public class PPU
 
                 // Hardware: LY becomes 0, mode 0, timing reset.
                 UpdateLineIndex(false);           // LY = 0, windowLine reset.
-                CurrentState = FrameState.HBlank; // Mode 0.
+                EnterHBlank(endsScanline: true, cycles: HBlankCycles); // Mode 0.
 
                 ClearFrameBufferToBaseColor();
             }
@@ -175,14 +180,16 @@ public class PPU
         {
             m_lcdOff = false;
             m_lcdStartDelay = LcdEnableDelayCycles;
-            m_tCycles = 0;
+            m_tCycles = LcdEnableScanlineOffsetCycles;
             m_line153Wrapped = false;
+            m_stateCycles = 0;
+            m_hblankEndsScanline = true;
 
-            // Start a fresh frame from LY=0, mode 0 for the 4T enable delay.
+            // Start a fresh frame from LY=0.
             // LY is already 0 from the disable, so don't bump it again.
             m_statInterruptsEnabled = false;
             UpdateLineIndex(false);
-            CurrentState = FrameState.HBlank;
+            EnterOamScan();
             m_statInterruptsEnabled = true;
         }
 
@@ -199,7 +206,7 @@ public class PPU
                     continue;
 
                 m_tCycles = 0;
-                EnterOamScan(); // Enter mode 2 after the enable delay.
+                EnterOamScan();
                 continue;
             }
 
@@ -208,49 +215,58 @@ public class PPU
                 // Capture up to 10 sprites.
                 case FrameState.OAMScan:
                 {
-                    var untilDrawing = OamCycles - m_tCycles;
+                    var untilDrawing = m_stateCycles - m_tCycles;
                     var step = Math.Min(remaining, untilDrawing);
                     m_tCycles += step;
                     remaining -= step;
 
-                    if (m_tCycles < OamCycles)
+                    if (m_tCycles < m_stateCycles)
                         continue;
 
-                    m_tCycles -= OamCycles;
+                    m_tCycles -= m_stateCycles;
                     CaptureVisibleSprites();
-                    CurrentState = FrameState.Drawing;
+                    EnterDrawing();
                     break;
                 }
             
                 // Build up a scanline of pixels.
                 case FrameState.Drawing:
                 {
-                    var untilHBlank = Mode3Cycles - m_tCycles; // 172 T per scanline.
+                    var untilHBlank = m_stateCycles - m_tCycles;
                     var step = Math.Min(remaining, untilHBlank);
                     m_tCycles += step;
                     remaining -= step;
 
-                    if (m_tCycles < Mode3Cycles)
+                    if (m_tCycles < m_stateCycles)
                         continue;
 
-                    m_tCycles -= Mode3Cycles;
+                    m_tCycles -= m_stateCycles;
                     RenderScanline();
-                    CurrentState = FrameState.HBlank;
+                    EnterHBlank(endsScanline: true, cycles: HBlankCycles);
                     break;
                 }
             
                 // Wait until end of scanline.
                 case FrameState.HBlank:
                 {
-                    var untilLineEnd = HBlankCycles - m_tCycles; // 204 T.
-                    var step = Math.Min(remaining, untilLineEnd);
+                    var untilHBlankEnd = m_stateCycles - m_tCycles;
+                    var step = Math.Min(remaining, untilHBlankEnd);
                     m_tCycles += step;
                     remaining -= step;
 
-                    if (m_tCycles < HBlankCycles)
+                    if (m_tCycles < m_stateCycles)
                         continue;
 
-                    m_tCycles -= HBlankCycles;
+                    m_tCycles -= m_stateCycles;
+
+                    // The "startup" scanline begins in mode 0; at the end of that initial period we enter mode 3
+                    // without advancing LY. Normal mode 0 is the end-of-line HBlank.
+                    if (!m_hblankEndsScanline)
+                    {
+                        EnterDrawing();
+                        break;
+                    }
+
                     LogScanlineEnd(m_lcd.LY);
                     UpdateLineIndex(true);
                     
@@ -637,7 +653,23 @@ public class PPU
     private void EnterOamScan()
     {
         CurrentState = FrameState.OAMScan;
+        m_stateCycles = OamCycles;
+        m_hblankEndsScanline = true;
         LogScanlineStart();
+    }
+
+    private void EnterDrawing()
+    {
+        CurrentState = FrameState.Drawing;
+        m_stateCycles = Mode3Cycles;
+        m_hblankEndsScanline = true;
+    }
+
+    private void EnterHBlank(bool endsScanline, int cycles)
+    {
+        CurrentState = FrameState.HBlank;
+        m_stateCycles = (ulong)cycles;
+        m_hblankEndsScanline = endsScanline;
     }
 
     private void LogScanlineStart() =>
