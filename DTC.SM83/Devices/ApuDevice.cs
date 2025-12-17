@@ -23,7 +23,7 @@ public sealed class ApuDevice : IMemDevice
     public ushort ToAddr => 0xFF3F;
 
     private const double SampleHz = 44100.0;
-    private static readonly double TicksPerSample = Cpu.Hz / SampleHz;
+    private const double TicksPerSample = Cpu.Hz / SampleHz;
     private const ulong FrameSequencerStepTStates = (ulong)(Cpu.Hz / 512.0); // 512 Hz.
     private double m_ticksUntilSample = TicksPerSample;
     private ulong m_frameSequencerTicks;
@@ -64,9 +64,29 @@ public sealed class ApuDevice : IMemDevice
     public ApuDevice(SoundDevice audioSink)
     {
         m_audioSink = audioSink;
+
+        // DMG wave RAM powers up with non-zero, semi-random contents (varies by unit).
+        // Some commercial games rely on it being non-zero if they forget to initialize it.
+        // See https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Power_Control
+        InitializeWaveRamPowerOnPattern();
+
         m_channel3 = new WaveChannel(m_waveRam);
         m_channel1.OnFrequencyWritten = UpdateChannel1FrequencyRegisters;
         ResetRegisters();
+    }
+
+    private void InitializeWaveRamPowerOnPattern()
+    {
+        // Deterministic "DMG-ish" pattern. Real DMG units power up with a stable-but-unique per-unit pattern,
+        // and some docs cite the pattern used by R-Type DX to approximate DMG power-on wave RAM.
+        // Using a non-zero default improves compatibility with titles that assume wave RAM is not all zeros.
+        var pattern = new byte[]
+        {
+            0xAC, 0xDD, 0xDA, 0x48, 0x36, 0x02, 0xCF, 0x16,
+            0x2C, 0x04, 0xE5, 0x2C, 0xAC, 0xDD, 0xDA, 0x48
+        };
+
+        Array.Copy(pattern, m_waveRam, m_waveRam.Length);
     }
 
     public void AdvanceT(ulong tStates)
@@ -288,15 +308,15 @@ public sealed class ApuDevice : IMemDevice
     
     public void Write8(ushort addr, byte value)
     {
-        if (SuppressTriggers)
-            return;
-
-        // Wave RAM is unaffected by APU power state.
+        // Wave RAM is unaffected by APU power state and should also not be blocked by SuppressTriggers.
         if (addr is >= 0xFF30 and <= 0xFF3F)
         {
             m_channel3.WriteWaveRam(addr, value);
             return;
         }
+
+        if (SuppressTriggers)
+            return;
 
         // NR52 – sound on/off.
         if (addr == 0xFF26)
