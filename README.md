@@ -64,8 +64,8 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - ✔ Boot ROM behaviour
 - ✔ Battery-backed RAM persistence
 - ✔ Zipped ROM loading
-- ☐ Audio
-- ☐ Cartridge MBCs
+- ✔ Audio
+- ✔ Cartridge MBCs
 - ☐ Gameplay 'roll back'
 - ☐ Game Boy Color support
 
