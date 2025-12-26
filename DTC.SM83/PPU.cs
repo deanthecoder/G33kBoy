@@ -415,7 +415,10 @@ public class PPU
         var lcdBGP = m_lcd.BGP;
         var lcdWX = m_lcd.WX;
         var isCgb = Mode == GameBoyMode.Cgb;
-        var bgEnabled = m_lcdc.BgWindowEnablePriority && BackgroundVisible;
+        var cgbMasterPriority = isCgb && m_lcd.LCDC.IsBitSet(0);
+
+        // DMG: LCDC.0 disables BG/WIN. CGB: LCDC.0 is master priority, BG/WIN still render.
+        var bgEnabled = (isCgb || m_lcdc.BgWindowEnablePriority) && BackgroundVisible;
         var windowEnabled =
             bgEnabled &&
             m_lcdc.WindowEnable &&
@@ -543,10 +546,16 @@ public class PPU
                         continue; // Sprite doesn't cover this X position.
 
                     var isBackgroundOpaque = bgColorIndex != 0x00;
-                    if (isCgb && bgPriority && isBackgroundOpaque)
-                        continue; // Background tile forces priority.
-                    if (sprite.Priority && isBackgroundOpaque)
-                        continue; // Favor the background pixel.
+
+                    // CGB master priority (LCDC.0): when 0, OBJ always wins over BG/WIN (except color 0 transparency).
+                    // When 1 (or in DMG), apply normal priority rules.
+                    if (!isCgb || cgbMasterPriority)
+                    {
+                        if (isCgb && bgPriority && isBackgroundOpaque)
+                            continue; // Background tile forces priority.
+                        if (sprite.Priority && isBackgroundOpaque)
+                            continue; // Favor the background pixel.
+                    }
 
                     // Find the sprite tile address.
                     var tileDataAddr = 0x8000;

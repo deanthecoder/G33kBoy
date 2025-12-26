@@ -69,7 +69,7 @@ public class IoDevice : IMemDevice, ILcd
     public byte OBP1 => m_data[0x49];
     public byte WY => m_data[0x4A];
     public byte WX => m_data[0x4B];
-    public byte OPRI => m_opri;
+    public byte OPRI => m_mode == GameBoyMode.Cgb ? (byte)(0xFE | (m_opri & 0x01)) : (byte)0xFF;
 
     public void SetMode(GameBoyMode mode)
     {
