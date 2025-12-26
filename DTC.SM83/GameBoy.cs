@@ -165,7 +165,7 @@ public sealed class GameBoy : IDisposable
         using var archive = ZipFile.OpenRead(romFile.FullName);
         foreach (var entry in archive.Entries)
         {
-            if (!entry.Name.EndsWith(".gb", StringComparison.OrdinalIgnoreCase))
+            if (!entry.Name.EndsWith(".gb", StringComparison.OrdinalIgnoreCase) && !entry.Name.EndsWith(".gbc", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var buffer = new byte[(int)entry.Length];

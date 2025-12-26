@@ -212,7 +212,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void LoadGameRom()
     {
         var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
-        var command = new FileOpenCommand("Load Game Boy ROM", "Game Boy ROMs", ["*.gb", "*.zip"]);
+        var command = new FileOpenCommand("Load Game Boy ROM", "Game Boy ROMs", ["*.gb", "*.gbc", "*.zip"]);
         command.FileSelected += (_, info) =>
         {
             try
