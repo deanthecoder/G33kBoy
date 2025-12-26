@@ -27,6 +27,7 @@ public class IoDevice : IMemDevice, ILcd
     private GameBoyMode m_mode = GameBoyMode.Dmg;
     private bool m_prepareSpeedSwitch;
     private bool m_doubleSpeed;
+    // TODO: Implement CGB double-speed switching; KEY1 currently tracks only the prepare flag.
     private byte m_vramBank;
     private byte m_wramBank = 1;
     private byte m_bgPaletteIndex;
