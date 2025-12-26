@@ -30,6 +30,7 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly InterruptDevice m_interruptDevice;
     private readonly HramDevice m_hramDevice;
     private readonly OamDevice m_oam;
+    private GameBoyMode m_mode = GameBoyMode.Dmg;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
@@ -40,6 +41,7 @@ public sealed class Bus : IMemDevice, IDisposable
     public Dma Dma { get; }
     public CartridgeRamDevice CartridgeRam { get; private set; }
     public CartridgeRomDevice CartridgeRom { get; private set; }
+    public GameBoyMode Mode => m_mode;
     private IMemoryBankController m_memoryBankController;
 
     /// <summary>
@@ -146,6 +148,11 @@ public sealed class Bus : IMemDevice, IDisposable
             // Pixel Processing Unit
             PPU = new PPU(m_ioDevice, vram, m_interruptDevice, m_oam!);
         }
+    }
+
+    public void SetMode(GameBoyMode mode)
+    {
+        m_mode = mode;
     }
 
     public void SetInstructionLogger(InstructionLogger instructionLogger)

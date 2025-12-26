@@ -64,6 +64,18 @@
                     </MenuItem>
 
                     <MenuItem Header="Hardware">
+                        <MenuItem Header="Mode">
+                            <MenuItem Header="Prefer DMG" Command="{Binding SelectDmgMode}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsDmgModeRequested}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Prefer CGB" Command="{Binding SelectCgbMode}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsCgbModeRequested}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuItem>
                         <MenuItem Header="Display">
                             <MenuItem Header="Emulate LCD" Command="{Binding ToggleLcdEmulation}">
                                 <MenuItem.Icon>

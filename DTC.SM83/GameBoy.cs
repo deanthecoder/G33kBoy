@@ -43,6 +43,7 @@ public sealed class GameBoy : IDisposable
     private bool m_isRunningAtNormalSpeed = true;
     private bool m_isCpuHistoryTracked;
     private double m_relativeSpeedRaw;
+    private GameBoyMode m_requestedMode = GameBoyMode.Cgb;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -52,6 +53,10 @@ public sealed class GameBoy : IDisposable
     public double RelativeSpeed => Math.Round(m_relativeSpeedRaw / 0.2) * 0.2;
 
     public Joypad Joypad { get; }
+
+    public GameBoyMode RequestedMode => m_requestedMode;
+
+    public GameBoyMode EffectiveMode { get; private set; } = GameBoyMode.Dmg;
 
     /// <summary>
     /// Debugging aid.
@@ -108,8 +113,11 @@ public sealed class GameBoy : IDisposable
 
         m_cartridgeKey = cartridgeKey;
         m_loadedCartridge = cartridge;
+        ApplyHardwareMode(m_loadedCartridge);
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
+        if (EffectiveMode == GameBoyMode.Cgb)
+            m_cpu.SkipBootRomCgb();
 
         WriteDisassemblyIfEnabled(romFile, romData, cartridgeKey);
         RestoreSavedGameData();
@@ -219,6 +227,15 @@ public sealed class GameBoy : IDisposable
         }
 
         m_clockSync.SetSpeed(speed);
+    }
+
+    public void SetRequestedMode(GameBoyMode mode)
+    {
+        if (m_requestedMode == mode)
+            return;
+        m_requestedMode = mode;
+        if (m_loadedCartridge != null)
+            ApplyHardwareMode(m_loadedCartridge);
     }
 
     public void SetBackgroundVisibility(bool isVisible)
@@ -428,6 +445,7 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_audioSink);
+        m_bus.SetMode(EffectiveMode);
         ApplySoundChannelSettings();
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
@@ -454,5 +472,20 @@ public sealed class GameBoy : IDisposable
     {
         m_bus?.ResetClock();
         return 0;
+    }
+
+    private void ApplyHardwareMode(Cartridge cartridge)
+    {
+        EffectiveMode = DetermineEffectiveMode(cartridge, m_requestedMode);
+        m_bus?.SetMode(EffectiveMode);
+    }
+
+    private static GameBoyMode DetermineEffectiveMode(Cartridge cartridge, GameBoyMode requestedMode)
+    {
+        if (cartridge.IsCgbOnly)
+            return GameBoyMode.Cgb;
+        if (!cartridge.IsCgbCapable)
+            return GameBoyMode.Dmg;
+        return requestedMode;
     }
 }

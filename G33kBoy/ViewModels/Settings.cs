@@ -69,6 +69,12 @@ public class Settings : UserSettingsBase, IGameDataStore
         set => Set(value);
     }
 
+    public GameBoyMode RequestedHardwareMode
+    {
+        get => Get<GameBoyMode>();
+        set => Set(value);
+    }
+
     public string MruFiles
     {
         get => Get<string>();
@@ -100,6 +106,7 @@ public class Settings : UserSettingsBase, IGameDataStore
         IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;
         IsCpuHistoryTracked = false;
+        RequestedHardwareMode = GameBoyMode.Cgb;
         GameDataStates = [];
         MruFiles = string.Empty;
         LastRomFile = null;
