@@ -407,6 +407,7 @@ public class PPU
         var lcdSCX = m_lcd.SCX;
         var lcdBGP = m_lcd.BGP;
         var lcdWX = m_lcd.WX;
+        var isCgb = Mode == GameBoyMode.Cgb;
         var bgEnabled = m_lcdc.BgWindowEnablePriority && BackgroundVisible;
         var windowEnabled =
             bgEnabled &&
@@ -424,6 +425,8 @@ public class PPU
         {
             // First we draw the background.
             byte bgColorIndex = 0x00;
+            byte bgPaletteIndex = 0x00;
+            bool bgPriority = false;
             if (bgEnabled)
             {
                 var isWindow = windowEnabled && x >= lcdWX - 7;
@@ -453,7 +456,20 @@ public class PPU
 
                 // Get the tile index (Window or background).
                 var bgTileMapAddr = tileMapSelector ? 0x9C00 : 0x9800;
-                var tileIndex = m_vram.Read8((ushort)(bgTileMapAddr + tileOffset));
+                var tileMapEntryAddr = (ushort)(bgTileMapAddr + tileOffset);
+                var tileIndex = isCgb ? m_vram.ReadBanked(tileMapEntryAddr, 0) : m_vram.Read8(tileMapEntryAddr);
+                byte tileBank = 0;
+                bool xFlip = false;
+                bool yFlip = false;
+                if (isCgb)
+                {
+                    var attributes = m_vram.ReadBanked(tileMapEntryAddr, 1);
+                    bgPaletteIndex = (byte)(attributes & 0x07);
+                    tileBank = (byte)((attributes & 0x08) != 0 ? 1 : 0);
+                    xFlip = (attributes & 0x20) != 0;
+                    yFlip = (attributes & 0x40) != 0;
+                    bgPriority = (attributes & 0x80) != 0;
+                }
 
                 // Get the start of the tile data. (One tile = (8 x 2) * 8 = 16 bytes)
                 int tileDataAddr;
@@ -480,16 +496,27 @@ public class PPU
                     }
                 }
                 // Offset into the correct tile Y.
-                tileDataAddr += srcY % 8 * 2;
+                var tileRowOffset = srcY % 8;
+                if (yFlip)
+                    tileRowOffset = 7 - tileRowOffset;
+                tileDataAddr += tileRowOffset * 2;
                 ValidateVramRange(tileDataAddr, 2, "BG tile row");
 
                 // Read the 8 pixel tile row.
-                var lowBits = m_vram.Read8((ushort)tileDataAddr);
-                var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
+                var lowBits = isCgb
+                    ? m_vram.ReadBanked((ushort)tileDataAddr, tileBank)
+                    : m_vram.Read8((ushort)tileDataAddr);
+                var highBits = isCgb
+                    ? m_vram.ReadBanked((ushort)(tileDataAddr + 1), tileBank)
+                    : m_vram.Read8((ushort)(tileDataAddr + 1));
 
                 // Shift bits to the correct position for our screen X.
-                lowBits = (byte)((lowBits >> (7 - srcX % 8)) & 0x01);
-                highBits = (byte)((highBits >> (7 - srcX % 8)) & 0x01);
+                var pixelX = srcX % 8;
+                if (xFlip)
+                    pixelX = 7 - pixelX;
+                var bitShift = 7 - pixelX;
+                lowBits = (byte)((lowBits >> bitShift) & 0x01);
+                highBits = (byte)((highBits >> bitShift) & 0x01);
 
                 // Get the 2-bit color index.
                 bgColorIndex = (byte)(highBits << 1 | lowBits);
@@ -498,6 +525,7 @@ public class PPU
             // Now we draw the sprites.
             byte spriteColorIndex = 0x00;
             byte spritePalette = 0x00;
+            byte spritePaletteIndex = 0x00;
             if (m_spritePixelCoverage[x] && SpritesVisible)
             {
                 for (var i = 0; i < m_spriteCount && spriteColorIndex == 0x00; i++)
@@ -507,13 +535,11 @@ public class PPU
                     if (spriteX > x || spriteX + 7 < x)
                         continue; // Sprite doesn't cover this X position.
 
-                    if (sprite.Priority)
-                    {
-                        // Sprite is drawn behind non-transparent background, so only plot if background is transparent.
-                        var isBackgroundOpaque = bgColorIndex != 0x00;
-                        if (isBackgroundOpaque)
-                            continue; // Favor the background pixel.
-                    }
+                    var isBackgroundOpaque = bgColorIndex != 0x00;
+                    if (isCgb && bgPriority && isBackgroundOpaque)
+                        continue; // Background tile forces priority.
+                    if (sprite.Priority && isBackgroundOpaque)
+                        continue; // Favor the background pixel.
 
                     // Find the sprite tile address.
                     var tileDataAddr = 0x8000;
@@ -548,8 +574,13 @@ public class PPU
                     tileDataAddr += y * 2;
                     ValidateVramRange(tileDataAddr, 2, "sprite tile row");
                     // Read the 8 pixel tile row.
-                    var lowBits = m_vram.Read8((ushort)tileDataAddr);
-                    var highBits = m_vram.Read8((ushort)(tileDataAddr + 1));
+                    var spriteBank = isCgb && sprite.UseCgbBank ? (byte)1 : (byte)0;
+                    var lowBits = isCgb
+                        ? m_vram.ReadBanked((ushort)tileDataAddr, spriteBank)
+                        : m_vram.Read8((ushort)tileDataAddr);
+                    var highBits = isCgb
+                        ? m_vram.ReadBanked((ushort)(tileDataAddr + 1), spriteBank)
+                        : m_vram.Read8((ushort)(tileDataAddr + 1));
 
                     // Mirror on X if required.
                     if (sprite.XFlip)
@@ -569,27 +600,13 @@ public class PPU
                     if (colorIndex == 0x00)
                         continue; // Skip transparent pixels.
 
+                    spritePaletteIndex = sprite.CgbPaletteIndex;
                     spritePalette = sprite.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0;
                     spriteColorIndex = colorIndex;
                 }
             }
 
             // Update the frame buffer.
-            // Background palette entry (includes color 0).
-            var bgPaletteValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
-
-            byte colorValue;
-            if (spriteColorIndex != 0x00)
-            {
-                // Sprite is drawn, so use the sprite palette.
-                colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
-            }
-            else
-            {
-                // No sprite, so use the background palette (color 0 included).
-                colorValue = bgPaletteValue;
-            }
-
             var frameIndex = lcdLy * FrameWidth + x;
             var frameOffset = frameIndex * 4;
             var accumulatorOffset = frameIndex * 3;
@@ -597,19 +614,46 @@ public class PPU
             byte targetG;
             byte targetB;
 
-            if (m_lcdEmulationEnabled)
+            if (isCgb)
             {
-                var greenIndex = colorValue * 3;
-                targetR = m_greenMap[greenIndex];
-                targetG = m_greenMap[greenIndex + 1];
-                targetB = m_greenMap[greenIndex + 2];
+                var color = spriteColorIndex != 0x00
+                    ? m_lcd.ReadCgbObjPaletteColor(spritePaletteIndex, spriteColorIndex)
+                    : m_lcd.ReadCgbBgPaletteColor(bgPaletteIndex, bgColorIndex);
+                targetR = Expand5To8(color & 0x1F);
+                targetG = Expand5To8((color >> 5) & 0x1F);
+                targetB = Expand5To8((color >> 10) & 0x1F);
             }
             else
             {
-                var grey = m_greyMap[colorValue];
-                targetR = grey;
-                targetG = grey;
-                targetB = grey;
+                // Background palette entry (includes color 0).
+                var bgPaletteValue = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
+
+                byte colorValue;
+                if (spriteColorIndex != 0x00)
+                {
+                    // Sprite is drawn, so use the sprite palette.
+                    colorValue = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
+                }
+                else
+                {
+                    // No sprite, so use the background palette (color 0 included).
+                    colorValue = bgPaletteValue;
+                }
+
+                if (m_lcdEmulationEnabled)
+                {
+                    var greenIndex = colorValue * 3;
+                    targetR = m_greenMap[greenIndex];
+                    targetG = m_greenMap[greenIndex + 1];
+                    targetB = m_greenMap[greenIndex + 2];
+                }
+                else
+                {
+                    var grey = m_greyMap[colorValue];
+                    targetR = grey;
+                    targetG = grey;
+                    targetB = grey;
+                }
             }
 
             var oldR = m_colorAccumulator[accumulatorOffset];
@@ -696,7 +740,13 @@ public class PPU
         byte baseG;
         byte baseB;
 
-        if (m_lcdEmulationEnabled)
+        if (Mode == GameBoyMode.Cgb)
+        {
+            baseR = 0xFF;
+            baseG = 0xFF;
+            baseB = 0xFF;
+        }
+        else if (m_lcdEmulationEnabled)
         {
             baseR = m_greenMap[0];
             baseG = m_greenMap[1];
@@ -725,6 +775,9 @@ public class PPU
             m_colorAccumulator[accOffset + 2] = baseB;
         }
     }
+
+    private static byte Expand5To8(int value) =>
+        (byte)((value << 3) | (value >> 2));
 
     /// <summary>
     /// Compare LY vs LYC; set STAT.coincidence + IF STAT if enabled.
