@@ -109,6 +109,11 @@ public interface ILcd
     byte WX { get; }
 
     /// <summary>
+    /// OPRI (Object Priority Mode) - 0xFF6C (CGB only)
+    /// </summary>
+    byte OPRI { get; }
+
+    /// <summary>
     /// Read a 15-bit CGB background palette color.
     /// </summary>
     ushort ReadCgbBgPaletteColor(int paletteIndex, int colorIndex);

@@ -34,6 +34,7 @@ public class IoDevice : IMemDevice, ILcd
     private byte m_objPaletteIndex;
     private bool m_bgPaletteAutoIncrement;
     private bool m_objPaletteAutoIncrement;
+    private byte m_opri;
 
     public IoDevice(Bus bus, [NotNull] BootRom bootRom)
     {
@@ -68,6 +69,7 @@ public class IoDevice : IMemDevice, ILcd
     public byte OBP1 => m_data[0x49];
     public byte WY => m_data[0x4A];
     public byte WX => m_data[0x4B];
+    public byte OPRI => m_opri;
 
     public void SetMode(GameBoyMode mode)
     {
@@ -80,6 +82,7 @@ public class IoDevice : IMemDevice, ILcd
         m_objPaletteIndex = 0;
         m_bgPaletteAutoIncrement = false;
         m_objPaletteAutoIncrement = false;
+        m_opri = 0;
         m_bus.Vram?.SetCurrentBank(m_vramBank);
         m_bus.WorkRam?.SetCurrentBank(m_wramBank);
     }
@@ -134,6 +137,9 @@ public class IoDevice : IMemDevice, ILcd
                 return m_mode == GameBoyMode.Cgb
                     ? ReadPaletteData(m_objPaletteData, ref m_objPaletteIndex, m_objPaletteAutoIncrement)
                     : (byte)0xFF;
+
+            case 0xFF6C: // OPRI
+                return m_mode == GameBoyMode.Cgb ? (byte)(0xFE | (m_opri & 0x01)) : (byte)0xFF;
 
             case 0xFF70: // SVBK
                 return m_mode == GameBoyMode.Cgb ? (byte)(0xF8 | m_wramBank) : (byte)0xFF;
@@ -208,6 +214,11 @@ public class IoDevice : IMemDevice, ILcd
             case 0xFF6B: // OBPD
                 if (m_mode == GameBoyMode.Cgb)
                     WritePaletteData(m_objPaletteData, ref m_objPaletteIndex, m_objPaletteAutoIncrement, value);
+                return;
+
+            case 0xFF6C: // OPRI
+                if (m_mode == GameBoyMode.Cgb)
+                    m_opri = (byte)(value & 0x01);
                 return;
 
             case 0xFF70: // SVBK

@@ -355,8 +355,10 @@ public class PPU
         m_spriteCount = 0;
         if (!m_lcdc.SpriteEnable || !SpritesVisible)
             return; // No sprite drawing required.
-        
+
         // Capture up to 10 sprites for this LY in OAM order.
+        var isCgb = Mode == GameBoyMode.Cgb;
+        var objectPriorityByX = isCgb && m_lcd.OPRI.IsBitSet(0);
         var sprites = m_oam.GetSprites();
         for (byte i = 0; i < 40 && m_spriteCount < 10; i++)
         {
@@ -369,20 +371,25 @@ public class PPU
             m_spriteIndices[m_spriteCount++] = i;
         }
 
-        // Sort sprite indices based on their X position (smallest first).
-        for (var i = 1; i < m_spriteCount; i++)
+        // DMG: Sort sprite indices based on their X position (smallest first).
+        // CGB: Priority mode is controlled by OPRI bit 0.
+        //      0 = OAM order, 1 = X coordinate order (DMG-like).
+        if (!isCgb || objectPriorityByX)
         {
-            var key = m_spriteIndices[i];
-            var keyX = sprites[key].X;
-            var j = i - 1;
-
-            while (j >= 0 && sprites[m_spriteIndices[j]].X > keyX)
+            for (var i = 1; i < m_spriteCount; i++)
             {
-                m_spriteIndices[j + 1] = m_spriteIndices[j];
-                j--;
-            }
+                var key = m_spriteIndices[i];
+                var keyX = sprites[key].X;
+                var j = i - 1;
 
-            m_spriteIndices[j + 1] = key;
+                while (j >= 0 && sprites[m_spriteIndices[j]].X > keyX)
+                {
+                    m_spriteIndices[j + 1] = m_spriteIndices[j];
+                    j--;
+                }
+
+                m_spriteIndices[j + 1] = key;
+            }
         }
 
         // Build a lookup table of which screen X positions have sprite coverage.
