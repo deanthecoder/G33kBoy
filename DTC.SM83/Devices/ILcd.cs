@@ -7,6 +7,8 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+using DTC.SM83;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
@@ -15,6 +17,11 @@ namespace DTC.SM83.Devices;
 /// </summary>
 public interface ILcd
 {
+    /// <summary>
+    /// True when the hardware is running in CGB mode.
+    /// </summary>
+    GameBoyMode Mode { get; }
+
     /// <summary>
     /// LCD Control (LCDC) - 0xFF40
     /// </summary>
@@ -100,4 +107,14 @@ public interface ILcd
     /// WX (Window X Position) - 0xFF4B
     /// </summary>
     byte WX { get; }
+
+    /// <summary>
+    /// Read a 15-bit CGB background palette color.
+    /// </summary>
+    ushort ReadCgbBgPaletteColor(int paletteIndex, int colorIndex);
+
+    /// <summary>
+    /// Read a 15-bit CGB object palette color.
+    /// </summary>
+    ushort ReadCgbObjPaletteColor(int paletteIndex, int colorIndex);
 }

@@ -30,6 +30,9 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly InterruptDevice m_interruptDevice;
     private readonly HramDevice m_hramDevice;
     private readonly OamDevice m_oam;
+    private VramDevice m_vram;
+    private WorkRamDevice m_wram;
+    private Hdma m_hdma;
     private GameBoyMode m_mode = GameBoyMode.Dmg;
 
     public ushort FromAddr => 0x0000;
@@ -39,6 +42,9 @@ public sealed class Bus : IMemDevice, IDisposable
     public PPU PPU { get; }
     public ApuDevice APU { get; }
     public Dma Dma { get; }
+    public Hdma Hdma => m_hdma;
+    public VramDevice Vram => m_vram;
+    public WorkRamDevice WorkRam => m_wram;
     public CartridgeRamDevice CartridgeRam { get; private set; }
     public CartridgeRomDevice CartridgeRom { get; private set; }
     public GameBoyMode Mode => m_mode;
@@ -92,15 +98,16 @@ public sealed class Bus : IMemDevice, IDisposable
             BootRom = new BootRom();
 
             // V(ideo)RAM (0x8000 - 0x9FFF)
-            vram = new VramDevice();
-            Attach(vram);
+            m_vram = new VramDevice();
+            vram = m_vram;
+            Attach(m_vram);
             
             // Ram bank 0 (0xC000 - 0xDFFF)
-            var wram = new WorkRamDevice();
-            Attach(wram);
+            m_wram = new WorkRamDevice();
+            Attach(m_wram);
             
             // Echo of WRAM (0xE000 - 0xFDFF)
-            Attach(new EchoRamDevice(wram));
+            Attach(new EchoRamDevice(m_wram));
 
             // OAM(/Sprites) (0xFE00 - 0xFE9F)
             m_oam = new OamDevice();
@@ -146,13 +153,21 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             // Pixel Processing Unit
+            m_hdma = new Hdma(this);
             PPU = new PPU(m_ioDevice, vram, m_interruptDevice, m_oam!);
+            PPU.HBlankStarted += () => m_hdma?.OnHBlank();
         }
     }
 
     public void SetMode(GameBoyMode mode)
     {
+        if (m_mode == mode)
+            return;
         m_mode = mode;
+        m_ioDevice?.SetMode(mode);
+        m_vram?.SetMode(mode);
+        m_wram?.SetMode(mode);
+        PPU?.SetMode(mode);
     }
 
     public void SetInstructionLogger(InstructionLogger instructionLogger)

@@ -98,11 +98,15 @@ public class PPU
     /// </summary>
     public event EventHandler<byte[]> FrameRendered;
 
+    public event Action HBlankStarted;
+
     public bool BackgroundVisible { get; set; } = true;
 
     public bool SpritesVisible { get; set; } = true;
 
     public InstructionLogger InstructionLogger { get; set; }
+
+    public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
 
     public bool LcdEmulationEnabled
     {
@@ -670,6 +674,8 @@ public class PPU
         CurrentState = FrameState.HBlank;
         m_stateCycles = (ulong)cycles;
         m_hblankEndsScanline = endsScanline;
+        if (endsScanline)
+            HBlankStarted?.Invoke();
     }
 
     private void LogScanlineStart() =>
@@ -680,6 +686,9 @@ public class PPU
 
     public void ResetLyCounter() =>
         UpdateLineIndex(false);
+
+    public void SetMode(GameBoyMode mode) =>
+        Mode = mode;
 
     private void ClearFrameBufferToBaseColor()
     {
