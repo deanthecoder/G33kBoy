@@ -48,6 +48,7 @@ public sealed class Bus : IMemDevice, IDisposable
     public CartridgeRamDevice CartridgeRam { get; private set; }
     public CartridgeRomDevice CartridgeRom { get; private set; }
     public GameBoyMode Mode => m_mode;
+
     private IMemoryBankController m_memoryBankController;
 
     /// <summary>
@@ -164,6 +165,7 @@ public sealed class Bus : IMemDevice, IDisposable
         if (m_mode == mode)
             return;
         m_mode = mode;
+        BootRom?.SetMode(mode);
         m_ioDevice?.SetMode(mode);
         m_vram?.SetMode(mode);
         m_wram?.SetMode(mode);
@@ -209,6 +211,8 @@ public sealed class Bus : IMemDevice, IDisposable
         CartridgeRam = m_memoryBankController.HasRam ? new CartridgeRamDevice(m_memoryBankController) : null;
         if (CartridgeRam != null)
             Attach(CartridgeRam);
+
+        BootRom?.PrimeCartridgeData(cartridge.RomData);
 
         // Boot ROM must overlay the cartridge; re-attach to ensure priority.
         if (BootRom != null)

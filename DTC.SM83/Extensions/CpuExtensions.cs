@@ -29,20 +29,6 @@ public static class CpuExtensions
         Cf = true
     };
 
-    private static readonly Registers CgbBootState = new Registers
-    {
-        A = 0x11,     // 0x11 => CGB
-        BC = 0x0013,
-        DE = 0x00D8,
-        HL = 0x014D,
-        SP = 0xFFFE,
-        PC = 0x0100,
-        Zf = true,
-        Nf = false,
-        Hf = true,
-        Cf = true
-    };
-
     /// <summary>
     /// Hardware register defaults that the boot ROM programs before handing control to the cartridge (DMG/MGB column).
     /// </summary>
@@ -93,16 +79,6 @@ public static class CpuExtensions
         (0xFFFF, 0x00)  // IE
     ];
 
-    private static readonly (ushort Address, byte Value)[] CgbIoOverrides =
-    [
-        (0xFF4C, 0x00), // KEY0: CGB mode (bit 2 cleared)
-        (0xFF4D, 0x7E), // KEY1: normal speed, prepare switch off
-        (0xFF4F, 0x00), // VBK: VRAM bank 0
-        (0xFF68, 0x00), // BGPI: palette index
-        (0xFF6A, 0x00), // OBPI: palette index
-        (0xFF70, 0x01)  // SVBK: WRAM bank 1
-    ];
-
     /// <summary>
     /// Mimic the state the CPU and IO registers are left in once the DMG boot ROM hands off to the cartridge.
     /// </summary>
@@ -138,43 +114,6 @@ public static class CpuExtensions
         return cpu;
     }
 
-    public static Cpu SkipBootRomCgb(this Cpu cpu, bool disableDevices = false)
-    {
-        if (cpu == null)
-            throw new ArgumentNullException(nameof(cpu));
-
-        if (cpu.Bus.BootRom != null)
-        {
-            cpu.Bus.Detach(cpu.Bus.BootRom, cpu.Bus.CartridgeRom);
-            cpu.Bus.BootRom.Unload();
-        }
-
-        CgbBootState.CopyTo(cpu.Reg);
-        cpu.IME = true;
-        cpu.PendingIME = false;
-        cpu.IsHalted = false;
-
-        if (disableDevices)
-        {
-            cpu.Bus.Dma.IsEnabled = false;
-            cpu.Bus.APU.SuppressTriggers = true;
-        }
-
-        foreach (var (address, value) in BootIoDefaults)
-            cpu.Bus.Write8(address, value);
-        foreach (var (address, value) in CgbIoOverrides)
-            cpu.Bus.Write8(address, value);
-
-        cpu.Bus.Dma.IsEnabled = false;
-        if (cpu.Bus.APU != null)
-            cpu.Bus.APU.SuppressTriggers = false;
-
-        cpu.Bus.ResetClock();
-        cpu.Fetch8();
-
-        return cpu;
-    }
-
     /// <summary>
     /// Load a ROM into the CPU's memory.
     /// </summary>
@@ -188,7 +127,6 @@ public static class CpuExtensions
         Console.WriteLine(cartridge);
 
         cpu.Bus.LoadCartridge(cartridge);
-        if (cpu.Bus.Mode == GameBoyMode.Dmg)
-            cpu.Bus.BootRom?.Load();
+        cpu.Bus.BootRom?.Load();
     }
 }

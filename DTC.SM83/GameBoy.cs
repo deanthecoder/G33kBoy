@@ -116,8 +116,6 @@ public sealed class GameBoy : IDisposable
         ApplyHardwareMode(m_loadedCartridge);
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
-        if (EffectiveMode == GameBoyMode.Cgb)
-            m_cpu.SkipBootRomCgb();
 
         WriteDisassemblyIfEnabled(romFile, romData, cartridgeKey);
         RestoreSavedGameData();
@@ -473,6 +471,7 @@ public sealed class GameBoy : IDisposable
         m_bus?.ResetClock();
         return 0;
     }
+
 
     private void ApplyHardwareMode(Cartridge cartridge)
     {
