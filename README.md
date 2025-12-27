@@ -68,7 +68,6 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - ✔ CPU: full instruction set + automated tests
 - ✔ PPU: Scanline-based renderer
 - ✔ Boot ROM behaviour
-- ✔ Battery-backed RAM persistence
 - ✔ Zipped ROM loading
 - ✔ Audio
 - ✔ Cartridge MBCs
@@ -80,7 +79,6 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - **Shared core utilities** – `DTC.Core` provides reusable commands, extensions, converters, and Avalonia helpers so the emulator and any future UI/drivers share common infrastructure.
 - **Avalonia UI shell** – `G33kBoy` hosts the emulator in a cross-platform desktop window.
 - **Validation suite** – `UnitTests` target the CPU core via NUnit, ensuring regressions are caught early.
-- **Battery-backed saves** – Cartridge RAM is checkpointed every few seconds, compressed, and restored when the ROM loads so in-game progress (scores, unlocks, etc.) persists between sessions.
 
 ## External resources
 - `external/GameboyCPUTests/` – CPU tests for regression validation

@@ -22,7 +22,4 @@ public interface IMemoryBankController
 
     byte ReadRam(ushort addr);
     void WriteRam(ushort addr, byte value);
-
-    byte[] GetRamSnapshot();
-    void LoadRamSnapshot(ReadOnlySpan<byte> data);
 }

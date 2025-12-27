@@ -58,7 +58,6 @@
                             <Separator/>
                             <MenuItem Header="Clear" Command="{Binding Mru.Clear}"/>
                         </MenuItem>
-                        <MenuItem Header="_Clear All Saved ROM Data" Command="{Binding ClearAllGameData}"/>
                         <Separator />
                         <MenuItem Header="_Exit" Command="{Binding CloseCommand}" />
                     </MenuItem>

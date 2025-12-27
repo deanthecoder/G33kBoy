@@ -61,36 +61,6 @@ internal abstract class MemoryBankControllerBase : IMemoryBankController
             ram[offset] = value;
     }
 
-    public virtual byte[] GetRamSnapshot()
-    {
-        if (m_ramBanks.Length == 0)
-            return [];
-
-        var snapshot = new byte[m_ramBanks.Length * 8 * 1024];
-        for (var bank = 0; bank < m_ramBanks.Length; bank++)
-            m_ramBanks[bank].CopyTo(snapshot, bank * 8 * 1024);
-        return snapshot;
-    }
-
-    public virtual void LoadRamSnapshot(ReadOnlySpan<byte> data)
-    {
-        if (m_ramBanks.Length == 0 || data.IsEmpty)
-            return;
-
-        for (var bank = 0; bank < m_ramBanks.Length; bank++)
-        {
-            var dest = m_ramBanks[bank].AsSpan();
-            var offset = bank * 8 * 1024;
-            var bytesToCopy = Math.Min(dest.Length, data.Length - offset);
-            if (bytesToCopy <= 0)
-                break;
-
-            data.Slice(offset, bytesToCopy).CopyTo(dest);
-            if (bytesToCopy < dest.Length)
-                dest[bytesToCopy..].Clear();
-        }
-    }
-
     protected byte ReadRomFromBank(int bank, ushort addr)
     {
         if (bank < 0)

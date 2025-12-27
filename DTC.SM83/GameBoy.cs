@@ -23,17 +23,13 @@ namespace DTC.SM83;
 
 public sealed class GameBoy : IDisposable
 {
-    private static readonly TimeSpan CartRamPersistInterval = TimeSpan.FromSeconds(5);
     private readonly ClockSync m_clockSync;
-    private readonly IGameDataStore m_gameDataStore;
-    private readonly Stopwatch m_ramPersistStopwatch = new();
     private readonly LcdScreen m_screen;
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private long m_lastFrameClockTicks;
     private long m_lastFrameCpuTicks;
     private Bus m_bus;
     private Cpu m_cpu;
-    private string m_cartridgeKey;
     private Thread m_cpuThread;
     private bool m_shutdownRequested;
     private Cartridge m_loadedCartridge;
@@ -45,6 +41,7 @@ public sealed class GameBoy : IDisposable
     private bool m_isCpuHistoryTracked;
     private double m_relativeSpeedRaw;
     private GameBoyMode m_requestedMode = GameBoyMode.Cgb;
+    private GameBoyMode m_effectiveMode = GameBoyMode.Dmg;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -55,24 +52,20 @@ public sealed class GameBoy : IDisposable
 
     public Joypad Joypad { get; }
 
-    public GameBoyMode RequestedMode => m_requestedMode;
-
-    public GameBoyMode EffectiveMode { get; private set; } = GameBoyMode.Dmg;
 
     /// <summary>
     /// Debugging aid.
     /// </summary>
     private static bool WriteDisassemblyOnLoad => false;
 
-    public GameBoy(IGameDataStore gameDataStore = null)
+    public GameBoy()
     {
-        m_gameDataStore = gameDataStore;
         Joypad = new Joypad();
         m_audioSink = new SoundDevice(44100);
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight)
         {
-            Mode = EffectiveMode
+            Mode = m_effectiveMode
         };
 
         m_clockSync = new ClockSync(GetEffectiveCpuHz, () => (long)(m_bus?.CpuClockTicks ?? 0), ResetBusClock);
@@ -114,18 +107,15 @@ public sealed class GameBoy : IDisposable
         RecreateHardware();
         m_clockSync.Reset();
 
-        m_cartridgeKey = cartridgeKey;
         m_loadedCartridge = cartridge;
         ApplyHardwareMode(m_loadedCartridge);
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
 
         WriteDisassemblyIfEnabled(romFile, romData, cartridgeKey);
-        RestoreSavedGameData();
 
         m_audioSink?.Start();
         
-        m_ramPersistStopwatch.Restart();
         m_cpuThread = new Thread(RunLoop) { Name = "GameBoy CPU" };
         m_cpuThread.Start();
     }
@@ -135,7 +125,6 @@ public sealed class GameBoy : IDisposable
         m_shutdownRequested = false;
         
         Logger.Instance.Info("CPU loop started.");
-        var canPersistGameData = CanPersistGameData;
 
         try
         {
@@ -145,7 +134,6 @@ public sealed class GameBoy : IDisposable
                 m_clockSync.SyncWithRealTime();
             
                 m_cpu.Step();
-                PersistCartRamIfDue(canPersistGameData);
             }
         }
         catch (Exception e)
@@ -301,9 +289,6 @@ public sealed class GameBoy : IDisposable
             m_cpu.InstructionLogger.IsEnabled = isEnabled;
     }
     
-    public void ClearAllGameData() =>
-        m_gameDataStore?.ClearAllGameData();
-    
     public void SetSoundEnabled(bool isEnabled)
     {
         m_isUserSoundEnabled = isEnabled;
@@ -325,13 +310,7 @@ public sealed class GameBoy : IDisposable
         for (var channel = 1; channel <= m_soundChannelsEnabled.Length; channel++)
             m_bus.SetSoundChannelEnabled(channel, m_soundChannelsEnabled[channel - 1]);
     }
-
-    private bool CanPersistGameData =>
-        m_gameDataStore != null &&
-        m_loadedCartridge?.SupportsBattery == true &&
-        !string.IsNullOrEmpty(m_cartridgeKey) &&
-        m_bus?.CartridgeRam != null;
-
+    
     public bool IsDebugBuild
     {
         get
@@ -343,64 +322,8 @@ public sealed class GameBoy : IDisposable
 #endif
         }
     }
-
-    private void PersistCartRamIfDue(bool canPersistGameData)
-    {
-        if (!canPersistGameData)
-            return;
-
-        if (!m_ramPersistStopwatch.IsRunning)
-            m_ramPersistStopwatch.Start();
-
-        if (m_ramPersistStopwatch.Elapsed < CartRamPersistInterval)
-            return;
-
-        m_ramPersistStopwatch.Restart();
-        SaveCartRamState();
-    }
-
-    private void SaveCartRamState()
-    {
-        try
-        {
-            var cartRam = m_bus?.CartridgeRam;
-            if (cartRam == null)
-                return;
-
-            var snapshot = cartRam.GetSnapshot();
-            m_gameDataStore?.SaveGameData(m_cartridgeKey, snapshot);
-        }
-        catch (Exception ex)
-        {
-            Logger.Instance.Warn($"Failed to persist cartridge RAM: {ex.Message}");
-        }
-    }
-
-    private void RestoreSavedGameData()
-    {
-        if (!CanPersistGameData)
-            return;
-
-        var snapshot = m_gameDataStore?.LoadGameData(m_cartridgeKey);
-        if (snapshot == null || snapshot.Length == 0)
-            return;
-
-        try
-        {
-            var cartRam = m_bus?.CartridgeRam;
-            if (cartRam == null)
-                return;
-
-            cartRam.LoadSnapshot(snapshot);
-            Logger.Instance.Info($"Restored {snapshot.Length} bytes of cartridge RAM for '{m_cartridgeKey}'.");
-        }
-        catch (Exception ex)
-        {
-            Logger.Instance.Warn($"Failed to restore cartridge RAM: {ex.Message}");
-        }
-    }
-
-    private void WriteDisassemblyIfEnabled(FileInfo romFile, byte[] romData, string cartridgeKey)
+    
+    private static void WriteDisassemblyIfEnabled(FileInfo romFile, byte[] romData, string cartridgeKey)
     {
         if (!WriteDisassemblyOnLoad || romFile == null || romData == null || romData.Length == 0)
             return;
@@ -447,7 +370,7 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_audioSink);
-        m_bus.SetMode(EffectiveMode);
+        m_bus.SetMode(m_effectiveMode);
         ApplySoundChannelSettings();
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
@@ -493,10 +416,10 @@ public sealed class GameBoy : IDisposable
 
     private void ApplyHardwareMode(Cartridge cartridge)
     {
-        EffectiveMode = DetermineEffectiveMode(cartridge, m_requestedMode);
-        m_bus?.SetMode(EffectiveMode);
+        m_effectiveMode = DetermineEffectiveMode(cartridge, m_requestedMode);
+        m_bus?.SetMode(m_effectiveMode);
         if (m_screen != null)
-            m_screen.Mode = EffectiveMode;
+            m_screen.Mode = m_effectiveMode;
     }
 
     private static GameBoyMode DetermineEffectiveMode(Cartridge cartridge, GameBoyMode requestedMode)

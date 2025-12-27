@@ -30,10 +30,4 @@ public sealed class CartridgeRamDevice : IMemDevice
 
     public void Write8(ushort addr, byte value) =>
         m_controller.WriteRam(addr, value);
-
-    public byte[] GetSnapshot() =>
-        m_controller.GetRamSnapshot();
-
-    public void LoadSnapshot(ReadOnlySpan<byte> data) =>
-        m_controller.LoadRamSnapshot(data);
 }

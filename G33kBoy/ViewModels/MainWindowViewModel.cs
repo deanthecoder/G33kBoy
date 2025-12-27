@@ -16,7 +16,6 @@ using Avalonia.Threading;
 using DTC.Core;
 using DTC.Core.Commands;
 using DTC.Core.Extensions;
-using DTC.Core.UI;
 using DTC.Core.ViewModels;
 using DTC.SM83;
 
@@ -128,22 +127,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
     }
 
-    public void ClearAllGameData()
-    {
-        DialogService.Instance.Warn(
-            "Clear All Saved ROM Data",
-            "Are you sure you want to clear all saved ROM data?",
-            "Cancel",
-            "Clear and Reset Device",
-            confirmed =>
-            {
-                if (!confirmed)
-                    return;
-                GameBoy.ClearAllGameData();
-                ResetDevice();
-            });
-    }
-
     public void ToggleSoundChannel1()
     {
         IsSoundChannel1Enabled = !IsSoundChannel1Enabled;
@@ -173,7 +156,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Mru = new MruFiles().InitFromString(Settings.MruFiles);
         Mru.OpenRequested += (_, file) => LoadRomFile(file, addToMru: false);
 
-        GameBoy = new GameBoy(Settings.Instance);
+        GameBoy = new GameBoy();
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
         GameBoy.RomLoaded += (_, title) =>

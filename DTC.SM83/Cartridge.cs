@@ -172,7 +172,6 @@ public sealed class Cartridge
         Title = ReadTitle();
         NewLicenseeCode = ReadAscii(0x0144, 2);
         CartridgeType = (CartridgeType)RomData[0x0147];
-        SupportsBattery = DetermineBatterySupport(CartridgeType);
 
         RomSizeCode = (RomSize)RomData[0x0148];
         RamSizeCode = (RamSize)RomData[0x0149];
@@ -223,11 +222,6 @@ public sealed class Cartridge
     /// Cartridge hardware type (mapper and extras) stored at 0x0147.
     /// </summary>
     public CartridgeType CartridgeType { get; }
-
-    /// <summary>
-    /// True if the cartridge header indicates battery-backed capabilities.
-    /// </summary>
-    public bool SupportsBattery { get; }
 
     /// <summary>
     /// Encoded ROM size value from 0x0148.
@@ -322,23 +316,6 @@ public sealed class Cartridge
 
     private static int CalculateRamSizeBytes(RamSize size) =>
         CalculateRamBankCount(size) * 8 * 1024;
-
-    private static bool DetermineBatterySupport(CartridgeType type) =>
-        type switch
-        {
-            CartridgeType.Mbc1RamBattery or
-            CartridgeType.Mbc2Battery or
-            CartridgeType.RomRamBattery or
-            CartridgeType.Mmm01RamBattery or
-            CartridgeType.Mbc3TimerBattery or
-            CartridgeType.Mbc3TimerRamBattery or
-            CartridgeType.Mbc3RamBattery or
-            CartridgeType.Mbc5RamBattery or
-            CartridgeType.Mbc5RumbleRamBattery or
-            CartridgeType.Mbc7SensorRumbleRamBattery or
-            CartridgeType.HuC1RamBattery => true,
-            _ => false
-        };
 
     public (bool IsSupported, string Message) IsSupported()
     {

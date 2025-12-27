@@ -23,7 +23,7 @@ namespace G33kBoy.ViewModels;
 /// <summary>
 /// Application settings.
 /// </summary>
-public class Settings : UserSettingsBase, IGameDataStore
+public class Settings : UserSettingsBase
 {
     public static Settings Instance { get; } = new Settings();
     
