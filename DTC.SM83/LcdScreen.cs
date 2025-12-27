@@ -27,12 +27,38 @@ public sealed class LcdScreen : IDisposable
     private readonly float[] m_redBoostPerPixel;
     private readonly float[] m_grainWithShadow;
     private uint m_previousFrameBufferHash;
+    private bool m_forceRefresh;
     private readonly Vector3 m_inv255 = new Vector3(1.0f / 255.0f);
     private readonly Vector3 m_redBoostMult = new Vector3(0.25f, 0.07f, 0.0f);
     private readonly Vector3 m_outlineColor = new Vector3(0x81 / 255.0f, 0x7D / 255.0f, 0x15 / 255.0f);
 
     public WriteableBitmap Display { get; }
-    public bool LcdEmulationEnabled { get; set; } = true;
+    private bool m_lcdEmulationEnabled = true;
+    private GameBoyMode m_mode = GameBoyMode.Dmg;
+
+    public bool LcdEmulationEnabled
+    {
+        get => m_lcdEmulationEnabled;
+        set
+        {
+            if (m_lcdEmulationEnabled == value)
+                return;
+            m_lcdEmulationEnabled = value;
+            m_forceRefresh = true;
+        }
+    }
+    
+    public GameBoyMode Mode
+    {
+        get => m_mode;
+        set
+        {
+            if (m_mode == value)
+                return;
+            m_mode = value;
+            m_forceRefresh = true;
+        }
+    }
 
     public LcdScreen(int sourceWidth, int sourceHeight)
     {
@@ -90,7 +116,7 @@ public sealed class LcdScreen : IDisposable
                 var shadow = Math.Min(shadowL, shadowR);
                 var grain = 1.0 + 0.03 * (random.NextDouble() * 2.0 - 1.0);
 
-                m_grainWithShadow[rowOffset + destX] = (float)(grain * (0.6 + 0.4 * shadow) * 255.0);
+                m_grainWithShadow[rowOffset + destX] = (float)(grain * (0.6 + 0.4 * shadow) * 255.0).Clamp(0.0f, 255.0f);
             }
         }
     }
@@ -101,7 +127,7 @@ public sealed class LcdScreen : IDisposable
             throw new ArgumentNullException(nameof(frameBuffer));
 
         var frameBufferHash = ComputeFrameBufferHash(frameBuffer);
-        if (frameBufferHash == m_previousFrameBufferHash)
+        if (!m_forceRefresh && frameBufferHash == m_previousFrameBufferHash)
             return false; // Nothing to do - No change in frame data.
 
         using var locked = Display.Lock();
@@ -114,6 +140,7 @@ public sealed class LcdScreen : IDisposable
             RenderSimple(frameBuffer, destPtr, destStride);
 
         m_previousFrameBufferHash = frameBufferHash;
+        m_forceRefresh = false;
         return true; // Frame data changed.
     }
 
@@ -160,6 +187,7 @@ public sealed class LcdScreen : IDisposable
     /// </summary>
     private unsafe void RenderWithLcdEffects(byte[] frameBuffer, byte* destPtr, int destStride)
     {
+        var useRedBoost = Mode == GameBoyMode.Dmg;
         fixed (byte* srcPtr = frameBuffer)
         {
             for (var y = 0; y < m_sourceHeight; y++)
@@ -178,7 +206,7 @@ public sealed class LcdScreen : IDisposable
                     var b = src[2] * m_inv255.X;
 
                     // Precomputed red boost (top/bottom/left/right tinge).
-                    var redBoost = m_redBoostPerPixel[redBoostRowOffset + x];
+                    var redBoost = useRedBoost ? m_redBoostPerPixel[redBoostRowOffset + x] : 0.0f;
                     r *= 1.0f + m_redBoostMult.X * redBoost;
                     g *= 1.0f + m_redBoostMult.Y * redBoost;
 

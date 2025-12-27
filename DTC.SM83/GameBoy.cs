@@ -70,7 +70,10 @@ public sealed class GameBoy : IDisposable
         Joypad = new Joypad();
         m_audioSink = new SoundDevice(44100);
         CreateHardware();
-        m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
+        m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight)
+        {
+            Mode = EffectiveMode
+        };
 
         m_clockSync = new ClockSync(GetEffectiveCpuHz, () => (long)(m_bus?.CpuClockTicks ?? 0), ResetBusClock);
 
@@ -496,6 +499,8 @@ public sealed class GameBoy : IDisposable
     {
         EffectiveMode = DetermineEffectiveMode(cartridge, m_requestedMode);
         m_bus?.SetMode(EffectiveMode);
+        if (m_screen != null)
+            m_screen.Mode = EffectiveMode;
     }
 
     private static GameBoyMode DetermineEffectiveMode(Cartridge cartridge, GameBoyMode requestedMode)
