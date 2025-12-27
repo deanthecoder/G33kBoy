@@ -24,13 +24,6 @@ public class VramDevice : IMemDevice
     public ushort FromAddr => 0x8000;
     public ushort ToAddr => 0x9FFF;
 
-    public byte CurrentBank => m_currentBank;
-
-    public void SetMode(GameBoyMode mode)
-    {
-        m_currentBank = 0;
-    }
-
     public void SetCurrentBank(byte bank) =>
         m_currentBank = (byte)(bank & 0x01);
 
@@ -46,7 +39,7 @@ public class VramDevice : IMemDevice
         return (bank & 0x01) == 0 ? m_bank0[idx] : m_bank1[idx];
     }
 
-    public void WriteBanked(ushort addr, byte bank, byte value)
+    private void WriteBanked(ushort addr, byte bank, byte value)
     {
         var idx = addr - FromAddr;
         if ((bank & 0x01) == 0)

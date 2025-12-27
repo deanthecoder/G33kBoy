@@ -179,10 +179,10 @@ public sealed class Cartridge
         OldLicenseeCode = RomData[0x014B];
 
         RomBankCount = CalculateRomBankCount(RomSizeCode);
-        RomSizeBytes = CalculateRomSizeBytes(RomSizeCode, RomData.Length);
+        m_romSizeBytes = CalculateRomSizeBytes(RomSizeCode, RomData.Length);
 
         RamBankCount = CalculateRamBankCount(RamSizeCode);
-        RamSizeBytes = CalculateRamSizeBytes(RamSizeCode);
+        m_ramSizeBytes = CalculateRamSizeBytes(RamSizeCode);
     }
 
     public override string ToString()
@@ -194,8 +194,8 @@ public sealed class Cartridge
         return $"Title: {Title}\n" +
                $"Publisher: {licensee}\n" +
                $"Type: {CartridgeType}\n" +
-               $"ROM: {RomSizeBytes / 1024}KB\n" +
-               $"RAM: {RamSizeBytes / 1024}KB";
+               $"ROM: {m_romSizeBytes / 1024}KB\n" +
+               $"RAM: {m_ramSizeBytes / 1024}KB";
     }
 
     /// <summary>
@@ -246,7 +246,7 @@ public sealed class Cartridge
     /// <summary>
     /// Total ROM size in bytes reported by the header (falls back to actual ROM length if header is unknown).
     /// </summary>
-    public int RomSizeBytes { get; }
+    private readonly int m_romSizeBytes;
 
     /// <summary>
     /// Number of 8 KiB external RAM banks reported by the header.
@@ -256,7 +256,7 @@ public sealed class Cartridge
     /// <summary>
     /// Total external RAM size in bytes reported by the header.
     /// </summary>
-    public int RamSizeBytes { get; }
+    private readonly int m_ramSizeBytes;
 
     /// <summary>
     /// True if the cartridge advertises any CGB support.

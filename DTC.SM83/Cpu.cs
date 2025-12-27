@@ -23,7 +23,6 @@ public class Cpu
     private string m_instructionState;
     private byte m_fetchedOpcode;
     private readonly List<ICpuDebugger> m_debuggers = new();
-    private ushort m_currentInstructionAddress;
     private bool m_isStopped;
     private Joypad.JoypadButtons m_stopJoypadState;
 
@@ -83,7 +82,7 @@ public class Cpu
     /// <summary>
     /// The address of the instruction currently being executed.
     /// </summary>
-    public ushort CurrentInstructionAddress => m_currentInstructionAddress;
+    public ushort CurrentInstructionAddress { get; private set; }
 
     public Cpu(Bus bus)
     {
@@ -124,7 +123,7 @@ public class Cpu
             }
         }
 
-        m_currentInstructionAddress = (ushort)(Reg.PC - 1);
+        CurrentInstructionAddress = (ushort)(Reg.PC - 1);
         var isDebugMode = InstructionLogger.IsEnabled;
 #if DEBUG
         if (!IsHalted)
@@ -146,7 +145,7 @@ public class Cpu
 #endif
         if (!IsHalted)
         {
-            NotifyBeforeInstruction(m_currentInstructionAddress, m_fetchedOpcode);
+            NotifyBeforeInstruction(CurrentInstructionAddress, m_fetchedOpcode);
 
             try
             {

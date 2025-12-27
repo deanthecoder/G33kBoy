@@ -30,12 +30,8 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly InterruptDevice m_interruptDevice;
     private readonly HramDevice m_hramDevice;
     private readonly OamDevice m_oam;
-    private readonly VramDevice m_vram;
-    private readonly WorkRamDevice m_wram;
-    private readonly Hdma m_hdma;
     private readonly JoypadDevice m_joypadDevice;
-    private bool m_isDoubleSpeed;
-    private GameBoyMode m_mode = GameBoyMode.Dmg;
+    private CartridgeRamDevice m_cartridgeRam;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
@@ -44,13 +40,15 @@ public sealed class Bus : IMemDevice, IDisposable
     public PPU PPU { get; }
     public ApuDevice APU { get; }
     public Dma Dma { get; }
-    public Hdma Hdma => m_hdma;
-    public VramDevice Vram => m_vram;
-    public WorkRamDevice WorkRam => m_wram;
-    public CartridgeRamDevice CartridgeRam { get; private set; }
+    public Hdma Hdma { get; }
+
+    public VramDevice Vram { get; }
+
+    public WorkRamDevice WorkRam { get; }
+
     public CartridgeRomDevice CartridgeRom { get; private set; }
-    public GameBoyMode Mode => m_mode;
-    public bool IsDoubleSpeed => m_isDoubleSpeed;
+    public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
+    public bool IsDoubleSpeed { get; private set; }
 
     private IMemoryBankController m_memoryBankController;
 
@@ -107,16 +105,16 @@ public sealed class Bus : IMemDevice, IDisposable
             BootRom = new BootRom();
 
             // V(ideo)RAM (0x8000 - 0x9FFF)
-            m_vram = new VramDevice();
-            vram = m_vram;
-            Attach(m_vram);
+            Vram = new VramDevice();
+            vram = Vram;
+            Attach(Vram);
             
             // Ram bank 0 (0xC000 - 0xDFFF)
-            m_wram = new WorkRamDevice();
-            Attach(m_wram);
+            WorkRam = new WorkRamDevice();
+            Attach(WorkRam);
             
             // Echo of WRAM (0xE000 - 0xFDFF)
-            Attach(new EchoRamDevice(m_wram));
+            Attach(new EchoRamDevice(WorkRam));
 
             // OAM(/Sprites) (0xFE00 - 0xFE9F)
             m_oam = new OamDevice();
@@ -163,28 +161,36 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             // Pixel Processing Unit
-            m_hdma = new Hdma(this);
+            Hdma = new Hdma(this);
             PPU = new PPU(m_ioDevice, vram, m_interruptDevice, m_oam!);
-            PPU.HBlankStarted += () => m_hdma?.OnHBlank();
+            PPU.HBlankStarted += () => Hdma?.OnHBlank();
         }
     }
 
     public void SetMode(GameBoyMode mode)
     {
-        if (m_mode == mode)
+        if (Mode == mode)
             return;
-        m_mode = mode;
-        m_isDoubleSpeed = false;
+        Mode = mode;
+        IsDoubleSpeed = false;
         BootRom?.SetMode(mode);
         m_ioDevice?.SetMode(mode);
-        m_vram?.SetMode(mode);
-        m_wram?.SetMode(mode);
+        VramDevice tempQualifier = Vram;
+        if (tempQualifier != null)
+        {
+            tempQualifier.SetCurrentBank(0);
+        }
+        WorkRamDevice tempQualifier1 = WorkRam;
+        if (tempQualifier1 != null)
+        {
+            tempQualifier1.SetCurrentBank(1);
+        }
         PPU?.SetMode(mode);
     }
 
     public void SetDoubleSpeed(bool isDoubleSpeed)
     {
-        m_isDoubleSpeed = isDoubleSpeed;
+        IsDoubleSpeed = isDoubleSpeed;
     }
 
     public Joypad.JoypadButtons GetJoypadButtons() =>
@@ -232,9 +238,9 @@ public sealed class Bus : IMemDevice, IDisposable
         CartridgeRom = new CartridgeRomDevice(m_memoryBankController);
         Attach(CartridgeRom);
 
-        CartridgeRam = m_memoryBankController.HasRam ? new CartridgeRamDevice(m_memoryBankController) : null;
-        if (CartridgeRam != null)
-            Attach(CartridgeRam);
+        m_cartridgeRam = m_memoryBankController.HasRam ? new CartridgeRamDevice(m_memoryBankController) : null;
+        if (m_cartridgeRam != null)
+            Attach(m_cartridgeRam);
 
         BootRom?.PrimeCartridgeData(cartridge.RomData);
 
@@ -317,7 +323,7 @@ public sealed class Bus : IMemDevice, IDisposable
     public void AdvanceM()
     {
         const ulong cpuTicksPerM = 4;
-        var masterTicksPerM = m_isDoubleSpeed ? 2UL : 4UL;
+        var masterTicksPerM = IsDoubleSpeed ? 2UL : 4UL;
 
         ClockTicks += masterTicksPerM;
         CpuClockTicks += cpuTicksPerM;

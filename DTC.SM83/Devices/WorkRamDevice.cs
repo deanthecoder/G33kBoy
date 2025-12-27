@@ -24,13 +24,6 @@ public class WorkRamDevice : IMemDevice
     public ushort FromAddr => 0xC000;
     public ushort ToAddr => 0xDFFF;
 
-    public byte CurrentBank => m_currentBank;
-
-    public void SetMode(GameBoyMode mode)
-    {
-        m_currentBank = 1;
-    }
-
     public void SetCurrentBank(byte bank)
     {
         var normalized = (byte)(bank & 0x07);

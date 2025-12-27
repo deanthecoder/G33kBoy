@@ -128,12 +128,12 @@ public class ClockSync
     private void UpdateTicksPerSecondIfNeeded(long currentTicks)
     {
         var currentTicksPerSecond = m_emulatedTicksPerSecond();
-        if (currentTicksPerSecond == m_lastEmulatedTicksPerSecond)
+        if (Math.Abs(currentTicksPerSecond - m_lastEmulatedTicksPerSecond) < 0.001f)
             return;
 
         lock (m_lock)
         {
-            if (currentTicksPerSecond == m_lastEmulatedTicksPerSecond)
+            if (Math.Abs(currentTicksPerSecond - m_lastEmulatedTicksPerSecond) < 0.001f)
                 return;
             m_lastEmulatedTicksPerSecond = currentTicksPerSecond;
             ResetTimingLocked(currentTicks);

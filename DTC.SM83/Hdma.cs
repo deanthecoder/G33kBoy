@@ -81,8 +81,6 @@ public sealed class Hdma
         if (m_remainingBlocks == 0 || !m_hblankMode)
             return;
         TransferBlock();
-        if (m_remainingBlocks == 0)
-            return;
     }
 
     private void TransferBlock()

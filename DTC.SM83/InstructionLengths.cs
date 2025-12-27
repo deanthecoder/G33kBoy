@@ -13,7 +13,7 @@ namespace DTC.SM83;
 
 public static class InstructionLengths
 {
-    public static readonly byte[] Unprefixed =
+    private static readonly byte[] Unprefixed =
     [
         1, 3, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 1, 1, 2, 1,
         2, 3, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 2, 1,
@@ -33,7 +33,7 @@ public static class InstructionLengths
         2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 3, 1, 1, 1, 2, 1,
     ];
 
-    public static readonly byte[] Prefixed =
+    private static readonly byte[] Prefixed =
     [
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
