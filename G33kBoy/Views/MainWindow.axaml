@@ -126,12 +126,6 @@
                             </MenuItem>
                         </MenuItem>
                         <Separator />
-                        <MenuItem Header="Auto-fire (C)" Command="{Binding ToggleAutoFire}">
-                            <MenuItem.Icon>
-                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsAutoFireEnabled}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator />
                         <MenuItem Header="Reset Device" Command="{Binding ResetDevice}"
                                   InputGesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
                     </MenuItem>

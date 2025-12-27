@@ -7,7 +7,11 @@
 # G33kBoy
 A cross-platform Avalonia-based Game Boy emulator. (Work In Progress)
 
+## Classic Game Boy LCD
 ![Application screenshot](img/app.png)
+
+## Game Boy Color LCD
+![Application screenshot](img/GBC.png)
 
 ## Purpose
 G33kBoy exists so I can learn Game Boy hardware properly, starting from a clean SM83 CPU implementation.  
@@ -24,7 +28,8 @@ Global key hooks translate the following keys into the Game Boy joypad:
   | Arrow keys | D-pad |
   | `Z` | B |
   | `X` | A |
-  | `C` | Auto-fire A |
+  | `C` | Auto-fire B |
+  | `V` | Auto-fire A |
   | Space | Select |
   | Enter/Return | Start |
   </div>
@@ -33,9 +38,9 @@ Global key hooks translate the following keys into the Game Boy joypad:
 </div>
 
 ## Emulator features
-- **ROM loading from ZIPs** – Load standard `.gb` ROMs directly, or from a `.zip` archive containing a Game Boy ROM.
+- **ROM loading from ZIPs** – Load standard `.gb` and `.gbc` ROMs directly, or from a `.zip` archive containing a Game Boy ROM.
 - **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
-- **On-demand auto-fire** – Enable hardware auto-fire (Hardware → Auto-fire) to have `C` pulse the A button.
+- **On-demand auto-fire** – Enable hardware auto-fire of A and B buttons.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
 - **Original green display** – Toggle a classic four-shade green palette to mimic the original DMG screen.
 - **CGB mode selection** – Choose DMG or CGB mode for dual-compatible cartridges.
@@ -67,8 +72,8 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - ✔ Zipped ROM loading
 - ✔ Audio
 - ✔ Cartridge MBCs
-- ☐ Gameplay 'roll back'
 - ✔ Game Boy Color support (no double-speed yet)
+- ☐ Gameplay 'roll back'
 
 ## Highlights
 - **SM83 accuracy** – `DTC.SM83` implements the Game Boy CPU, including interrupt handling, prefixed instructions, memory bus, PPU timing, and a mnemonic disassembler to inspect opcode streams.

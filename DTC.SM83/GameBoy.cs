@@ -113,7 +113,6 @@ public sealed class GameBoy : IDisposable
         ShutdownCpuThread();
         RecreateHardware();
         m_clockSync.Reset();
-        SetAutoFireEnabled(false); // Reset auto-fire on cartridge change.
 
         m_cartridgeKey = cartridgeKey;
         m_loadedCartridge = cartridge;
@@ -267,9 +266,6 @@ public sealed class GameBoy : IDisposable
             ppu.LcdEmulationEnabled = isEnabled;
     }
 
-    public void SetAutoFireEnabled(bool isEnabled) =>
-        Joypad.AutoFireEnabled = isEnabled;
-    
     public void SetSoundChannelEnabled(int channel, bool isEnabled)
     {
         if (channel is < 1 or > 4)

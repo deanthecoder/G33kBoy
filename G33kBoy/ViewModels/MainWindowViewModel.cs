@@ -26,7 +26,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private ClockSync.Speed m_emulationSpeed;
     private string m_windowTitle;
-    private bool m_isAutoFireEnabled;
     private bool m_isSoundChannel1Enabled = true;
     private bool m_isSoundChannel2Enabled = true;
     private bool m_isSoundChannel3Enabled = true;
@@ -113,19 +112,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         }
     }
 
-    public bool IsAutoFireEnabled
-    {
-        get => m_isAutoFireEnabled;
-        private set
-        {
-            if (!SetField(ref m_isAutoFireEnabled, value))
-                return;
-
-            Settings.IsAutoFireEnabled = value;
-            ApplyAutoFireSetting();
-        }
-    }
-
     public bool IsDmgModeRequested => Settings.RequestedHardwareMode == GameBoyMode.Dmg;
 
     public bool IsCgbModeRequested => Settings.RequestedHardwareMode == GameBoyMode.Cgb;
@@ -156,11 +142,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
                 GameBoy.ClearAllGameData();
                 ResetDevice();
             });
-    }
-
-    public void ToggleAutoFire()
-    {
-        IsAutoFireEnabled = !IsAutoFireEnabled;
     }
 
     public void ToggleSoundChannel1()
@@ -202,7 +183,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
                 WindowTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : $"G33kBoy - {title}";
                 ApplyDisplayVisibilitySettings();
         });
-        IsAutoFireEnabled = Settings.IsAutoFireEnabled;
         IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
         ApplyDisplayVisibilitySettings();
         ApplySoundEnabledSetting();
@@ -336,15 +316,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
     }
 
-    private void ApplyAutoFireSetting() =>
-        GameBoy.SetAutoFireEnabled(IsAutoFireEnabled);
-
     private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Settings.IsSoundEnabled))
             ApplySoundEnabledSetting();
-        else if (e.PropertyName == nameof(Settings.IsAutoFireEnabled))
-            IsAutoFireEnabled = Settings.IsAutoFireEnabled;
         else if (e.PropertyName == nameof(Settings.IsCpuHistoryTracked))
             IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
         else if (e.PropertyName == nameof(Settings.RequestedHardwareMode))
@@ -369,7 +344,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             Mru.Add(romFile);
 
         GameBoy.PowerOnAsync(romFile);
-        ApplyAutoFireSetting(); // PowerOnAsync resets auto-fire to its default state.
         Settings.LastRomFile = romFile;
     }
 

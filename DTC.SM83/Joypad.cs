@@ -27,8 +27,7 @@ public sealed class Joypad : IDisposable
     private JoypadButtons m_physicalButtons;
     private JoypadButtons m_pressedButtons;
     private bool m_handlePressEvents = true;
-    private bool m_autoFireEnabled;
-    private bool m_autoFireHeld;
+    private JoypadButtons m_autoFireHeldButtons;
     private bool m_autoFirePulseOn;
 
     public Joypad()
@@ -59,30 +58,6 @@ public sealed class Joypad : IDisposable
         }
     }
 
-    /// <summary>
-    /// Enables/disables the auto-fire feature.
-    /// </summary>
-    public bool AutoFireEnabled
-    {
-        get
-        {
-            lock (m_stateLock)
-                return m_autoFireEnabled;
-        }
-        set
-        {
-            lock (m_stateLock)
-            {
-                if (m_autoFireEnabled == value)
-                    return;
-
-                m_autoFireEnabled = value;
-                if (!value)
-                    ResetAutoFireStateInternal();
-            }
-        }
-    }
-
     public JoypadButtons GetPressedButtons()
     {
         lock (m_stateLock)
@@ -99,8 +74,13 @@ public sealed class Joypad : IDisposable
 
         if (keyCode == KeyCode.VcC)
         {
-            if (AutoFireEnabled)
-                SetAutoFireHeld(isPressed);
+            SetAutoFireHeld(JoypadButtons.B, isPressed);
+            return;
+        }
+
+        if (keyCode == KeyCode.VcV)
+        {
+            SetAutoFireHeld(JoypadButtons.A, isPressed);
             return;
         }
 
@@ -198,26 +178,36 @@ public sealed class Joypad : IDisposable
             m_joypad.HandlePressEvents = m_oldHandlePressEvents;
     }
 
-    private void SetAutoFireHeld(bool isPressed)
+    private void SetAutoFireHeld(JoypadButtons button, bool isPressed)
     {
         lock (m_stateLock)
         {
-            if (m_autoFireHeld == isPressed)
+            var wasHeld = (m_autoFireHeldButtons & button) != 0;
+            if (wasHeld == isPressed)
                 return;
 
-            m_autoFireHeld = isPressed;
-
+            var hadAnyHeld = m_autoFireHeldButtons != JoypadButtons.None;
             if (isPressed)
+                m_autoFireHeldButtons |= button;
+            else
+                m_autoFireHeldButtons &= ~button;
+
+            if (m_autoFireHeldButtons == JoypadButtons.None)
+            {
+                ResetAutoFireStateInternal();
+                RecomputeButtons();
+                return;
+            }
+
+            if (!hadAnyHeld)
             {
                 m_autoFirePulseOn = true; // Press immediately on engage.
                 RecomputeButtons();
                 m_autoFireTimer.Change(AutoFireIntervalMs, AutoFireIntervalMs);
+                return;
             }
-            else
-            {
-                ResetAutoFireStateInternal();
-                RecomputeButtons();
-            }
+
+            RecomputeButtons();
         }
     }
 
@@ -225,7 +215,7 @@ public sealed class Joypad : IDisposable
     {
         lock (m_stateLock)
         {
-            if (!m_autoFireEnabled || !m_autoFireHeld)
+            if (m_autoFireHeldButtons == JoypadButtons.None)
             {
                 ResetAutoFireStateInternal();
                 RecomputeButtons();
@@ -240,15 +230,15 @@ public sealed class Joypad : IDisposable
     private void RecomputeButtons()
     {
         var combined = m_physicalButtons;
-        if (m_autoFireEnabled && m_autoFireHeld && m_autoFirePulseOn)
-            combined |= JoypadButtons.A;
+        if (m_autoFireHeldButtons != JoypadButtons.None && m_autoFirePulseOn)
+            combined |= m_autoFireHeldButtons;
 
         m_pressedButtons = combined;
     }
 
     private void ResetAutoFireStateInternal()
     {
-        m_autoFireHeld = false;
+        m_autoFireHeldButtons = JoypadButtons.None;
         m_autoFirePulseOn = false;
         m_autoFireTimer?.Change(Timeout.Infinite, Timeout.Infinite);
     }
