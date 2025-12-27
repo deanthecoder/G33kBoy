@@ -119,7 +119,12 @@ public static class Instructions
         ),
         new Instruction(
             "STOP nn", // 0x10 nn
-            static _ => throw new NotImplementedException("Unsupported instruction - STOP")),
+            static cpu =>
+            {
+                cpu.Fetch8(); // Consume padding byte.
+                if (!cpu.Bus.TryHandleSpeedSwitch())
+                    cpu.EnterStop();
+            }),
         new Instruction(
             "LD DE,nn", // 0x11 nn nn
             static cpu =>

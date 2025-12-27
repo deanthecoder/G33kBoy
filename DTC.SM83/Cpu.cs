@@ -24,6 +24,8 @@ public class Cpu
     private byte m_fetchedOpcode;
     private readonly List<ICpuDebugger> m_debuggers = new();
     private ushort m_currentInstructionAddress;
+    private bool m_isStopped;
+    private Joypad.JoypadButtons m_stopJoypadState;
 
 #if DEBUG
     private int m_nopStreak;
@@ -110,6 +112,18 @@ public class Cpu
 
     public void Step()
     {
+        if (m_isStopped)
+        {
+            var currentState = Bus.GetJoypadButtons();
+            if (currentState != m_stopJoypadState)
+                m_isStopped = false;
+            else
+            {
+                Thread.Sleep(1);
+                return;
+            }
+        }
+
         m_currentInstructionAddress = (ushort)(Reg.PC - 1);
         var isDebugMode = InstructionLogger.IsEnabled;
 #if DEBUG
@@ -346,6 +360,13 @@ public class Cpu
     {
         Write8(addr, (byte)(value & 0xFF));
         Write8((ushort)(addr + 1), (byte)(value >> 8));   
+    }
+
+    public void EnterStop()
+    {
+        m_isStopped = true;
+        m_stopJoypadState = Bus.GetJoypadButtons();
+        Bus.ResetDivider();
     }
 
     [Conditional("DEBUG")]

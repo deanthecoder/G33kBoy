@@ -38,6 +38,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - **On-demand auto-fire** – Enable hardware auto-fire (Hardware → Auto-fire) to have `C` pulse the A button.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
 - **Original green display** – Toggle a classic four-shade green palette to mimic the original DMG screen.
+- **CGB mode selection** – Choose DMG or CGB mode for dual-compatible cartridges.
 - **LCD emulation** – Optional high‑fidelity LCD simulation including pixel‑grid structure, sub‑pixel glow, grain, edge shadowing, and per‑pixel diffusion to closely mimic the look of the original DMG screen.
 - **Motion blur** – Blend frames together for a persistence-of-vision effect that smooths fast movement.
 - **Screenshot capture** – Save the current frame as a TGA screenshot.
@@ -67,7 +68,7 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - ✔ Audio
 - ✔ Cartridge MBCs
 - ☐ Gameplay 'roll back'
-- ☐ Game Boy Color support
+- ✔ Game Boy Color support (no double-speed yet)
 
 ## Highlights
 - **SM83 accuracy** – `DTC.SM83` implements the Game Boy CPU, including interrupt handling, prefixed instructions, memory bus, PPU timing, and a mnemonic disassembler to inspect opcode streams.

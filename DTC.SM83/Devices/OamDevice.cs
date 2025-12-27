@@ -37,6 +37,7 @@ public class OamDevice : RamDeviceBase
     /// <remarks>
     /// Layout matches DMG OAM: Y, X, Tile, Attr. Stored X is screenX + 8; stored Y is screenY + 16.
     /// Attr bits (DMG): bit7=Priority (1=behind BG), bit6=Y flip, bit5=X flip, bit4=Palette (0=OBP0, 1=OBP1).
+    /// Attr bits (CGB): bit7=Priority, bit6=Y flip, bit5=X flip, bit4=DMG palette, bit3=VRAM bank, bits0-2=CGB palette.
     /// </remarks>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct OamEntry
@@ -80,5 +81,15 @@ public class OamDevice : RamDeviceBase
         /// True to use OBP1; false uses OBP0. (Object Palette)
         /// </summary>
         public bool UseObp1 => (Attr & 0x10) != 0;
+
+        /// <summary>
+        /// True when the sprite uses VRAM bank 1 (CGB mode).
+        /// </summary>
+        public bool UseCgbBank => (Attr & 0x08) != 0;
+
+        /// <summary>
+        /// CGB palette index (0-7).
+        /// </summary>
+        public byte CgbPaletteIndex => (byte)(Attr & 0x07);
     }
 }

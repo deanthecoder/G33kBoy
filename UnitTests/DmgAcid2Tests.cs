@@ -20,34 +20,37 @@ public class DmgAcid2Tests : TestsBase
 {
     private const ulong OneSecondTicks = 4_194_304; // 4.194304 MHz DMG clock.
 
-    private static FileInfo RomFile =>
-        ProjectDir.GetFile("../external/dmg-acid2.gb");
+    private static (FileInfo RomFile, string ExpectedHash)[] RomFiles =>
+        [
+            (ProjectDir.GetFile("../external/dmg-acid2.gb"), "0EA3EBF98D12520CA936DB5D5C7CB77A"),
+            (ProjectDir.GetFile("../external/cgb-acid2.gbc"), "1D35E9FD4083C7C7ECEB48E86193E1B7")
+        ];
 
-    [Test]
-    public void Run()
+    [Test, Sequential]
+    public void Run([ValueSource(nameof(RomFiles))] (FileInfo RomFile, string ExpectedHash) romFileAndHash)
     {
-        var romFile = RomFile;
-        Assert.That(romFile, Does.Exist, $"Missing dmg-acid2 ROM at {romFile.FullName}");
+        Assert.That(romFileAndHash.RomFile, Does.Exist, $"Missing dmg-acid2 ROM at {romFileAndHash.RomFile.FullName}");
 
+        var cartridge = new Cartridge(romFileAndHash.RomFile.ReadAllBytes());
         using var bus = new Bus(0x10000, Bus.BusType.GameBoy);
+        bus.SetMode(cartridge.IsCgbCapable ? GameBoyMode.Cgb : GameBoyMode.Dmg);
         var cpu = new Cpu(bus);
-        cpu.LoadRom(new Cartridge(romFile.ReadAllBytes()));
+        cpu.LoadRom(cartridge);
         cpu.SkipBootRom();
 
         string bufferHash = null;
         bus.PPU.FrameRendered += (_, frameBuffer) => bufferHash = frameBuffer.GetMd5Hex();
 
-        const string expectedHash = "0EA3EBF98D12520CA936DB5D5C7CB77A";
-        while (bufferHash != expectedHash && bus.ClockTicks < OneSecondTicks)
+        while (bufferHash != romFileAndHash.ExpectedHash && bus.ClockTicks < OneSecondTicks)
             cpu.Step();
 
         Assert.That(bufferHash, Is.Not.Null, $"No frame rendered within {OneSecondTicks} T ticks.");
-        if (bufferHash != expectedHash)
+        if (bufferHash != romFileAndHash.ExpectedHash)
         {
             bus.PPU.Dump(Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
                 .ToDir()
                 .GetFile("acid-test-fail.tga"));
         }
-        Assert.That(bufferHash, Is.EqualTo(expectedHash));
+        Assert.That(bufferHash, Is.EqualTo(romFileAndHash.ExpectedHash));
     }
 }

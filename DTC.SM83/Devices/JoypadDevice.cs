@@ -24,6 +24,9 @@ public sealed class JoypadDevice : IMemDevice
 
     public JoypadDevice(Joypad joypad) =>
         m_joypad = joypad;
+
+    public Joypad.JoypadButtons GetPressedButtons() =>
+        m_joypad?.GetPressedButtons() ?? Joypad.JoypadButtons.None;
     
     public byte Read8(ushort addr)
     {

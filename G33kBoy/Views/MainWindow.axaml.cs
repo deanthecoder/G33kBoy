@@ -116,6 +116,7 @@ public partial class MainWindow : Window
     {
         var extension = Path.GetExtension(path);
         return extension.Equals(".gb", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".gbc", StringComparison.OrdinalIgnoreCase) ||
                extension.Equals(".zip", StringComparison.OrdinalIgnoreCase);
     }
 

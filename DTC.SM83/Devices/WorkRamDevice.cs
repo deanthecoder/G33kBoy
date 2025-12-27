@@ -12,11 +12,56 @@
 namespace DTC.SM83.Devices;
 
 /// <summary>
-/// Represents the working RAM device (0xC000 - 0xDFFF).
+/// Represents the working RAM device (0xC000 - 0xDFFF) with optional CGB banking.
 /// </summary>
-public class WorkRamDevice : RamDeviceBase
+public class WorkRamDevice : IMemDevice
 {
-    public WorkRamDevice() : base(0xC000, 0xDFFF, isUsable: true)
+    private const int BankSize = 0x1000;
+    private readonly byte[] m_fixedBank = new byte[BankSize];
+    private readonly byte[] m_banked = new byte[BankSize * 7];
+    private byte m_currentBank = 1;
+
+    public ushort FromAddr => 0xC000;
+    public ushort ToAddr => 0xDFFF;
+
+    public byte CurrentBank => m_currentBank;
+
+    public void SetMode(GameBoyMode mode)
     {
+        m_currentBank = 1;
     }
+
+    public void SetCurrentBank(byte bank)
+    {
+        var normalized = (byte)(bank & 0x07);
+        if (normalized == 0)
+            normalized = 1;
+        m_currentBank = normalized;
+    }
+
+    public byte Read8(ushort addr)
+    {
+        if (addr < 0xD000)
+            return m_fixedBank[addr - 0xC000];
+
+        var offset = addr - 0xD000;
+        var bankOffset = (m_currentBank - 1) * BankSize;
+        return m_banked[bankOffset + offset];
+    }
+
+    public void Write8(ushort addr, byte value)
+    {
+        if (addr < 0xD000)
+        {
+            m_fixedBank[addr - 0xC000] = value;
+            return;
+        }
+
+        var offset = addr - 0xD000;
+        var bankOffset = (m_currentBank - 1) * BankSize;
+        m_banked[bankOffset + offset] = value;
+    }
+
+    public bool Contains(ushort addr) =>
+        addr >= FromAddr && addr <= ToAddr;
 }

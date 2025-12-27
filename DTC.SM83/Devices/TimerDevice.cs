@@ -143,8 +143,7 @@ public class TimerDevice : IMemDevice
         {
             // DIV
             case 0xFF04:
-                DIV = 0;
-                m_divCycleCount = 0;
+                ResetDivider();
                 break;
             
             // TIMA
@@ -162,6 +161,15 @@ public class TimerDevice : IMemDevice
                 TAC = (byte) (value | 0xF8);
                 break;
         }
+    }
+
+    public void ResetDivider()
+    {
+        DIV = 0;
+        m_divCycleCount = 0;
+        m_timaCycleCount = 0;
+        m_pendingReload = false;
+        m_reloadDelayT = 0;
     }
 
     /// <summary>

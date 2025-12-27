@@ -16,6 +16,11 @@ namespace DTC.SM83.Devices;
 public interface ILcd
 {
     /// <summary>
+    /// True when the hardware is running in CGB mode.
+    /// </summary>
+    GameBoyMode Mode { get; }
+
+    /// <summary>
     /// LCD Control (LCDC) - 0xFF40
     /// </summary>
     /// <remarks>
@@ -100,4 +105,19 @@ public interface ILcd
     /// WX (Window X Position) - 0xFF4B
     /// </summary>
     byte WX { get; }
+
+    /// <summary>
+    /// OPRI (Object Priority Mode) - 0xFF6C (CGB only)
+    /// </summary>
+    byte OPRI { get; }
+
+    /// <summary>
+    /// Read a 15-bit CGB background palette color.
+    /// </summary>
+    ushort ReadCgbBgPaletteColor(int paletteIndex, int colorIndex);
+
+    /// <summary>
+    /// Read a 15-bit CGB object palette color.
+    /// </summary>
+    ushort ReadCgbObjPaletteColor(int paletteIndex, int colorIndex);
 }

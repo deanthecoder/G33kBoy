@@ -126,6 +126,22 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         }
     }
 
+    public bool IsDmgModeRequested => Settings.RequestedHardwareMode == GameBoyMode.Dmg;
+
+    public bool IsCgbModeRequested => Settings.RequestedHardwareMode == GameBoyMode.Cgb;
+
+    public void SelectDmgMode()
+    {
+        Settings.RequestedHardwareMode = GameBoyMode.Dmg;
+        GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
+    }
+
+    public void SelectCgbMode()
+    {
+        Settings.RequestedHardwareMode = GameBoyMode.Cgb;
+        GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
+    }
+
     public void ClearAllGameData()
     {
         DialogService.Instance.Warn(
@@ -178,6 +194,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
         GameBoy = new GameBoy(Settings.Instance);
         Settings.PropertyChanged += OnSettingsPropertyChanged;
+        GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
         GameBoy.RomLoaded += (_, title) =>
             Dispatcher.UIThread.Post(() =>
             {
@@ -195,7 +212,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void LoadGameRom()
     {
         var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
-        var command = new FileOpenCommand("Load Game Boy ROM", "Game Boy ROMs", ["*.gb", "*.zip"]);
+        var command = new FileOpenCommand("Load Game Boy ROM", "Game Boy ROMs", ["*.gb", "*.gbc", "*.zip"]);
         command.FileSelected += (_, info) =>
         {
             try
@@ -330,6 +347,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             IsAutoFireEnabled = Settings.IsAutoFireEnabled;
         else if (e.PropertyName == nameof(Settings.IsCpuHistoryTracked))
             IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
+        else if (e.PropertyName == nameof(Settings.RequestedHardwareMode))
+        {
+            GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
+            OnPropertyChanged(nameof(IsDmgModeRequested));
+            OnPropertyChanged(nameof(IsCgbModeRequested));
+        }
     }
 
     internal void LoadRomFile(FileInfo romFile, bool addToMru = true)

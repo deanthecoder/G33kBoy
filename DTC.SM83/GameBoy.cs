@@ -30,6 +30,7 @@ public sealed class GameBoy : IDisposable
     private readonly LcdScreen m_screen;
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private long m_lastFrameClockTicks;
+    private long m_lastFrameCpuTicks;
     private Bus m_bus;
     private Cpu m_cpu;
     private string m_cartridgeKey;
@@ -43,6 +44,7 @@ public sealed class GameBoy : IDisposable
     private bool m_isRunningAtNormalSpeed = true;
     private bool m_isCpuHistoryTracked;
     private double m_relativeSpeedRaw;
+    private GameBoyMode m_requestedMode = GameBoyMode.Cgb;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -52,6 +54,10 @@ public sealed class GameBoy : IDisposable
     public double RelativeSpeed => Math.Round(m_relativeSpeedRaw / 0.2) * 0.2;
 
     public Joypad Joypad { get; }
+
+    public GameBoyMode RequestedMode => m_requestedMode;
+
+    public GameBoyMode EffectiveMode { get; private set; } = GameBoyMode.Dmg;
 
     /// <summary>
     /// Debugging aid.
@@ -66,7 +72,7 @@ public sealed class GameBoy : IDisposable
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
 
-        m_clockSync = new ClockSync(Cpu.Hz, () => (long)(m_bus?.ClockTicks ?? 0), ResetBusClock);
+        m_clockSync = new ClockSync(GetEffectiveCpuHz, () => (long)(m_bus?.CpuClockTicks ?? 0), ResetBusClock);
 
         // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, () => Console.WriteLine("Memory write detected!")));
         // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, targetValue: 0x34, () => Console.WriteLine("Memory write detected!")));
@@ -108,6 +114,7 @@ public sealed class GameBoy : IDisposable
 
         m_cartridgeKey = cartridgeKey;
         m_loadedCartridge = cartridge;
+        ApplyHardwareMode(m_loadedCartridge);
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
 
@@ -157,7 +164,7 @@ public sealed class GameBoy : IDisposable
         using var archive = ZipFile.OpenRead(romFile.FullName);
         foreach (var entry in archive.Entries)
         {
-            if (!entry.Name.EndsWith(".gb", StringComparison.OrdinalIgnoreCase))
+            if (!entry.Name.EndsWith(".gb", StringComparison.OrdinalIgnoreCase) && !entry.Name.EndsWith(".gbc", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var buffer = new byte[(int)entry.Length];
@@ -173,13 +180,17 @@ public sealed class GameBoy : IDisposable
 
     private void OnFrameRendered(object sender, byte[] frameBuffer)
     {
-        // Calculate relative speed based on emulated CPU clock ticks
-        // GameBoy runs at ~59.7Hz, which is 70,224 ticks per frame at 4.19MHz
+        // Calculate relative speed based on emulated CPU clock ticks.
         var currentClockTicks = (long)(m_bus?.ClockTicks ?? 0);
-        var ticksDelta = currentClockTicks - m_lastFrameClockTicks;
+        var clockTicksDelta = currentClockTicks - m_lastFrameClockTicks;
         m_lastFrameClockTicks = currentClockTicks;
+        LogFrameTiming(clockTicksDelta);
 
-        if (ticksDelta > 0)
+        var currentCpuTicks = (long)(m_bus?.CpuClockTicks ?? 0);
+        var cpuTicksDelta = currentCpuTicks - m_lastFrameCpuTicks;
+        m_lastFrameCpuTicks = currentCpuTicks;
+
+        if (cpuTicksDelta > 0)
         {
             var elapsedSecs = m_frameStopwatch.Elapsed.TotalSeconds;
             m_frameStopwatch.Restart();
@@ -187,8 +198,8 @@ public sealed class GameBoy : IDisposable
             if (elapsedSecs > 0)
             {
                 // Calculate actual emulated Hz based on ticks executed vs real time elapsed
-                var emulatedHz = ticksDelta / elapsedSecs;
-                var speedPercentage = emulatedHz / Cpu.Hz;
+                var emulatedHz = cpuTicksDelta / elapsedSecs;
+                var speedPercentage = emulatedHz / GetEffectiveCpuHz();
 
                 // Apply exponential moving average filter to smooth out the value
                 m_relativeSpeedRaw = m_relativeSpeedRaw * 0.98 + speedPercentage * 0.02;
@@ -219,6 +230,15 @@ public sealed class GameBoy : IDisposable
         }
 
         m_clockSync.SetSpeed(speed);
+    }
+
+    public void SetRequestedMode(GameBoyMode mode)
+    {
+        if (m_requestedMode == mode)
+            return;
+        m_requestedMode = mode;
+        if (m_loadedCartridge != null)
+            ApplyHardwareMode(m_loadedCartridge);
     }
 
     public void SetBackgroundVisibility(bool isVisible)
@@ -428,6 +448,7 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_audioSink);
+        m_bus.SetMode(EffectiveMode);
         ApplySoundChannelSettings();
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
@@ -454,5 +475,35 @@ public sealed class GameBoy : IDisposable
     {
         m_bus?.ResetClock();
         return 0;
+    }
+
+    private double GetEffectiveCpuHz() =>
+        m_bus?.IsDoubleSpeed == true ? Cpu.Hz * 2.0 : Cpu.Hz;
+
+    [Conditional("DEBUG")]
+    private static void LogFrameTiming(long clockTicksDelta)
+    {
+        if (clockTicksDelta <= 0)
+            return;
+        const int expectedTicksPerFrame = 70224;
+        const int tolerance = 32;
+        if (Math.Abs(clockTicksDelta - expectedTicksPerFrame) > tolerance)
+            Logger.Instance.Info($"Frame timing drift: {clockTicksDelta} ticks (expected {expectedTicksPerFrame}).");
+    }
+
+
+    private void ApplyHardwareMode(Cartridge cartridge)
+    {
+        EffectiveMode = DetermineEffectiveMode(cartridge, m_requestedMode);
+        m_bus?.SetMode(EffectiveMode);
+    }
+
+    private static GameBoyMode DetermineEffectiveMode(Cartridge cartridge, GameBoyMode requestedMode)
+    {
+        if (cartridge.IsCgbOnly)
+            return GameBoyMode.Cgb;
+        if (!cartridge.IsCgbCapable)
+            return GameBoyMode.Dmg;
+        return requestedMode;
     }
 }

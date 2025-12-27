@@ -342,9 +342,6 @@ public sealed class Cartridge
 
     public (bool IsSupported, string Message) IsSupported()
     {
-        if (IsCgbOnly)
-            return (false, "CGB-only cartridges are not supported.");
-
         var isSupportedType = CartridgeType switch
         {
             CartridgeType.RomOnly or

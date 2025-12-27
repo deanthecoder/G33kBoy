@@ -30,6 +30,12 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly InterruptDevice m_interruptDevice;
     private readonly HramDevice m_hramDevice;
     private readonly OamDevice m_oam;
+    private readonly VramDevice m_vram;
+    private readonly WorkRamDevice m_wram;
+    private readonly Hdma m_hdma;
+    private readonly JoypadDevice m_joypadDevice;
+    private bool m_isDoubleSpeed;
+    private GameBoyMode m_mode = GameBoyMode.Dmg;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
@@ -38,14 +44,25 @@ public sealed class Bus : IMemDevice, IDisposable
     public PPU PPU { get; }
     public ApuDevice APU { get; }
     public Dma Dma { get; }
+    public Hdma Hdma => m_hdma;
+    public VramDevice Vram => m_vram;
+    public WorkRamDevice WorkRam => m_wram;
     public CartridgeRamDevice CartridgeRam { get; private set; }
     public CartridgeRomDevice CartridgeRom { get; private set; }
+    public GameBoyMode Mode => m_mode;
+    public bool IsDoubleSpeed => m_isDoubleSpeed;
+
     private IMemoryBankController m_memoryBankController;
 
     /// <summary>
-    /// The number of T cycles elapsed since boot. (4T = 1M)
+    /// Master clock ticks (PPU dots / DMG T-cycles) elapsed since boot.
     /// </summary>
     public ulong ClockTicks { get; private set; }
+
+    /// <summary>
+    /// CPU T-cycles elapsed since boot. (4T = 1M)
+    /// </summary>
+    public ulong CpuClockTicks { get; private set; }
 
     /// <summary>
     /// The type of bus to create.
@@ -90,15 +107,16 @@ public sealed class Bus : IMemDevice, IDisposable
             BootRom = new BootRom();
 
             // V(ideo)RAM (0x8000 - 0x9FFF)
-            vram = new VramDevice();
-            Attach(vram);
+            m_vram = new VramDevice();
+            vram = m_vram;
+            Attach(m_vram);
             
             // Ram bank 0 (0xC000 - 0xDFFF)
-            var wram = new WorkRamDevice();
-            Attach(wram);
+            m_wram = new WorkRamDevice();
+            Attach(m_wram);
             
             // Echo of WRAM (0xE000 - 0xFDFF)
-            Attach(new EchoRamDevice(wram));
+            Attach(new EchoRamDevice(m_wram));
 
             // OAM(/Sprites) (0xFE00 - 0xFE9F)
             m_oam = new OamDevice();
@@ -112,7 +130,8 @@ public sealed class Bus : IMemDevice, IDisposable
             Attach(m_ioDevice);
 
             // Joypad (0xFF00)
-            Attach(new JoypadDevice(joypad));
+            m_joypadDevice = new JoypadDevice(joypad);
+            Attach(m_joypadDevice);
             
             // APU
             APU = new ApuDevice(audioSink);
@@ -144,9 +163,38 @@ public sealed class Bus : IMemDevice, IDisposable
         if (busType == BusType.GameBoy)
         {
             // Pixel Processing Unit
+            m_hdma = new Hdma(this);
             PPU = new PPU(m_ioDevice, vram, m_interruptDevice, m_oam!);
+            PPU.HBlankStarted += () => m_hdma?.OnHBlank();
         }
     }
+
+    public void SetMode(GameBoyMode mode)
+    {
+        if (m_mode == mode)
+            return;
+        m_mode = mode;
+        m_isDoubleSpeed = false;
+        BootRom?.SetMode(mode);
+        m_ioDevice?.SetMode(mode);
+        m_vram?.SetMode(mode);
+        m_wram?.SetMode(mode);
+        PPU?.SetMode(mode);
+    }
+
+    public void SetDoubleSpeed(bool isDoubleSpeed)
+    {
+        m_isDoubleSpeed = isDoubleSpeed;
+    }
+
+    public Joypad.JoypadButtons GetJoypadButtons() =>
+        m_joypadDevice?.GetPressedButtons() ?? Joypad.JoypadButtons.None;
+
+    public void ResetDivider() =>
+        m_timer?.ResetDivider();
+
+    public bool TryHandleSpeedSwitch() =>
+        m_ioDevice?.TryHandleSpeedSwitch() == true;
 
     public void SetInstructionLogger(InstructionLogger instructionLogger)
     {
@@ -187,6 +235,8 @@ public sealed class Bus : IMemDevice, IDisposable
         CartridgeRam = m_memoryBankController.HasRam ? new CartridgeRamDevice(m_memoryBankController) : null;
         if (CartridgeRam != null)
             Attach(CartridgeRam);
+
+        BootRom?.PrimeCartridgeData(cartridge.RomData);
 
         // Boot ROM must overlay the cartridge; re-attach to ensure priority.
         if (BootRom != null)
@@ -262,19 +312,26 @@ public sealed class Bus : IMemDevice, IDisposable
     }
 
     /// <summary>
-    /// Advance the clock by T cycles (4T = 1M).
+    /// Advance the clock by one CPU M-cycle.
     /// </summary>
     public void AdvanceM()
     {
-        ClockTicks += 4;
-        Dma?.AdvanceT(4);
-        m_timer?.AdvanceT(4);
-        APU?.AdvanceT(4);
-        PPU?.AdvanceT(4);
+        const ulong cpuTicksPerM = 4;
+        var masterTicksPerM = m_isDoubleSpeed ? 2UL : 4UL;
+
+        ClockTicks += masterTicksPerM;
+        CpuClockTicks += cpuTicksPerM;
+        Dma?.AdvanceT(cpuTicksPerM);
+        m_timer?.AdvanceT(masterTicksPerM);
+        APU?.AdvanceT(masterTicksPerM);
+        PPU?.AdvanceT(masterTicksPerM);
     }
 
-    public void ResetClock() =>
+    public void ResetClock()
+    {
         ClockTicks = 0;
+        CpuClockTicks = 0;
+    }
 
     public bool IsUninitializedWorkRam(ushort addr) =>
         addr is >= 0xC000 and <= 0xFDFF && !m_written[addr];

@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System.Diagnostics;
+using DTC.Core;
 using JetBrains.Annotations;
 
 namespace DTC.SM83.Devices;
@@ -21,6 +23,17 @@ public class IoDevice : IMemDevice, ILcd
     private readonly byte[] m_data = new byte[0x80];
     private readonly Bus m_bus;
     private readonly BootRom m_bootRom;
+    private readonly byte[] m_bgPaletteData = new byte[0x40];
+    private readonly byte[] m_objPaletteData = new byte[0x40];
+    private GameBoyMode m_mode = GameBoyMode.Dmg;
+    private bool m_prepareSpeedSwitch;
+    private byte m_vramBank;
+    private byte m_wramBank = 1;
+    private byte m_bgPaletteIndex;
+    private byte m_objPaletteIndex;
+    private bool m_bgPaletteAutoIncrement;
+    private bool m_objPaletteAutoIncrement;
+    private byte m_opri;
 
     public IoDevice(Bus bus, [NotNull] BootRom bootRom)
     {
@@ -33,6 +46,8 @@ public class IoDevice : IMemDevice, ILcd
 
     public ushort FromAddr => 0xFF00;
     public ushort ToAddr => 0xFF7F;
+
+    public GameBoyMode Mode => m_mode;
 
     public byte LCDC => m_data[0x40];
     public byte STAT
@@ -53,14 +68,91 @@ public class IoDevice : IMemDevice, ILcd
     public byte OBP1 => m_data[0x49];
     public byte WY => m_data[0x4A];
     public byte WX => m_data[0x4B];
+    public byte OPRI => m_mode == GameBoyMode.Cgb ? (byte)(0xFE | (m_opri & 0x01)) : (byte)0xFF;
+
+    public void SetMode(GameBoyMode mode)
+    {
+        m_mode = mode;
+        m_prepareSpeedSwitch = false;
+        m_vramBank = 0;
+        m_wramBank = 1;
+        m_bgPaletteIndex = 0;
+        m_objPaletteIndex = 0;
+        m_bgPaletteAutoIncrement = false;
+        m_objPaletteAutoIncrement = false;
+        m_opri = 0;
+        m_bus.Vram?.SetCurrentBank(m_vramBank);
+        m_bus.WorkRam?.SetCurrentBank(m_wramBank);
+    }
+
+    public bool TryHandleSpeedSwitch()
+    {
+        if (m_mode != GameBoyMode.Cgb || !m_prepareSpeedSwitch)
+            return false;
+
+        m_prepareSpeedSwitch = false;
+        m_bus.SetDoubleSpeed(!m_bus.IsDoubleSpeed);
+        m_bus.ResetDivider();
+        LogSpeedSwitch(m_bus.IsDoubleSpeed);
+        return true;
+    }
+
+    public ushort ReadCgbBgPaletteColor(int paletteIndex, int colorIndex) =>
+        ReadPaletteColor(m_bgPaletteData, paletteIndex, colorIndex);
+
+    public ushort ReadCgbObjPaletteColor(int paletteIndex, int colorIndex) =>
+        ReadPaletteColor(m_objPaletteData, paletteIndex, colorIndex);
 
     public byte Read8(ushort addr)
     {
         switch (addr)
         {
             // CGB-specific registers
-            case 0xFF4C or 0xFF4D:        // KEY0 and KEY1 - CGB speed switching registers
-                return 0xFF;
+            case 0xFF4C: // KEY0 - CGB mode select
+                return m_mode == GameBoyMode.Cgb ? (byte)0xFB : (byte)0xFF;
+
+            case 0xFF4D: // KEY1 - speed switch
+                return m_mode == GameBoyMode.Cgb
+                    ? (byte)(0x7E | (m_bus.IsDoubleSpeed ? 0x80 : 0x00) | (m_prepareSpeedSwitch ? 0x01 : 0x00))
+                    : (byte)0xFF;
+
+            case 0xFF4F: // VBK - VRAM bank
+                return m_mode == GameBoyMode.Cgb ? (byte)(0xFE | m_vramBank) : (byte)0xFF;
+
+            case 0xFF51: // HDMA1
+                return m_mode == GameBoyMode.Cgb ? m_bus.Hdma?.ReadHdma1() ?? (byte)0xFF : (byte)0xFF;
+            case 0xFF52: // HDMA2
+                return m_mode == GameBoyMode.Cgb ? m_bus.Hdma?.ReadHdma2() ?? (byte)0xFF : (byte)0xFF;
+            case 0xFF53: // HDMA3
+                return m_mode == GameBoyMode.Cgb ? m_bus.Hdma?.ReadHdma3() ?? (byte)0xFF : (byte)0xFF;
+            case 0xFF54: // HDMA4
+                return m_mode == GameBoyMode.Cgb ? m_bus.Hdma?.ReadHdma4() ?? (byte)0xFF : (byte)0xFF;
+            case 0xFF55: // HDMA5
+                return m_mode == GameBoyMode.Cgb ? m_bus.Hdma?.ReadHdma5() ?? (byte)0xFF : (byte)0xFF;
+
+            case 0xFF68: // BGPI
+                return m_mode == GameBoyMode.Cgb
+                    ? (byte)((m_bgPaletteAutoIncrement ? 0x80 : 0x00) | (m_bgPaletteIndex & 0x3F))
+                    : (byte)0xFF;
+            case 0xFF69: // BGPD
+                return m_mode == GameBoyMode.Cgb
+                    ? ReadPaletteData(m_bgPaletteData, ref m_bgPaletteIndex, m_bgPaletteAutoIncrement)
+                    : (byte)0xFF;
+
+            case 0xFF6A: // OBPI
+                return m_mode == GameBoyMode.Cgb
+                    ? (byte)((m_objPaletteAutoIncrement ? 0x80 : 0x00) | (m_objPaletteIndex & 0x3F))
+                    : (byte)0xFF;
+            case 0xFF6B: // OBPD
+                return m_mode == GameBoyMode.Cgb
+                    ? ReadPaletteData(m_objPaletteData, ref m_objPaletteIndex, m_objPaletteAutoIncrement)
+                    : (byte)0xFF;
+
+            case 0xFF6C: // OPRI
+                return m_mode == GameBoyMode.Cgb ? (byte)(0xFE | (m_opri & 0x01)) : (byte)0xFF;
+
+            case 0xFF70: // SVBK
+                return m_mode == GameBoyMode.Cgb ? (byte)(0xF8 | m_wramBank) : (byte)0xFF;
             
             default:
             {
@@ -73,6 +165,83 @@ public class IoDevice : IMemDevice, ILcd
     public void Write8(ushort addr, byte value)
     {
         var idx = addr - FromAddr;
+
+        switch (addr)
+        {
+            case 0xFF4D: // KEY1
+                if (m_mode == GameBoyMode.Cgb)
+                    m_prepareSpeedSwitch = (value & 0x01) != 0;
+                return;
+
+            case 0xFF4F: // VBK
+                if (m_mode == GameBoyMode.Cgb)
+                {
+                    m_vramBank = (byte)(value & 0x01);
+                    m_bus.Vram?.SetCurrentBank(m_vramBank);
+                }
+                return;
+
+            case 0xFF51: // HDMA1
+                if (m_mode == GameBoyMode.Cgb)
+                    m_bus.Hdma?.WriteHdma1(value);
+                return;
+            case 0xFF52: // HDMA2
+                if (m_mode == GameBoyMode.Cgb)
+                    m_bus.Hdma?.WriteHdma2(value);
+                return;
+            case 0xFF53: // HDMA3
+                if (m_mode == GameBoyMode.Cgb)
+                    m_bus.Hdma?.WriteHdma3(value);
+                return;
+            case 0xFF54: // HDMA4
+                if (m_mode == GameBoyMode.Cgb)
+                    m_bus.Hdma?.WriteHdma4(value);
+                return;
+            case 0xFF55: // HDMA5
+                if (m_mode == GameBoyMode.Cgb)
+                    m_bus.Hdma?.WriteHdma5(value);
+                return;
+
+            case 0xFF68: // BGPI
+                if (m_mode == GameBoyMode.Cgb)
+                {
+                    m_bgPaletteAutoIncrement = (value & 0x80) != 0;
+                    m_bgPaletteIndex = (byte)(value & 0x3F);
+                }
+                return;
+            case 0xFF69: // BGPD
+                if (m_mode == GameBoyMode.Cgb)
+                    WritePaletteData(m_bgPaletteData, ref m_bgPaletteIndex, m_bgPaletteAutoIncrement, value);
+                return;
+
+            case 0xFF6A: // OBPI
+                if (m_mode == GameBoyMode.Cgb)
+                {
+                    m_objPaletteAutoIncrement = (value & 0x80) != 0;
+                    m_objPaletteIndex = (byte)(value & 0x3F);
+                }
+                return;
+            case 0xFF6B: // OBPD
+                if (m_mode == GameBoyMode.Cgb)
+                    WritePaletteData(m_objPaletteData, ref m_objPaletteIndex, m_objPaletteAutoIncrement, value);
+                return;
+
+            case 0xFF6C: // OPRI
+                if (m_mode == GameBoyMode.Cgb)
+                    m_opri = (byte)(value & 0x01);
+                return;
+
+            case 0xFF70: // SVBK
+                if (m_mode == GameBoyMode.Cgb)
+                {
+                    var bank = (byte)(value & 0x07);
+                    if (bank == 0)
+                        bank = 1;
+                    m_wramBank = bank;
+                    m_bus.WorkRam?.SetCurrentBank(m_wramBank);
+                }
+                return;
+        }
 
         // STAT: Only bits 3-6 are writable; bit 7 always reads as 1; bits 0-2 are read-only.
         if (idx == 0x41)
@@ -105,4 +274,31 @@ public class IoDevice : IMemDevice, ILcd
             m_bootRom.Unload();
         }
     }
+
+    private static byte ReadPaletteData(byte[] paletteData, ref byte index, bool autoIncrement)
+    {
+        var value = paletteData[index & 0x3F];
+        if (autoIncrement)
+            index = (byte)((index + 1) & 0x3F);
+        return value;
+    }
+
+    private static void WritePaletteData(byte[] paletteData, ref byte index, bool autoIncrement, byte value)
+    {
+        paletteData[index & 0x3F] = value;
+        if (autoIncrement)
+            index = (byte)((index + 1) & 0x3F);
+    }
+
+    private static ushort ReadPaletteColor(byte[] paletteData, int paletteIndex, int colorIndex)
+    {
+        var safePalette = paletteIndex & 0x07;
+        var safeColor = colorIndex & 0x03;
+        var offset = safePalette * 8 + safeColor * 2;
+        return (ushort)(paletteData[offset] | (paletteData[offset + 1] << 8));
+    }
+
+    [Conditional("DEBUG")]
+    private static void LogSpeedSwitch(bool isDoubleSpeed) =>
+        Logger.Instance.Info($"CGB speed switch: {(isDoubleSpeed ? "double" : "normal")} speed.");
 }
