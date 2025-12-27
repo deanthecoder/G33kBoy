@@ -13,6 +13,7 @@ using DTC.Core.Extensions;
 using DTC.Core.UnitTesting;
 using DTC.SM83;
 using DTC.SM83.Extensions;
+using DTC.SM83.Snapshot;
 
 namespace UnitTests;
 
@@ -21,6 +22,7 @@ public class BlarggTests : TestsBase
 {
     private const ulong OneSecondTicks = 4_194_304; // 4.194304 MHz DMG clock.
     private const ulong TimeoutTicks = OneSecondTicks * 20;
+    private const ulong PreSaveTicks = 20_000;
 
     public static IEnumerable<TestCaseData> CpuTestRomFiles =>
         new[]
@@ -81,6 +83,55 @@ public class BlarggTests : TestsBase
 
         Assert.That(bus.ClockTicks, Is.LessThanOrEqualTo(TimeoutTicks), $"Time-out. Serial output: {serialBus.Output}");
         Assert.That(serialBus.Output, Does.Contain("Passed"));
+    }
+
+    [Test]
+    public void RunTestRomWithStateRestore()
+    {
+        var romFile = ProjectDir.GetFile("../external/blargg-test-roms/cpu_instrs/individual/01-special.gb");
+        Assert.That(romFile, Does.Exist);
+
+        MachineState state;
+        using (var bus = new Bus(0x10000, Bus.BusType.Minimal))
+        {
+            var cpu = new Cpu(bus);
+            cpu.LoadRom(new Cartridge(romFile.ReadAllBytes()));
+            cpu.SkipBootRom();
+
+            var serialBus = new SerialDevice();
+            bus.Attach(serialBus);
+            cpu.Reg.PC = 0x0100;
+
+            while (bus.ClockTicks < PreSaveTicks)
+                cpu.Step();
+
+            state = new MachineState(cpu.GetStateSize())
+            {
+                RomPath = romFile.FullName
+            };
+            cpu.SaveState(state);
+        }
+
+        using var restoredBus = new Bus(0x10000, Bus.BusType.Minimal);
+        var restoredCpu = new Cpu(restoredBus);
+        restoredCpu.LoadRom(new Cartridge(File.ReadAllBytes(state.RomPath)));
+        restoredCpu.SkipBootRom();
+
+        var restoredSerial = new SerialDevice();
+        restoredBus.Attach(restoredSerial);
+        restoredCpu.Reg.PC = 0x0100;
+        restoredCpu.LoadState(state);
+
+        while (restoredBus.ClockTicks < TimeoutTicks)
+        {
+            var oldPC = restoredCpu.Reg.PC;
+            restoredCpu.Step();
+            if (restoredCpu.Reg.PC == oldPC && (restoredSerial.Output.Contains("Passed") || restoredSerial.Output.Contains("Failed")))
+                break;
+        }
+
+        Assert.That(restoredBus.ClockTicks, Is.LessThanOrEqualTo(TimeoutTicks), $"Time-out. Serial output: {restoredSerial.Output}");
+        Assert.That(restoredSerial.Output, Does.Contain("Passed"));
     }
     
     /// <summary>

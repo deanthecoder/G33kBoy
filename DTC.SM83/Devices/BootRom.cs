@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
@@ -245,5 +247,29 @@ public class BootRom : IMemDevice
         if (addr >= m_realMem.Length)
             return;
         m_realMem[addr] = value;
+    }
+
+    internal int GetStateSize() =>
+        sizeof(byte) + // m_isLoaded
+        sizeof(byte) + // m_mode
+        sizeof(int) +
+        m_realMem.Length;
+
+    internal void SaveState(ref StateWriter writer)
+    {
+        writer.WriteBool(m_isLoaded);
+        writer.WriteByte((byte)m_mode);
+        writer.WriteInt32(m_realMem.Length);
+        writer.WriteBytes(m_realMem);
+    }
+
+    internal void LoadState(ref StateReader reader)
+    {
+        m_isLoaded = reader.ReadBool();
+        m_mode = (GameBoyMode)reader.ReadByte();
+        var length = reader.ReadInt32();
+        if (length != m_realMem.Length)
+            throw new InvalidOperationException($"Boot ROM size mismatch. Expected {m_realMem.Length}, got {length}.");
+        reader.ReadBytes(m_realMem);
     }
 }

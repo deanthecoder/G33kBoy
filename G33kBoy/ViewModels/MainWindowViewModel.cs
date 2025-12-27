@@ -157,6 +157,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Mru.OpenRequested += (_, file) => LoadRomFile(file, addToMru: false);
 
         GameBoy = new GameBoy();
+        GameBoy.SnapshotHistory.Activated += (_, _) => EmulationSpeed = ClockSync.Speed.Actual;
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
         GameBoy.RomLoaded += (_, title) =>

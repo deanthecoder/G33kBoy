@@ -11,6 +11,7 @@
 
 using System.Diagnostics;
 using DTC.Core;
+using DTC.SM83.Snapshot;
 using JetBrains.Annotations;
 
 namespace DTC.SM83.Devices;
@@ -300,4 +301,48 @@ public class IoDevice : IMemDevice, ILcd
     [Conditional("DEBUG")]
     private static void LogSpeedSwitch(bool isDoubleSpeed) =>
         Logger.Instance.Info($"CGB speed switch: {(isDoubleSpeed ? "double" : "normal")} speed.");
+
+    internal int GetStateSize() =>
+        sizeof(byte) + // Mode
+        sizeof(byte) * 9 + // m_prepareSpeedSwitch, m_vramBank, m_wramBank, m_bgPaletteIndex, m_objPaletteIndex, m_bgPaletteAutoIncrement, m_objPaletteAutoIncrement, m_opri, padding
+        m_data.Length +
+        m_bgPaletteData.Length +
+        m_objPaletteData.Length;
+
+    internal void SaveState(ref StateWriter writer)
+    {
+        writer.WriteByte((byte)Mode);
+        writer.WriteBool(m_prepareSpeedSwitch);
+        writer.WriteByte(m_vramBank);
+        writer.WriteByte(m_wramBank);
+        writer.WriteByte(m_bgPaletteIndex);
+        writer.WriteByte(m_objPaletteIndex);
+        writer.WriteBool(m_bgPaletteAutoIncrement);
+        writer.WriteBool(m_objPaletteAutoIncrement);
+        writer.WriteByte(m_opri);
+        writer.WriteByte(0); // reserved
+        writer.WriteBytes(m_data);
+        writer.WriteBytes(m_bgPaletteData);
+        writer.WriteBytes(m_objPaletteData);
+    }
+
+    internal void LoadState(ref StateReader reader)
+    {
+        Mode = (GameBoyMode)reader.ReadByte();
+        m_prepareSpeedSwitch = reader.ReadBool();
+        m_vramBank = reader.ReadByte();
+        m_wramBank = reader.ReadByte();
+        m_bgPaletteIndex = reader.ReadByte();
+        m_objPaletteIndex = reader.ReadByte();
+        m_bgPaletteAutoIncrement = reader.ReadBool();
+        m_objPaletteAutoIncrement = reader.ReadBool();
+        m_opri = reader.ReadByte();
+        reader.ReadByte(); // reserved
+        reader.ReadBytes(m_data);
+        reader.ReadBytes(m_bgPaletteData);
+        reader.ReadBytes(m_objPaletteData);
+
+        m_bus.Vram?.SetCurrentBank(m_vramBank);
+        m_bus.WorkRam?.SetCurrentBank(m_wramBank);
+    }
 }

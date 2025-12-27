@@ -8,6 +8,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83.MemoryBankControllers;
 
 /// <summary>
@@ -59,4 +61,22 @@ internal sealed class Mbc3Controller : MemoryBankControllerBase
     
     protected override int GetRamBankIndex() =>
         m_bankRegister < m_ramBanks.Length ? m_bankRegister : 0;
+
+    internal override int GetStateSize() =>
+        base.GetStateSize() +
+        sizeof(byte) * 2;
+
+    internal override void SaveState(ref StateWriter writer)
+    {
+        base.SaveState(ref writer);
+        writer.WriteByte((byte)m_romBank);
+        writer.WriteByte((byte)m_bankRegister);
+    }
+
+    internal override void LoadState(ref StateReader reader)
+    {
+        base.LoadState(ref reader);
+        m_romBank = reader.ReadByte();
+        m_bankRegister = reader.ReadByte();
+    }
 }

@@ -8,6 +8,7 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 using System.Runtime.CompilerServices;
+using DTC.SM83.Snapshot;
 
 namespace DTC.SM83.Devices;
 
@@ -38,4 +39,12 @@ public class InterruptDevice : IMemDevice
 
     public void Raise(InterruptType requested) =>
         m_if |= (byte)requested;
+
+    public int GetStateSize() => sizeof(byte);
+
+    public void SaveState(ref StateWriter writer) =>
+        writer.WriteByte(m_if);
+
+    public void LoadState(ref StateReader reader) =>
+        m_if = reader.ReadByte();
 }

@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Runtime.CompilerServices;
+using DTC.SM83.Snapshot;
 
 namespace DTC.SM83.Devices;
 
@@ -54,4 +55,21 @@ public abstract class RamDeviceBase : IMemDevice
     
     public bool Contains(ushort addr) =>
         addr >= FromAddr && addr <= ToAddr;
+
+    internal int GetStateSize() =>
+        sizeof(int) + m_data.Length;
+
+    internal void SaveState(ref StateWriter writer)
+    {
+        writer.WriteInt32(m_data.Length);
+        writer.WriteBytes(m_data);
+    }
+
+    internal void LoadState(ref StateReader reader)
+    {
+        var length = reader.ReadInt32();
+        if (length != m_data.Length)
+            throw new InvalidOperationException($"RAM size mismatch. Expected {m_data.Length}, got {length}.");
+        reader.ReadBytes(m_data);
+    }
 }

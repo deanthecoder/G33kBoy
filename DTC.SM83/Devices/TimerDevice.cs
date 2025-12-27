@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Diagnostics.CodeAnalysis;
+using DTC.SM83.Snapshot;
 
 namespace DTC.SM83.Devices;
 
@@ -220,5 +221,35 @@ public class TimerDevice : IMemDevice
                 m_interruptDevice.Raise(InterruptDevice.InterruptType.Timer);
             }
         }
+    }
+
+    public int GetStateSize() =>
+        sizeof(byte) * 4 + // DIV, TIMA, TMA, m_tac
+        sizeof(ulong) * 2 + // m_divCycleCount, m_timaCycleCount
+        sizeof(byte) + // m_pendingReload
+        sizeof(long); // m_reloadDelayT
+
+    public void SaveState(ref StateWriter writer)
+    {
+        writer.WriteByte(DIV);
+        writer.WriteByte(TIMA);
+        writer.WriteByte(TMA);
+        writer.WriteByte(m_tac);
+        writer.WriteUInt64(m_divCycleCount);
+        writer.WriteUInt64(m_timaCycleCount);
+        writer.WriteBool(m_pendingReload);
+        writer.WriteInt64(m_reloadDelayT);
+    }
+
+    public void LoadState(ref StateReader reader)
+    {
+        DIV = reader.ReadByte();
+        TIMA = reader.ReadByte();
+        TMA = reader.ReadByte();
+        TAC = reader.ReadByte();
+        m_divCycleCount = reader.ReadUInt64();
+        m_timaCycleCount = reader.ReadUInt64();
+        m_pendingReload = reader.ReadBool();
+        m_reloadDelayT = reader.ReadInt64();
     }
 }

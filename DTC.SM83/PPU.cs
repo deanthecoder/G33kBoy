@@ -11,8 +11,10 @@
 using DTC.Core.Extensions;
 using DTC.Core.Image;
 using DTC.SM83.Devices;
+using DTC.SM83.Snapshot;
 using JetBrains.Annotations;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace DTC.SM83;
 
@@ -116,6 +118,86 @@ public class PPU
             m_lcdEmulationEnabled = value;
             SetMotionBlurEnabled(value);
         }
+    }
+
+    internal int GetFrameBufferStateSize() =>
+        m_frameBuffer.Length;
+
+    internal void SaveFrameBuffer(ref StateWriter writer) =>
+        writer.WriteBytes(m_frameBuffer);
+
+    internal void LoadFrameBuffer(ref StateReader reader) =>
+        reader.ReadBytes(m_frameBuffer);
+
+    internal void CopyFrameBuffer(Span<byte> destination)
+    {
+        if (destination.Length != m_frameBuffer.Length)
+            throw new ArgumentException("Frame buffer size mismatch.", nameof(destination));
+        m_frameBuffer.AsSpan().CopyTo(destination);
+    }
+
+    internal int GetStateSize() =>
+        sizeof(byte) * 2 + // Mode, CurrentState
+        sizeof(int) * 2 + // m_spriteCount, m_windowLine
+        sizeof(ulong) * 3 + // m_tCycles, m_stateCycles, m_lcdStartDelay
+        sizeof(byte) * 8 + // bool flags
+        m_spriteIndices.Length +
+        m_spritePixelCoverage.Length +
+        m_frameBuffer.Length +
+        m_colorAccumulator.Length * sizeof(double);
+
+    internal void SaveState(ref StateWriter writer)
+    {
+        writer.WriteByte((byte)Mode);
+        writer.WriteByte(m_stat.GetMode());
+        writer.WriteInt32(m_spriteCount);
+        writer.WriteInt32(m_windowLine);
+        writer.WriteUInt64(m_tCycles);
+        writer.WriteUInt64(m_stateCycles);
+        writer.WriteUInt64(m_lcdStartDelay);
+        writer.WriteBool(m_hblankEndsScanline);
+        writer.WriteBool(m_statInterruptsEnabled);
+        writer.WriteBool(m_line153Wrapped);
+        writer.WriteBool(m_lcdOff);
+        writer.WriteBool(m_windowLineUsedThisScanline);
+        writer.WriteBool(m_motionBlurEnabled);
+        writer.WriteBool(m_motionBlurPrimed);
+        writer.WriteBool(m_lcdEmulationEnabled);
+        writer.WriteBytes(m_spriteIndices);
+
+        for (var i = 0; i < m_spritePixelCoverage.Length; i++)
+            writer.WriteBool(m_spritePixelCoverage[i]);
+
+        writer.WriteBytes(m_frameBuffer);
+        writer.WriteBytes(MemoryMarshal.AsBytes(m_colorAccumulator.AsSpan()));
+    }
+
+    internal void LoadState(ref StateReader reader)
+    {
+        Mode = (GameBoyMode)reader.ReadByte();
+        var state = reader.ReadByte();
+        m_spriteCount = reader.ReadInt32();
+        m_windowLine = reader.ReadInt32();
+        m_tCycles = reader.ReadUInt64();
+        m_stateCycles = reader.ReadUInt64();
+        m_lcdStartDelay = reader.ReadUInt64();
+        m_hblankEndsScanline = reader.ReadBool();
+        m_statInterruptsEnabled = reader.ReadBool();
+        m_line153Wrapped = reader.ReadBool();
+        m_lcdOff = reader.ReadBool();
+        m_windowLineUsedThisScanline = reader.ReadBool();
+        m_motionBlurEnabled = reader.ReadBool();
+        m_motionBlurPrimed = reader.ReadBool();
+        m_lcdEmulationEnabled = reader.ReadBool();
+        reader.ReadBytes(m_spriteIndices);
+
+        for (var i = 0; i < m_spritePixelCoverage.Length; i++)
+            m_spritePixelCoverage[i] = reader.ReadBool();
+
+        reader.ReadBytes(m_frameBuffer);
+        reader.ReadBytes(MemoryMarshal.AsBytes(m_colorAccumulator.AsSpan()));
+
+        m_stat.SetMode(state, isLcdEnabled: false);
     }
 
     private void SetMotionBlurEnabled(bool enabled)

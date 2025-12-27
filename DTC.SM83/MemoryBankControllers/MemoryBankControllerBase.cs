@@ -8,6 +8,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83.MemoryBankControllers;
 
 /// <summary>
@@ -82,4 +84,32 @@ internal abstract class MemoryBankControllerBase : IMemoryBankController
     }
 
     protected virtual int GetRamBankIndex() => 0;
+
+    internal virtual int GetStateSize()
+    {
+        var size = sizeof(byte) * 2; // m_ramEnabled, bank count
+        for (var i = 0; i < m_ramBanks.Length; i++)
+            size += m_ramBanks[i].Length;
+        return size;
+    }
+
+    internal virtual void SaveState(ref StateWriter writer)
+    {
+        writer.WriteBool(m_ramEnabled);
+        if (m_ramBanks.Length > byte.MaxValue)
+            throw new InvalidOperationException("Too many RAM banks to serialize.");
+        writer.WriteByte((byte)m_ramBanks.Length);
+        for (var i = 0; i < m_ramBanks.Length; i++)
+            writer.WriteBytes(m_ramBanks[i]);
+    }
+
+    internal virtual void LoadState(ref StateReader reader)
+    {
+        m_ramEnabled = reader.ReadBool();
+        var bankCount = reader.ReadByte();
+        if (bankCount != m_ramBanks.Length)
+            throw new InvalidOperationException($"RAM bank count mismatch. Expected {m_ramBanks.Length}, got {bankCount}.");
+        for (var i = 0; i < m_ramBanks.Length; i++)
+            reader.ReadBytes(m_ramBanks[i]);
+    }
 }

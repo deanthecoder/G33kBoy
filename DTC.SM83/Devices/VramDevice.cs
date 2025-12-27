@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
@@ -46,5 +48,22 @@ public class VramDevice : IMemDevice
             m_bank0[idx] = value;
         else
             m_bank1[idx] = value;
+    }
+
+    internal int GetStateSize() =>
+        sizeof(byte) + m_bank0.Length + m_bank1.Length;
+
+    internal void SaveState(ref StateWriter writer)
+    {
+        writer.WriteByte(m_currentBank);
+        writer.WriteBytes(m_bank0);
+        writer.WriteBytes(m_bank1);
+    }
+
+    internal void LoadState(ref StateReader reader)
+    {
+        m_currentBank = reader.ReadByte();
+        reader.ReadBytes(m_bank0);
+        reader.ReadBytes(m_bank1);
     }
 }

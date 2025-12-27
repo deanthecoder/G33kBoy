@@ -14,6 +14,7 @@ using System.Runtime.CompilerServices;
 using DTC.SM83.Devices;
 using DTC.SM83.HostDevices;
 using DTC.SM83.MemoryBankControllers;
+using DTC.SM83.Snapshot;
 
 namespace DTC.SM83;
 
@@ -48,6 +49,7 @@ public sealed class Bus : IMemDevice, IDisposable
     public CartridgeRomDevice CartridgeRom { get; private set; }
     public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
     public bool IsDoubleSpeed { get; private set; }
+    public BusType Type { get; }
 
     private IMemoryBankController m_memoryBankController;
 
@@ -90,6 +92,7 @@ public sealed class Bus : IMemDevice, IDisposable
 
     public Bus(int bytesToAllocate, BusType busType, Joypad joypad = null, SoundDevice audioSink = null)
     {
+        Type = busType;
         m_devices = ArrayPool<IMemDevice>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_devices);
         m_ram = ArrayPool<byte>.Shared.Rent(bytesToAllocate);
@@ -333,5 +336,140 @@ public sealed class Bus : IMemDevice, IDisposable
     {
         ArrayPool<IMemDevice>.Shared.Return(m_devices);
         ArrayPool<byte>.Shared.Return(m_ram);
+    }
+
+    public int GetStateSize()
+    {
+        var size =
+            sizeof(byte) +        // Mode
+            sizeof(byte) +        // IsDoubleSpeed
+            sizeof(ulong) * 2 +   // ClockTicks, CpuClockTicks
+            sizeof(int) +         // RAM length
+            m_ram.Length;
+
+        if (Type != BusType.Trivial)
+        {
+            size += m_timer.GetStateSize();
+            size += m_interruptDevice.GetStateSize();
+            size += sizeof(byte); // IE
+        }
+
+        size += Dma.GetStateSize();
+        size += sizeof(byte); // has MBC
+
+        if (m_memoryBankController is MemoryBankControllerBase mbc)
+            size += mbc.GetStateSize();
+
+        if (Type == BusType.GameBoy)
+        {
+            size += sizeof(byte); // boot ROM attached
+            size += BootRom?.GetStateSize() ?? 0;
+            size += Vram?.GetStateSize() ?? 0;
+            size += WorkRam?.GetStateSize() ?? 0;
+            size += m_oam?.GetStateSize() ?? 0;
+            size += m_hramDevice?.GetStateSize() ?? 0;
+            size += m_ioDevice?.GetStateSize() ?? 0;
+            size += m_joypadDevice?.GetStateSize() ?? 0;
+            size += Hdma?.GetStateSize() ?? 0;
+            size += PPU?.GetStateSize() ?? 0;
+        }
+
+        return size;
+    }
+
+    public void SaveState(ref StateWriter writer)
+    {
+        writer.WriteByte((byte)Mode);
+        writer.WriteBool(IsDoubleSpeed);
+        writer.WriteUInt64(ClockTicks);
+        writer.WriteUInt64(CpuClockTicks);
+        writer.WriteInt32(m_ram.Length);
+        writer.WriteBytes(m_ram);
+
+        if (Type != BusType.Trivial)
+        {
+            m_timer.SaveState(ref writer);
+            m_interruptDevice.SaveState(ref writer);
+            writer.WriteByte(UncheckedRead(0xFFFF));
+        }
+
+        Dma.SaveState(ref writer);
+
+        var hasMbc = m_memoryBankController is MemoryBankControllerBase;
+        writer.WriteBool(hasMbc);
+        if (hasMbc)
+            ((MemoryBankControllerBase)m_memoryBankController).SaveState(ref writer);
+
+        if (Type == BusType.GameBoy)
+        {
+            var bootRomAttached = BootRom != null && ReferenceEquals(m_devices[0x0000], BootRom);
+            writer.WriteBool(bootRomAttached);
+            BootRom?.SaveState(ref writer);
+            Vram?.SaveState(ref writer);
+            WorkRam?.SaveState(ref writer);
+            m_oam?.SaveState(ref writer);
+            m_hramDevice?.SaveState(ref writer);
+            m_ioDevice?.SaveState(ref writer);
+            m_joypadDevice?.SaveState(ref writer);
+            Hdma?.SaveState(ref writer);
+            PPU?.SaveState(ref writer);
+        }
+    }
+
+    public void LoadState(ref StateReader reader)
+    {
+        Mode = (GameBoyMode)reader.ReadByte();
+        IsDoubleSpeed = reader.ReadBool();
+        ClockTicks = reader.ReadUInt64();
+        CpuClockTicks = reader.ReadUInt64();
+
+        var ramLength = reader.ReadInt32();
+        if (ramLength != m_ram.Length)
+            throw new InvalidOperationException($"State RAM size mismatch. Expected {m_ram.Length}, got {ramLength}.");
+        reader.ReadBytes(m_ram);
+
+        if (Type != BusType.Trivial)
+        {
+            m_timer.LoadState(ref reader);
+            m_interruptDevice.LoadState(ref reader);
+            UncheckedWrite(0xFFFF, reader.ReadByte());
+        }
+
+        Dma.LoadState(ref reader);
+
+        var hasMbc = reader.ReadBool();
+        if (hasMbc)
+        {
+            if (m_memoryBankController is MemoryBankControllerBase mbc)
+                mbc.LoadState(ref reader);
+            else
+                throw new InvalidOperationException("State expects a cartridge controller, but none is loaded.");
+        }
+        else if (m_memoryBankController != null)
+        {
+            throw new InvalidOperationException("State does not include a cartridge controller, but one is loaded.");
+        }
+
+        if (Type == BusType.GameBoy)
+        {
+            var bootRomAttached = reader.ReadBool();
+            if (BootRom != null)
+            {
+                if (bootRomAttached)
+                    Attach(BootRom);
+                else
+                    Detach(BootRom, CartridgeRom);
+            }
+
+            BootRom?.LoadState(ref reader);
+            Vram?.LoadState(ref reader);
+            WorkRam?.LoadState(ref reader);
+            m_oam?.LoadState(ref reader);
+            m_hramDevice?.LoadState(ref reader);
+            m_ioDevice?.LoadState(ref reader);
+            m_joypadDevice?.LoadState(ref reader);
+            Hdma?.LoadState(ref reader);
+            PPU?.LoadState(ref reader);
+        }
     }
 }

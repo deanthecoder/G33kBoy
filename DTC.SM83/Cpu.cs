@@ -13,12 +13,21 @@ using System.Runtime.CompilerServices;
 using DTC.Core;
 using DTC.SM83.Debuggers;
 using DTC.SM83.Instructions;
+using DTC.SM83.Snapshot;
 
 namespace DTC.SM83;
 
 public class Cpu
 {
     public const double Hz = 4194304.0;
+    private const int StateHeaderSize = sizeof(uint) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
+    private const int CpuStateSize =
+        sizeof(byte) +            // A
+        sizeof(ushort) * 5 +      // BC, DE, HL, SP, PC
+        sizeof(byte) * 4 +        // Z/N/H/C flags
+        sizeof(byte) * 5 +        // IsHalted, HaltBug, IME, PendingIME, m_isStopped
+        sizeof(byte) +            // m_fetchedOpcode
+        sizeof(byte);             // m_stopJoypadState
     
     private string m_instructionState;
     private byte m_fetchedOpcode;
@@ -396,5 +405,92 @@ public class Cpu
 
         foreach (var debugger in m_debuggers)
             debugger.OnMemoryWrite(this, address, value);
+    }
+
+    public int GetStateSize() =>
+        StateHeaderSize + CpuStateSize + Bus.GetStateSize();
+
+    public void SaveState(MachineState state)
+    {
+        if (state == null)
+            throw new ArgumentNullException(nameof(state));
+        if (state.Size != GetStateSize())
+            throw new InvalidOperationException($"State buffer size mismatch. Expected {GetStateSize()} bytes.");
+
+        var writer = state.CreateWriter();
+        writer.WriteUInt32(MachineState.Magic);
+        writer.WriteUInt16(MachineState.Version);
+        writer.WriteByte((byte)Bus.Type);
+        writer.WriteByte(0); // reserved
+
+        writer.WriteByte(Reg.A);
+        writer.WriteUInt16(Reg.BC);
+        writer.WriteUInt16(Reg.DE);
+        writer.WriteUInt16(Reg.HL);
+        writer.WriteUInt16(Reg.SP);
+        writer.WriteUInt16(Reg.PC);
+        writer.WriteBool(Reg.Zf);
+        writer.WriteBool(Reg.Nf);
+        writer.WriteBool(Reg.Hf);
+        writer.WriteBool(Reg.Cf);
+
+        writer.WriteBool(IsHalted);
+        writer.WriteBool(HaltBug);
+        writer.WriteBool(IME);
+        writer.WriteBool(PendingIME);
+        writer.WriteBool(m_isStopped);
+        writer.WriteByte(m_fetchedOpcode);
+        writer.WriteByte((byte)m_stopJoypadState);
+
+        Bus.SaveState(ref writer);
+
+        if (writer.Offset != state.Size)
+            throw new InvalidOperationException($"State buffer write size mismatch. Wrote {writer.Offset} bytes, expected {state.Size}.");
+    }
+
+    public void LoadState(MachineState state)
+    {
+        if (state == null)
+            throw new ArgumentNullException(nameof(state));
+        if (state.Size != GetStateSize())
+            throw new InvalidOperationException($"State buffer size mismatch. Expected {GetStateSize()} bytes.");
+
+        var reader = state.CreateReader();
+        var magic = reader.ReadUInt32();
+        if (magic != MachineState.Magic)
+            throw new InvalidOperationException("Invalid state buffer (bad magic).");
+
+        var version = reader.ReadUInt16();
+        if (version != MachineState.Version)
+            throw new InvalidOperationException($"Unsupported state version {version}.");
+
+        var busType = (Bus.BusType)reader.ReadByte();
+        reader.ReadByte(); // reserved
+        if (busType != Bus.Type)
+            throw new InvalidOperationException($"State expects bus type {busType}, but current bus is {Bus.Type}.");
+
+        Reg.A = reader.ReadByte();
+        Reg.BC = reader.ReadUInt16();
+        Reg.DE = reader.ReadUInt16();
+        Reg.HL = reader.ReadUInt16();
+        Reg.SP = reader.ReadUInt16();
+        Reg.PC = reader.ReadUInt16();
+        Reg.Zf = reader.ReadBool();
+        Reg.Nf = reader.ReadBool();
+        Reg.Hf = reader.ReadBool();
+        Reg.Cf = reader.ReadBool();
+
+        IsHalted = reader.ReadBool();
+        HaltBug = reader.ReadBool();
+        IME = reader.ReadBool();
+        PendingIME = reader.ReadBool();
+        m_isStopped = reader.ReadBool();
+        m_fetchedOpcode = reader.ReadByte();
+        m_stopJoypadState = (Joypad.JoypadButtons)reader.ReadByte();
+
+        Bus.LoadState(ref reader);
+
+        if (reader.Offset != state.Size)
+            throw new InvalidOperationException("State buffer read size mismatch.");
     }
 }

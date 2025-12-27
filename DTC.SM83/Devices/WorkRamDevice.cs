@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
@@ -57,4 +59,21 @@ public class WorkRamDevice : IMemDevice
 
     public bool Contains(ushort addr) =>
         addr >= FromAddr && addr <= ToAddr;
+
+    internal int GetStateSize() =>
+        sizeof(byte) + m_fixedBank.Length + m_banked.Length;
+
+    internal void SaveState(ref StateWriter writer)
+    {
+        writer.WriteByte(m_currentBank);
+        writer.WriteBytes(m_fixedBank);
+        writer.WriteBytes(m_banked);
+    }
+
+    internal void LoadState(ref StateReader reader)
+    {
+        m_currentBank = reader.ReadByte();
+        reader.ReadBytes(m_fixedBank);
+        reader.ReadBytes(m_banked);
+    }
 }

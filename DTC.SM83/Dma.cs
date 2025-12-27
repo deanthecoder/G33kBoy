@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83;
 
 /// <summary>
@@ -84,5 +86,31 @@ public class Dma
                 InstructionLogger?.Write(() => "DMA complete");
             }
         }
+    }
+
+    public int GetStateSize() =>
+        sizeof(byte) * 2 + // IsTransferActive, IsEnabled
+        sizeof(ushort) * 2 + // m_sourceAddr, m_destAddr
+        sizeof(int) + // m_bytesRemaining
+        sizeof(ulong); // m_cycleBudget
+
+    public void SaveState(ref StateWriter writer)
+    {
+        writer.WriteBool(IsTransferActive);
+        writer.WriteBool(IsEnabled);
+        writer.WriteUInt16(m_sourceAddr);
+        writer.WriteUInt16(m_destAddr);
+        writer.WriteInt32(m_bytesRemaining);
+        writer.WriteUInt64(m_cycleBudget);
+    }
+
+    public void LoadState(ref StateReader reader)
+    {
+        IsTransferActive = reader.ReadBool();
+        IsEnabled = reader.ReadBool();
+        m_sourceAddr = reader.ReadUInt16();
+        m_destAddr = reader.ReadUInt16();
+        m_bytesRemaining = reader.ReadInt32();
+        m_cycleBudget = reader.ReadUInt64();
     }
 }

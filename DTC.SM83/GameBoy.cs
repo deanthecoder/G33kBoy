@@ -17,6 +17,7 @@ using DTC.Core.Extensions;
 using DTC.Core.UI;
 using DTC.SM83.Extensions;
 using DTC.SM83.HostDevices;
+using DTC.SM83.Snapshot;
 using Material.Icons;
 
 namespace DTC.SM83;
@@ -26,6 +27,7 @@ public sealed class GameBoy : IDisposable
     private readonly ClockSync m_clockSync;
     private readonly LcdScreen m_screen;
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
+    private readonly object m_cpuStepLock = new();
     private long m_lastFrameClockTicks;
     private long m_lastFrameCpuTicks;
     private Bus m_bus;
@@ -42,6 +44,8 @@ public sealed class GameBoy : IDisposable
     private double m_relativeSpeedRaw;
     private GameBoyMode m_requestedMode = GameBoyMode.Cgb;
     private GameBoyMode m_effectiveMode = GameBoyMode.Dmg;
+    private string m_loadedRomPath;
+    private byte[] m_frameBufferScratch;
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
@@ -51,6 +55,11 @@ public sealed class GameBoy : IDisposable
     public double RelativeSpeed => Math.Round(m_relativeSpeedRaw / 0.2) * 0.2;
 
     public Joypad Joypad { get; }
+    public SnapshotHistory SnapshotHistory { get; }
+    public object CpuStepLock => m_cpuStepLock;
+    public bool IsRunning => m_cpu != null && m_bus != null;
+    public bool HasLoadedCartridge => m_loadedCartridge != null;
+    public ulong CpuClockTicks => m_bus?.CpuClockTicks ?? 0;
 
 
     /// <summary>
@@ -75,6 +84,7 @@ public sealed class GameBoy : IDisposable
         // m_cpu.AddDebugger(new MemoryReadDebugger(0x1234, value => Console.WriteLine($"Memory read detected! (0x{value:X2})")));
         // m_cpu.AddDebugger(new MemoryReadDebugger(0x1234, targetValue: 0x34, value => Console.WriteLine($"Memory read detected! (0x{value:X2})")));
         // m_cpu.AddDebugger(new PcBreakpointDebugger(0x1234, () => Console.WriteLine("PC breakpoint hit!")));
+        SnapshotHistory = new SnapshotHistory(this);
     }
 
     public void PowerOnAsync(FileInfo romFile)
@@ -108,9 +118,11 @@ public sealed class GameBoy : IDisposable
         m_clockSync.Reset();
 
         m_loadedCartridge = cartridge;
+        m_loadedRomPath = romFile.FullName;
         ApplyHardwareMode(m_loadedCartridge);
         RomLoaded?.Invoke(this, m_loadedCartridge.Title);
         m_cpu.LoadRom(m_loadedCartridge);
+        SnapshotHistory.ResetForRom(m_loadedRomPath);
 
         WriteDisassemblyIfEnabled(romFile, romData, cartridgeKey);
 
@@ -133,7 +145,8 @@ public sealed class GameBoy : IDisposable
                 // Sync the clock speed.
                 m_clockSync.SyncWithRealTime();
             
-                m_cpu.Step();
+                lock (m_cpuStepLock)
+                    m_cpu.Step();
             }
         }
         catch (Exception e)
@@ -199,6 +212,8 @@ public sealed class GameBoy : IDisposable
         var didUpdate = m_screen.Update(frameBuffer);
         if (didUpdate)
             DisplayUpdated?.Invoke(this, EventArgs.Empty);
+
+        SnapshotHistory?.OnFrameRendered(m_bus?.CpuClockTicks ?? 0);
     }
 
     public void Dispose()
@@ -397,6 +412,59 @@ public sealed class GameBoy : IDisposable
     {
         m_bus?.ResetClock();
         return 0;
+    }
+
+    public IDisposable CreatePauser() =>
+        m_clockSync.CreatePauser();
+
+    public int GetStateSize() =>
+        m_cpu?.GetStateSize() ?? 0;
+
+    public void CaptureState(MachineState state, Span<byte> frameBuffer)
+    {
+        if (state == null)
+            throw new ArgumentNullException(nameof(state));
+        if (frameBuffer.Length != PPU.FrameWidth * PPU.FrameHeight * 4)
+            throw new ArgumentException("Frame buffer size mismatch.", nameof(frameBuffer));
+        if (m_cpu == null)
+            throw new InvalidOperationException("Game Boy hardware is not initialized.");
+        if (m_bus?.PPU == null)
+            throw new InvalidOperationException("PPU is not available for state capture.");
+
+        lock (m_cpuStepLock)
+        {
+            m_cpu.SaveState(state);
+            m_bus.PPU.CopyFrameBuffer(frameBuffer);
+        }
+    }
+
+    public void LoadState(MachineState state)
+    {
+        if (state == null)
+            throw new ArgumentNullException(nameof(state));
+        if (m_cpu == null)
+            throw new InvalidOperationException("Game Boy hardware is not initialized.");
+
+        lock (m_cpuStepLock)
+            m_cpu.LoadState(state);
+
+        RefreshDisplay();
+        m_relativeSpeedRaw = 1.0;
+        m_lastFrameClockTicks = (long)(m_bus?.ClockTicks ?? 0);
+        m_lastFrameCpuTicks = (long)(m_bus?.CpuClockTicks ?? 0);
+        m_frameStopwatch.Restart();
+        m_clockSync.Resync();
+    }
+
+    private void RefreshDisplay()
+    {
+        if (m_bus?.PPU == null)
+            return;
+
+        m_frameBufferScratch ??= new byte[PPU.FrameWidth * PPU.FrameHeight * 4];
+        m_bus.PPU.CopyFrameBuffer(m_frameBufferScratch);
+        if (m_screen.Update(m_frameBufferScratch))
+            DisplayUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     private double GetEffectiveCpuHz() =>

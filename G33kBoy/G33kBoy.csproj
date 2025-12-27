@@ -42,6 +42,10 @@
         <DependentUpon>MainWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="Views\RollbackDialog.axaml.cs">
+        <DependentUpon>RollbackDialog.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
       <Compile Update="Views\AboutDialogContent.axaml.cs">
         <DependentUpon>AboutDialog.axaml</DependentUpon>
         <SubType>Code</SubType>

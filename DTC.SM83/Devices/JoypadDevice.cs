@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83.Devices;
 
 /// <summary>
@@ -63,4 +65,12 @@ public sealed class JoypadDevice : IMemDevice
         // Bits 6–7 read as 1.
         m_joySelect = (byte)((m_joySelect & 0xCF) | (value & 0x30));
     }
+
+    internal int GetStateSize() => sizeof(byte);
+
+    internal void SaveState(ref StateWriter writer) =>
+        writer.WriteByte(m_joySelect);
+
+    internal void LoadState(ref StateReader reader) =>
+        m_joySelect = reader.ReadByte();
 }

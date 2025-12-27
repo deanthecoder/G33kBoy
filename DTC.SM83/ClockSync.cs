@@ -125,6 +125,16 @@ public class ClockSync
         }
     }
 
+    public void Resync()
+    {
+        lock (m_lock)
+        {
+            var currentTicks = m_ticksSinceCpuStart();
+            m_lastEmulatedTicksPerSecond = m_emulatedTicksPerSecond();
+            ResetTimingLocked(currentTicks);
+        }
+    }
+
     private void UpdateTicksPerSecondIfNeeded(long currentTicks)
     {
         var currentTicksPerSecond = m_emulatedTicksPerSecond();

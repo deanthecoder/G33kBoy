@@ -9,6 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using DTC.SM83.Snapshot;
+
 namespace DTC.SM83;
 
 /// <summary>
@@ -111,5 +113,35 @@ public sealed class Hdma
         var dest = (ushort)(m_dest - 0x8000);
         m_hdma3 = (byte)((dest >> 8) & 0x1F);
         m_hdma4 = (byte)(dest & 0xF0);
+    }
+
+    internal int GetStateSize() =>
+        sizeof(byte) * 4 + // m_hdma1-4
+        sizeof(byte) + // m_hblankMode
+        sizeof(int) + // m_remainingBlocks
+        sizeof(ushort) * 2; // m_source, m_dest
+
+    internal void SaveState(ref StateWriter writer)
+    {
+        writer.WriteByte(m_hdma1);
+        writer.WriteByte(m_hdma2);
+        writer.WriteByte(m_hdma3);
+        writer.WriteByte(m_hdma4);
+        writer.WriteBool(m_hblankMode);
+        writer.WriteInt32(m_remainingBlocks);
+        writer.WriteUInt16(m_source);
+        writer.WriteUInt16(m_dest);
+    }
+
+    internal void LoadState(ref StateReader reader)
+    {
+        m_hdma1 = reader.ReadByte();
+        m_hdma2 = reader.ReadByte();
+        m_hdma3 = reader.ReadByte();
+        m_hdma4 = reader.ReadByte();
+        m_hblankMode = reader.ReadBool();
+        m_remainingBlocks = reader.ReadInt32();
+        m_source = reader.ReadUInt16();
+        m_dest = reader.ReadUInt16();
     }
 }

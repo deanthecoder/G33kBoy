@@ -37,6 +37,12 @@ Global key hooks translate the following keys into the Game Boy joypad:
   <img src="img/KeyMap.png" alt="Key map" width="200">
 </div>
 
+## App shortcuts
+- Open ROM: Ctrl+O (Cmd+O)
+- Reset device: Ctrl+R (Cmd+R)
+- Save screenshot: Ctrl+S (Cmd+S)
+- Time travel: Ctrl+T (Cmd+T)
+
 ## Emulator features
 - **ROM loading from ZIPs** – Load standard `.gb` and `.gbc` ROMs directly, or from a `.zip` archive containing a Game Boy ROM.
 - **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
@@ -47,6 +53,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - **LCD emulation** – Optional high‑fidelity LCD simulation including pixel‑grid structure, sub‑pixel glow, grain, edge shadowing, and per‑pixel diffusion to closely mimic the look of the original DMG screen.
 - **Motion blur** – Blend frames together for a persistence-of-vision effect that smooths fast movement.
 - **Screenshot capture** – Save the current frame as a TGA screenshot.
+- **Time travel snapshots** – Preview and roll back recent gameplay with Ctrl+T / Cmd+T.
 - **Tile map export** – Export the current tile map as a TGA image for debugging graphics or capturing assets.
 
 ## LCD emulation
@@ -72,7 +79,7 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - ✔ Audio
 - ✔ Cartridge MBCs
 - ✔ Game Boy Color support (no double-speed yet)
-- ☐ Gameplay 'roll back'
+- ✔ Gameplay rollback
 
 ## Highlights
 - **SM83 accuracy** – `DTC.SM83` implements the Game Boy CPU, including interrupt handling, prefixed instructions, memory bus, PPU timing, and a mnemonic disassembler to inspect opcode streams.
