@@ -24,7 +24,6 @@ public sealed class Bus : IMemDevice, IDisposable
 {
     private readonly byte[] m_ram;
     private readonly IMemDevice[] m_devices;
-    private readonly bool[] m_written;
     private readonly TimerDevice m_timer;
     private readonly IoDevice m_ioDevice;
     private readonly InterruptDevice m_interruptDevice;
@@ -95,8 +94,6 @@ public sealed class Bus : IMemDevice, IDisposable
         Array.Clear(m_devices);
         m_ram = ArrayPool<byte>.Shared.Rent(bytesToAllocate);
         Array.Clear(m_ram);
-        m_written = ArrayPool<bool>.Shared.Rent(bytesToAllocate);
-        Array.Clear(m_written);
         Dma = new Dma(this);
 
         VramDevice vram = null;
@@ -271,26 +268,19 @@ public sealed class Bus : IMemDevice, IDisposable
         if (PPU is { CanAccessOam: false } && m_oam?.Contains(addr) == true && Dma?.IsTransferActive != true)
         {
             var baseAddr = (ushort)(addr & 0xFFFE);
-            if (m_oam.Contains(baseAddr))
-            {
-                MarkWritten(baseAddr);
-                m_oam.Write8(baseAddr, value);
+            if (!m_oam.Contains(baseAddr))
+                return;
+            m_oam.Write8(baseAddr, value);
 
-                var neighbor = (ushort)(baseAddr + 1);
-                if (m_oam.Contains(neighbor))
-                {
-                    MarkWritten(neighbor);
-                    m_oam.Write8(neighbor, value);
-                }
-            }
+            var neighbor = (ushort)(baseAddr + 1);
+            if (m_oam.Contains(neighbor))
+                m_oam.Write8(neighbor, value);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UncheckedWrite(ushort addr, byte value)
     {
-        MarkWritten(addr);
-
         if (m_devices[addr] == null)
             m_ram[addr] = value;
         else
@@ -339,29 +329,9 @@ public sealed class Bus : IMemDevice, IDisposable
         CpuClockTicks = 0;
     }
 
-    public bool IsUninitializedWorkRam(ushort addr) =>
-        addr is >= 0xC000 and <= 0xFDFF && !m_written[addr];
-    public static bool IsOamOrUnusable(ushort addr) =>
-        addr is >= 0xFE00 and <= 0xFEFF;
-    public static bool IsIo(ushort addr) =>
-        addr is >= 0xFF00 and <= 0xFF7F;
-
     public void Dispose()
     {
         ArrayPool<IMemDevice>.Shared.Return(m_devices);
         ArrayPool<byte>.Shared.Return(m_ram);
-        ArrayPool<bool>.Shared.Return(m_written);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void MarkWritten(ushort addr)
-    {
-        m_written[addr] = true;
-
-        // Keep WRAM and its echo in sync for write-tracking.
-        if (addr is >= 0xC000 and <= 0xDFFF)
-            m_written[addr + 0x2000] = true;
-        else if (addr is >= 0xE000 and <= 0xFDFF)
-            m_written[addr - 0x2000] = true;
     }
 }

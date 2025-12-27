@@ -149,16 +149,6 @@ public class Cpu
 
             try
             {
-#if DEBUG
-                // Runtime checks to help identify potential bugs.
-                if (Bus.IsUninitializedWorkRam(Reg.PC))
-                    Logger.Instance.Warn($"Executing from uninitialized WRAM at {Reg.PC:X4} - This is probably a CPU/interrupt/RET bug.");
-                else if (Bus.IsOamOrUnusable(Reg.PC))
-                    Logger.Instance.Warn($"Executing from OAM/unusable region at {Reg.PC:X4} - This is not typical.");
-                else if (Bus.IsIo(Reg.PC))
-                    Logger.Instance.Warn($"Executing from IO region at {Reg.PC:X4} - This is not typical.");
-#endif
-
                 // Decode instruction.
                 Instruction instruction;
                 if (m_fetchedOpcode == 0xCB)
