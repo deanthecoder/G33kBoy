@@ -35,7 +35,7 @@
     <Window.KeyBindings>
         <KeyBinding Command="{Binding LoadGameRom}" Gesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
         <KeyBinding Command="{Binding ResetDevice}" Gesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
-        <KeyBinding Command="{Binding SaveScreenshot}" Gesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
+        <KeyBinding Command="{Binding SaveSnapshot}" Gesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
         <KeyBinding Command="{Binding OpenDialogCommand, ElementName=Host}" Gesture="{OnPlatform 'ctrl+t', macOS='⌘+t'}">
             <KeyBinding.CommandParameter>
                 <views:RollbackDialog DataContext="{Binding GameBoy.SnapshotHistory}" />
@@ -63,6 +63,8 @@
                             <Separator/>
                             <MenuItem Header="Clear" Command="{Binding Mru.Clear}"/>
                         </MenuItem>
+                        <MenuItem Header="_Save Snapshot..." Command="{Binding SaveSnapshot}"
+                                  InputGesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
                         <Separator />
                         <MenuItem Header="_Exit" Command="{Binding CloseCommand}" />
                     </MenuItem>
@@ -142,8 +144,7 @@
                     </MenuItem>
 
                     <MenuItem Header="Extras">
-                        <MenuItem Header="Save Screenshot..." Command="{Binding SaveScreenshot}"
-                                  InputGesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
+                        <MenuItem Header="Save Screenshot..." Command="{Binding SaveScreenshot}" />
                         <MenuItem Header="Export TileMap..." Command="{Binding ExportTileMap}" />
                     </MenuItem>
 

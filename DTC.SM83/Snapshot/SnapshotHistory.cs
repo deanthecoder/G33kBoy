@@ -26,7 +26,6 @@ public sealed class SnapshotHistory : ViewModelBase
     private readonly GameBoy m_gameBoy;
     private readonly MachineState[] m_states = new MachineState[MaxSamples];
     private readonly byte[][] m_frameBuffers = new byte[MaxSamples][];
-    private readonly WriteableBitmap m_preview;
     private int m_count;
     private int m_startIndex;
     private int m_indexToRestore;
@@ -41,7 +40,7 @@ public sealed class SnapshotHistory : ViewModelBase
     {
         m_gameBoy = gameBoy ?? throw new ArgumentNullException(nameof(gameBoy));
         var size = new PixelSize(PPU.FrameWidth, PPU.FrameHeight);
-        m_preview = new WriteableBitmap(size, new Vector(96, 96), PixelFormat.Rgba8888);
+        ScreenPreview = new WriteableBitmap(size, new Vector(96, 96), PixelFormat.Rgba8888);
     }
 
     public object CpuStepLock => m_gameBoy.CpuStepLock;
@@ -49,7 +48,7 @@ public sealed class SnapshotHistory : ViewModelBase
     public IDisposable CreatePauser() =>
         m_gameBoy.CreatePauser();
 
-    public WriteableBitmap ScreenPreview => m_preview;
+    public WriteableBitmap ScreenPreview { get; }
 
     public int LastSampleIndex => m_count - 1;
 
@@ -140,6 +139,12 @@ public sealed class SnapshotHistory : ViewModelBase
         Activated?.Invoke(this, EventArgs.Empty);
     }
 
+    public MachineState CaptureSnapshotNow()
+    {
+        CaptureSnapshot();
+        return GetSnapshot(LastSampleIndex);
+    }
+
     private void CaptureSnapshot()
     {
         EnsureBuffersAllocated();
@@ -226,7 +231,7 @@ public sealed class SnapshotHistory : ViewModelBase
             return;
         }
 
-        using var locked = m_preview.Lock();
+        using var locked = ScreenPreview.Lock();
         var destStride = locked.RowBytes;
         var srcStride = PPU.FrameWidth * 4;
         unsafe
@@ -246,7 +251,7 @@ public sealed class SnapshotHistory : ViewModelBase
 
     private void ClearPreview()
     {
-        using var locked = m_preview.Lock();
+        using var locked = ScreenPreview.Lock();
         var totalBytes = locked.RowBytes * PPU.FrameHeight;
         unsafe
         {

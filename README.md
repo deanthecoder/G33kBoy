@@ -40,7 +40,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 ## App shortcuts
 - Open ROM: Ctrl+O (Cmd+O)
 - Reset device: Ctrl+R (Cmd+R)
-- Save screenshot: Ctrl+S (Cmd+S)
+- Save snapshot: Ctrl+S (Cmd+S)
 - Time travel: Ctrl+T (Cmd+T)
 
 ## Emulator features
@@ -53,6 +53,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - **LCD emulation** – Optional high‑fidelity LCD simulation including pixel‑grid structure, sub‑pixel glow, grain, edge shadowing, and per‑pixel diffusion to closely mimic the look of the original DMG screen.
 - **Motion blur** – Blend frames together for a persistence-of-vision effect that smooths fast movement.
 - **Screenshot capture** – Save the current frame as a TGA screenshot.
+- **Snapshot save/load** – Save emulator state to `.sav` files and restore it later.
 - **Time travel snapshots** – Preview and roll back recent gameplay with Ctrl+T / Cmd+T.
 - **Tile map export** – Export the current tile map as a TGA image for debugging graphics or capturing assets.
 

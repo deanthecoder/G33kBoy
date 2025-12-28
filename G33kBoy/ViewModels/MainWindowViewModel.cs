@@ -18,6 +18,7 @@ using DTC.Core.Commands;
 using DTC.Core.Extensions;
 using DTC.Core.ViewModels;
 using DTC.SM83;
+using DTC.SM83.Snapshot;
 
 namespace G33kBoy.ViewModels;
 
@@ -183,12 +184,15 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void LoadGameRom()
     {
         var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
-        var command = new FileOpenCommand("Load Game Boy ROM", "Game Boy ROMs", ["*.gb", "*.gbc", "*.zip"]);
+        var command = new FileOpenCommand("Load Game Boy ROM or Snapshot", "Game Boy Files", ["*.gb", "*.gbc", "*.zip", "*.sav"]);
         command.FileSelected += (_, info) =>
         {
             try
             {
-                LoadRomFile(info);
+                if (IsSnapshotFile(info))
+                    LoadSnapshotFile(info);
+                else
+                    LoadRomFile(info);
             }
             finally
             {
@@ -232,6 +236,40 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             try
             {
                 GameBoy.SaveScreenshot(info);
+            }
+            finally
+            {
+                keyBlocker.Dispose();
+            }
+        };
+        command.Cancelled += (_, _) => keyBlocker.Dispose();
+        command.Execute(null);
+    }
+
+    public void SaveSnapshot()
+    {
+        if (!GameBoy.HasLoadedCartridge)
+        {
+            Logger.Instance.Warn("Unable to save snapshot: No ROM loaded.");
+            return;
+        }
+
+        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
+        var prefix = SanitizeFileName(m_currentRomTitle);
+        var defaultName = $"{prefix}.sav";
+        var command = new FileSaveCommand("Save Snapshot", "G33kBoy Snapshots", ["*.sav"], defaultName);
+        command.FileSelected += (_, info) =>
+        {
+            try
+            {
+                var snapshot = GameBoy.SnapshotHistory.CaptureSnapshotNow();
+                if (snapshot == null)
+                {
+                    Logger.Instance.Warn("Unable to save snapshot: No active emulation state.");
+                    return;
+                }
+
+                SnapshotFile.Save(info, snapshot);
             }
             finally
             {
@@ -342,6 +380,44 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.PowerOnAsync(romFile);
         Settings.LastRomFile = romFile;
     }
+
+    private void LoadSnapshotFile(FileInfo snapshotFile)
+    {
+        if (snapshotFile == null)
+            return;
+        if (!snapshotFile.Exists)
+        {
+            Logger.Instance.Warn($"Unable to load snapshot '{snapshotFile.FullName}': File not found.");
+            return;
+        }
+
+        try
+        {
+            var state = SnapshotFile.Load(snapshotFile, out var romPath);
+            if (string.IsNullOrWhiteSpace(romPath))
+            {
+                Logger.Instance.Warn($"Unable to load snapshot '{snapshotFile.FullName}': ROM path missing.");
+                return;
+            }
+
+            var romFile = new FileInfo(romPath);
+            if (!romFile.Exists)
+            {
+                Logger.Instance.Warn($"Unable to restore snapshot: ROM '{romFile.FullName}' not found.");
+                return;
+            }
+
+            LoadRomFile(romFile);
+            GameBoy.LoadState(state);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Warn($"Unable to load snapshot '{snapshotFile.FullName}': {ex.Message}");
+        }
+    }
+
+    private static bool IsSnapshotFile(FileInfo file) =>
+        file != null && file.Extension.Equals(".sav", StringComparison.OrdinalIgnoreCase);
 
     public void Dispose()
     {

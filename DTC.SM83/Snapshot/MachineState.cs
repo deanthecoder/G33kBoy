@@ -33,4 +33,13 @@ public sealed class MachineState
 
     internal StateWriter CreateWriter() => new StateWriter(m_data);
     internal StateReader CreateReader() => new StateReader(m_data);
+
+    internal byte[] GetBuffer() => m_data;
+
+    internal void LoadBuffer(ReadOnlySpan<byte> data)
+    {
+        if (data.Length != m_data.Length)
+            throw new InvalidOperationException($"State buffer size mismatch. Expected {m_data.Length} bytes.");
+        data.CopyTo(m_data);
+    }
 }
