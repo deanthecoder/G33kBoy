@@ -22,6 +22,7 @@ internal sealed class Mbc5Controller : MemoryBankControllerBase
 
     public Mbc5Controller(Cartridge cartridge) : base(cartridge)
     {
+        m_romBank = 1;
     }
 
     public override byte ReadRom(ushort addr)
