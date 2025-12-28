@@ -111,12 +111,14 @@ public sealed class LcdScreen : IDisposable
             for (var destX = 0; destX < m_destWidth; destX++)
             {
                 var xPos = destX / (double)Scale;
+                var yPos = destY / (double)Scale;
                 var shadowL = xPos.InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
                 var shadowR = (m_sourceWidth - xPos).InverseLerp(3.0, 6.0).Clamp(0.0, 1.0);
-                var shadow = Math.Min(shadowL, shadowR);
-                var grain = 1.0 + 0.03 * (random.NextDouble() * 2.0 - 1.0);
+                var shadowT = yPos.InverseLerp(0.0, 2.0).Clamp(0.0, 1.0);
+                var shadow = 0.6 + 0.4 * shadowL * shadowR * shadowT;
+                var grain = 1.0 - 0.05 * random.NextDouble();
 
-                m_grainWithShadow[rowOffset + destX] = (float)(grain * (0.6 + 0.4 * shadow) * 255.0).Clamp(0.0f, 255.0f);
+                m_grainWithShadow[rowOffset + destX] = (float)(grain * shadow * 255.0);
             }
         }
     }
