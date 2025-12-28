@@ -18,33 +18,35 @@ G33kBoy exists so I can learn Game Boy hardware properly, starting from a clean 
 My [ZX Spectrum emulator](https://github.com/deanthecoder/ZXSpeculator) taught me a lot about emulation, and the Game Boy has a *similar* CPU – but it also includes a dedicated PPU (video) and sound hardware that need to be emulated too. It is also a playground for some CPU performance techniques I wanted to try.
 
 ## Keyboard controls
+
+### Game Boy joypad
 Global key hooks translate the following keys into the Game Boy joypad:
 
 <div style="display: flex; align-items: flex-start; gap: 40px;">
   <div>
 
-  | Keyboard     | Joypad |
-  |--------------|--------|
-  | Arrow keys   | D-pad |
-  | `Z`          | B |
-  | `X`          | A |
-  | `A`          | Auto-fire B |
-  | `S`          | Auto-fire A |
-  | Space        | Select |
-  | Enter/Return | Start |
+  | Keyboard       | Joypad |
+  |----------------|--------|
+  | `Arrow keys`   | D-pad |
+  | `Z`            | B |
+  | `X`            | A |
+  | `A`            | Auto-fire B |
+  | `S`            | Auto-fire A |
+  | `Space`        | Select |
+  | `Enter/Return` | Start |
   </div>
 
   <img src="img/KeyMap.png" alt="Key map" width="200">
 </div>
 
-## App shortcuts
-- Open ROM: Ctrl+O (Cmd+O)
-- Reset device: Ctrl+R (Cmd+R)
-- Save snapshot: Ctrl+S (Cmd+S)
-- Time travel: Ctrl+T (Cmd+T)
+### Application shortcuts
+- **Open ROM**: `Ctrl+O` (`Cmd+O` on macOS)
+- **Reset device**: `Ctrl+R` (`Cmd+R` on macOS)
+- **Save snapshot**: `Ctrl+S` (`Cmd+S` on macOS)
+- **Time travel**: `Backspace`
 
 ## Emulator features
-- **ROM loading from ZIPs** – Load standard `.gb` and `.gbc` ROMs directly, or from a `.zip` archive containing a Game Boy ROM.
+- **ROM loading from ZIPs** – Load standard `.gb` and `.gbc` ROMs directly, or from a `.zip` archive containing a Game Boy ROM. Simply drag-and-drop ROM files onto the window.
 - **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
 - **On-demand auto-fire** – Enable hardware auto-fire of A and B buttons.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
@@ -54,7 +56,7 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - **Motion blur** – Blend frames together for a persistence-of-vision effect that smooths fast movement.
 - **Screenshot capture** – Save the current frame as a TGA screenshot.
 - **Snapshot save/load** – Save emulator state to `.sav` files and restore it later.
-- **Time travel snapshots** – Preview and roll back recent gameplay with Ctrl+T / Cmd+T.
+- **Time travel snapshots** – Preview and roll back recent gameplay with Backspace.
 - **Tile map export** – Export the current tile map as a TGA image for debugging graphics or capturing assets.
 
 ## LCD emulation
@@ -89,12 +91,9 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - **Validation suite** – `UnitTests` target the CPU core via NUnit, ensuring regressions are caught early.
 
 ## External resources
-- `external/GameboyCPUTests/` – CPU tests for regression validation
-  https://github.com/adtennant/GameboyCPUTests
-- `external/blargg-test-roms/` – Blargg test ROMs to verify accuracy.
-  https://github.com/retrio/gb-test-roms
-- `external/dmg-acid2.gb` – The Acid2 test ported to the DMG; useful for visual and timing verification.
-  https://github.com/mattcurrie/dmg-acid2
+- `external/GameboyCPUTests/` – [CPU tests for regression validation](https://github.com/adtennant/GameboyCPUTests)
+- `external/blargg-test-roms/` – [Blargg test ROMs to verify accuracy](https://github.com/retrio/gb-test-roms)
+- `external/dmg-acid2.gb` – [The Acid2 test ported to the DMG](https://github.com/mattcurrie/dmg-acid2); useful for visual and timing verification
 
 ## Useful links
 - [Pan Docs](https://gbdev.io/pandocs/)

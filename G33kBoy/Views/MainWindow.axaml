@@ -36,7 +36,7 @@
         <KeyBinding Command="{Binding LoadGameRom}" Gesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
         <KeyBinding Command="{Binding ResetDevice}" Gesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
         <KeyBinding Command="{Binding SaveSnapshot}" Gesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
-        <KeyBinding Command="{Binding OpenDialogCommand, ElementName=Host}" Gesture="{OnPlatform 'ctrl+t', macOS='⌘+t'}">
+        <KeyBinding Command="{Binding OpenDialogCommand, ElementName=Host}" Gesture="Back">
             <KeyBinding.CommandParameter>
                 <views:RollbackDialog DataContext="{Binding GameBoy.SnapshotHistory}" />
             </KeyBinding.CommandParameter>
