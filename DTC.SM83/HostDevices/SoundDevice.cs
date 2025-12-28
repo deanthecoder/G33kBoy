@@ -22,6 +22,7 @@ namespace DTC.SM83.HostDevices;
 public class SoundDevice
 {
     private const int BufferCount = 3;
+    private const double VolumeRampMs = 100.0;
 
     private readonly int m_source;
     private readonly int[] m_buffers;
@@ -33,8 +34,11 @@ public class SoundDevice
     private readonly Lock m_bufferLock = new();
     private readonly ManualResetEventSlim m_dataAvailable = new(false);
     private readonly byte[] m_transferBuffer;
+    private readonly double m_gainStep;
     private Task m_loopTask;
     private bool m_isSoundEnabled = true;
+    private double m_targetGain = 1.0;
+    private double m_outputGain = 1.0;
     private byte m_lastLeftSample = 128;
     private byte m_lastRightSample = 128;
     private bool m_isCancelled;
@@ -65,6 +69,7 @@ public class SoundDevice
         var cpuBufferCapacityFrames = m_targetBufferedFrames * 3; // Leave headroom for brief spikes.
         m_cpuBuffer = new CircularBuffer<byte>(cpuBufferCapacityFrames * 2);
         m_bufferDurationMs = 1000.0 * m_transferFrames / m_sampleRate;
+        m_gainStep = 1.0 / (m_sampleRate * (VolumeRampMs / 1000.0));
     }
 
     public void Start()
@@ -315,12 +320,14 @@ public class SoundDevice
 
     public void AddSample(double leftSample, double rightSample)
     {
-        if (!m_isSoundEnabled)
-        {
-            // Silence: center both channels.
-            leftSample = 0.0;
-            rightSample = 0.0;
-        }
+        var targetGain = m_targetGain;
+        if (m_outputGain < targetGain)
+            m_outputGain = Math.Min(targetGain, m_outputGain + m_gainStep);
+        else if (m_outputGain > targetGain)
+            m_outputGain = Math.Max(targetGain, m_outputGain - m_gainStep);
+
+        leftSample *= m_outputGain;
+        rightSample *= m_outputGain;
 
         var leftByte = ToUnsigned8(leftSample);
         var rightByte = ToUnsigned8(rightSample);
@@ -350,7 +357,9 @@ public class SoundDevice
         if (m_isSoundEnabled == isSoundEnabled)
             return;
         m_isSoundEnabled = isSoundEnabled;
-        ClearCpuBuffer();
+        m_targetGain = isSoundEnabled ? 1.0 : 0.0;
+        if (isSoundEnabled && m_outputGain <= 0.001)
+            ClearCpuBuffer();
     }
 
     private void ClearCpuBuffer()
