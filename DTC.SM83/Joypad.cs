@@ -72,13 +72,13 @@ public sealed class Joypad : IDisposable
         if (!m_handlePressEvents)
             return;
 
-        if (keyCode == KeyCode.VcC)
+        if (keyCode == KeyCode.VcA)
         {
             SetAutoFireHeld(JoypadButtons.B, isPressed);
             return;
         }
 
-        if (keyCode == KeyCode.VcV)
+        if (keyCode == KeyCode.VcS)
         {
             SetAutoFireHeld(JoypadButtons.A, isPressed);
             return;

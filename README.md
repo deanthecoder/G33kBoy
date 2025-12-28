@@ -23,14 +23,14 @@ Global key hooks translate the following keys into the Game Boy joypad:
 <div style="display: flex; align-items: flex-start; gap: 40px;">
   <div>
 
-  | Keyboard | Joypad |
-  |----------|--------|
-  | Arrow keys | D-pad |
-  | `Z` | B |
-  | `X` | A |
-  | `C` | Auto-fire B |
-  | `V` | Auto-fire A |
-  | Space | Select |
+  | Keyboard     | Joypad |
+  |--------------|--------|
+  | Arrow keys   | D-pad |
+  | `Z`          | B |
+  | `X`          | A |
+  | `A`          | Auto-fire B |
+  | `S`          | Auto-fire A |
+  | Space        | Select |
   | Enter/Return | Start |
   </div>
 
