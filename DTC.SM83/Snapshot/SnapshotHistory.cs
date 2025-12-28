@@ -33,6 +33,7 @@ public sealed class SnapshotHistory : ViewModelBase
     private ulong m_lastCpuTicks;
     private string m_romPath;
     private int m_stateSize;
+    private int m_pauseCount;
 
     public event EventHandler Activated;
 
@@ -43,11 +44,6 @@ public sealed class SnapshotHistory : ViewModelBase
         ScreenPreview = new WriteableBitmap(size, new Vector(96, 96), PixelFormat.Rgba8888);
     }
 
-    public object CpuStepLock => m_gameBoy.CpuStepLock;
-
-    public IDisposable CreatePauser() =>
-        m_gameBoy.CreatePauser();
-
     public WriteableBitmap ScreenPreview { get; }
 
     public int LastSampleIndex => m_count - 1;
@@ -55,6 +51,8 @@ public sealed class SnapshotHistory : ViewModelBase
     public bool CanRestore => LastSampleIndex >= 0 && IndexToRestore < LastSampleIndex;
 
     public bool HasSnapshots => m_count > 0;
+
+    public bool IsSnapshottingPaused => Volatile.Read(ref m_pauseCount) > 0;
 
     public int IndexToRestore
     {
@@ -90,6 +88,9 @@ public sealed class SnapshotHistory : ViewModelBase
 
     internal void OnFrameRendered(ulong currentCpuTicks)
     {
+        if (IsSnapshottingPaused)
+            return;
+
         if (!m_gameBoy.IsRunning || !m_gameBoy.HasLoadedCartridge)
             return;
 
@@ -143,6 +144,16 @@ public sealed class SnapshotHistory : ViewModelBase
     {
         CaptureSnapshot();
         return GetSnapshot(LastSampleIndex);
+    }
+
+    public void PauseSnapshotting() =>
+        Interlocked.Increment(ref m_pauseCount);
+
+    public void ResumeSnapshotting()
+    {
+        var newValue = Interlocked.Decrement(ref m_pauseCount);
+        if (newValue < 0)
+            Interlocked.Exchange(ref m_pauseCount, 0);
     }
 
     private void CaptureSnapshot()

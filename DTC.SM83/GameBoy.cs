@@ -416,9 +416,6 @@ public sealed class GameBoy : IDisposable
         return 0;
     }
 
-    public IDisposable CreatePauser() =>
-        m_clockSync.CreatePauser();
-
     public int GetStateSize() =>
         m_cpu?.GetStateSize() ?? 0;
 

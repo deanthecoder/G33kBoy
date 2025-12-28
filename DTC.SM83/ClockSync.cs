@@ -49,12 +49,6 @@ public class ClockSync
     }
 
     /// <summary>
-    /// Operations external to emulation (such as loading a ROM) should pause
-    /// emulated machine whilst they're 'busy'.
-    /// </summary>
-    public IDisposable CreatePauser() => new Pauser(m_realTime, m_lock);
-
-    /// <summary>
     /// Call to set whether the emulator is running at 100% emulated speed,
     /// or 'full throttle'.
     /// </summary>
@@ -156,25 +150,5 @@ public class ClockSync
         m_tStateCountAtLastSync = currentTicks;
         m_ticksSinceLastSync = 0;
         m_realTime.Restart();
-    }
-
-    private class Pauser : IDisposable
-    {
-        private readonly Stopwatch m_stopwatch;
-        private readonly Lock m_lock;
-
-        public Pauser(Stopwatch stopwatch, Lock lockObj)
-        {
-            m_stopwatch = stopwatch;
-            m_lock = lockObj;
-            lock (m_lock)
-                stopwatch.Stop();
-        }
-
-        public void Dispose()
-        {
-            lock (m_lock)
-                m_stopwatch.Start();
-        }
     }
 }
