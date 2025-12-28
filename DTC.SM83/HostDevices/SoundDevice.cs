@@ -36,12 +36,13 @@ public class SoundDevice
     private readonly ManualResetEventSlim m_dataAvailable = new(false);
     private readonly byte[] m_transferBuffer;
     private readonly double m_gainStep;
+    private readonly double m_lowPassAlpha;
     private Task m_loopTask;
     private bool m_isSoundEnabled = true;
     private double m_targetGain = 1.0;
-    private double m_outputGain = 1.0;
+    private double m_outputGain;
+    private double m_lastDeviceGain = -1.0;
     private bool m_isLowPassFilterEnabled = true;
-    private double m_lowPassAlpha;
     private double m_lowPassLeft;
     private double m_lowPassRight;
     private bool m_lowPassInitialized;
@@ -83,7 +84,10 @@ public class SoundDevice
     {
         if (m_loopTask != null)
             return; // Already started.
-        
+
+        m_outputGain = 0.0;
+        m_targetGain = m_isSoundEnabled ? 1.0 : 0.0;
+        m_lastDeviceGain = -1.0;
         m_loopTask = Task.Run(SoundLoop);
     }
 
@@ -97,19 +101,12 @@ public class SoundDevice
         foreach (var bufferId in m_buffers)
             UpdateBufferData(bufferId);
 
-        // Start playback (Muted, to avoid the 'pop').
-        Mute();
+        // Start playback (gain ramps via samples and device gain).
         ExecuteAl("SourcePlay", () => AL.SourcePlay(m_source));
-
-        var gain = 0.0f;
         var healthTimer = Stopwatch.StartNew();
         while (!m_isCancelled)
         {
-            if (gain < 0.2)
-            {
-                gain = Math.Min(0.2f, gain + 0.005f);
-                AL.Source(m_source, ALSourcef.Gain, gain);
-            }
+            UpdateDeviceGain();
 
             var buffersProcessed = 0;
             ExecuteAl("GetSource(BuffersProcessed)", () => AL.GetSource(m_source, ALGetSourcei.BuffersProcessed, out buffersProcessed));
@@ -127,8 +124,9 @@ public class SoundDevice
             ExecuteAl("GetSource(SourceState)", () => AL.GetSource(m_source, ALGetSourcei.SourceState, out state));
             if ((ALSourceState)state != ALSourceState.Playing && buffersQueued > 0)
             {
-                gain = 0.0f;
-                AL.Source(m_source, ALSourcef.Gain, gain);
+                m_outputGain = 0.0;
+                m_targetGain = m_isSoundEnabled ? 1.0 : 0.0;
+                m_lastDeviceGain = -1.0;
                 ExecuteAl("SourcePlay", () => AL.SourcePlay(m_source));
                 ClearCpuBuffer();
             }
@@ -143,11 +141,20 @@ public class SoundDevice
             m_dataAvailable.Reset();
         }
 
-        Mute();
         AL.SourceStop(m_source);
         LogBufferHealth();
         
         Logger.Instance.Info("Sound thread stopped.");
+    }
+
+    private void UpdateDeviceGain()
+    {
+        var gain = Math.Clamp(m_outputGain, 0.0, 1.0);
+        if (Math.Abs(gain - m_lastDeviceGain) < 0.0001)
+            return;
+
+        m_lastDeviceGain = gain;
+        ExecuteAl("Source(Gain)", () => AL.Source(m_source, ALSourcef.Gain, (float)gain));
     }
 
     private void WaitForInitialData()
@@ -201,9 +208,6 @@ public class SoundDevice
         m_dropResampleCount = 0;
     }
     
-    private void Mute() =>
-        AL.Source(m_source, ALSourcef.Gain, 0.0f);
-
     private static void ExecuteAl(string operation, Action action)
     {
         action();
@@ -332,9 +336,7 @@ public class SoundDevice
             m_outputGain = Math.Min(targetGain, m_outputGain + m_gainStep);
         else if (m_outputGain > targetGain)
             m_outputGain = Math.Max(targetGain, m_outputGain - m_gainStep);
-
-        leftSample *= m_outputGain;
-        rightSample *= m_outputGain;
+        // Device gain is applied in the sound thread; keep samples unscaled here to avoid double attenuation.
 
         if (m_isLowPassFilterEnabled)
         {
