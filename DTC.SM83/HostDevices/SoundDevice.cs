@@ -23,6 +23,7 @@ public class SoundDevice
 {
     private const int BufferCount = 3;
     private const double VolumeRampMs = 100.0;
+    private const double LowPassCutoffHz = 7000.0;
 
     private readonly int m_source;
     private readonly int[] m_buffers;
@@ -39,6 +40,11 @@ public class SoundDevice
     private bool m_isSoundEnabled = true;
     private double m_targetGain = 1.0;
     private double m_outputGain = 1.0;
+    private bool m_isLowPassFilterEnabled = true;
+    private double m_lowPassAlpha;
+    private double m_lowPassLeft;
+    private double m_lowPassRight;
+    private bool m_lowPassInitialized;
     private byte m_lastLeftSample = 128;
     private byte m_lastRightSample = 128;
     private bool m_isCancelled;
@@ -70,6 +76,7 @@ public class SoundDevice
         m_cpuBuffer = new CircularBuffer<byte>(cpuBufferCapacityFrames * 2);
         m_bufferDurationMs = 1000.0 * m_transferFrames / m_sampleRate;
         m_gainStep = 1.0 / (m_sampleRate * (VolumeRampMs / 1000.0));
+        m_lowPassAlpha = ComputeLowPassAlpha(LowPassCutoffHz, m_sampleRate);
     }
 
     public void Start()
@@ -329,6 +336,24 @@ public class SoundDevice
         leftSample *= m_outputGain;
         rightSample *= m_outputGain;
 
+        if (m_isLowPassFilterEnabled)
+        {
+            if (!m_lowPassInitialized)
+            {
+                m_lowPassLeft = leftSample;
+                m_lowPassRight = rightSample;
+                m_lowPassInitialized = true;
+            }
+            else
+            {
+                m_lowPassLeft += m_lowPassAlpha * (leftSample - m_lowPassLeft);
+                m_lowPassRight += m_lowPassAlpha * (rightSample - m_lowPassRight);
+            }
+
+            leftSample = m_lowPassLeft;
+            rightSample = m_lowPassRight;
+        }
+
         var leftByte = ToUnsigned8(leftSample);
         var rightByte = ToUnsigned8(rightSample);
 
@@ -362,12 +387,32 @@ public class SoundDevice
             ClearCpuBuffer();
     }
 
+    public void SetLowPassFilterEnabled(bool isEnabled)
+    {
+        if (m_isLowPassFilterEnabled == isEnabled)
+            return;
+
+        m_isLowPassFilterEnabled = isEnabled;
+        if (isEnabled)
+            m_lowPassInitialized = false;
+    }
+
     private void ClearCpuBuffer()
     {
         lock (m_bufferLock)
             m_cpuBuffer.Clear();
         m_lastLeftSample = 128;
         m_lastRightSample = 128;
+        m_lowPassInitialized = false;
+        m_lowPassLeft = 0.0;
+        m_lowPassRight = 0.0;
+    }
+
+    private static double ComputeLowPassAlpha(double cutoffHz, int sampleRate)
+    {
+        var rc = 1.0 / (2.0 * Math.PI * cutoffHz);
+        var dt = 1.0 / sampleRate;
+        return dt / (rc + dt);
     }
     
     public void Dispose()

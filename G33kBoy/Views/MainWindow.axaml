@@ -128,6 +128,13 @@
                                     <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsSoundChannel4Enabled}" />
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Hardware-style Low-pass Filter" Command="{Binding ToggleHardwareLowPassFilter}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding Settings.IsHardwareLowPassFilterEnabled}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </MenuItem>
                         <Separator />
                         <MenuItem Header="Reset Device" Command="{Binding ResetDevice}"

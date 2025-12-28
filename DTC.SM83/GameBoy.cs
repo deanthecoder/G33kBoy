@@ -310,6 +310,9 @@ public sealed class GameBoy : IDisposable
         UpdateSoundEnabled();
     }
 
+    public void SetHardwareLowPassFilterEnabled(bool isEnabled) =>
+        m_audioSink?.SetLowPassFilterEnabled(isEnabled);
+
     private void UpdateSoundEnabled()
     {
         // Auto-mute whenever the emulation is not running at 100% speed to avoid mangled audio.

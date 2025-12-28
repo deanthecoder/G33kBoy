@@ -33,6 +33,12 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
 
+    public bool IsHardwareLowPassFilterEnabled
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     public bool IsAmbientBlurred
     {
         get => Get<bool>();
@@ -95,6 +101,7 @@ public class Settings : UserSettingsBase
     {
         IsAmbientBlurred = true;
         IsSoundEnabled = true;
+        IsHardwareLowPassFilterEnabled = true;
         IsBackgroundVisible = true;
         IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;

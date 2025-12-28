@@ -151,6 +151,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
     }
 
+    public void ToggleHardwareLowPassFilter()
+    {
+        Settings.IsHardwareLowPassFilterEnabled = !Settings.IsHardwareLowPassFilterEnabled;
+        ApplyHardwareLowPassFilterSetting();
+    }
+
     public MainWindowViewModel()
     {
         Mru = new MruFiles().InitFromString(Settings.MruFiles);
@@ -170,6 +176,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
         ApplyDisplayVisibilitySettings();
         ApplySoundEnabledSetting();
+        ApplyHardwareLowPassFilterSetting();
         ApplySoundChannelSettings();
     }
 
@@ -291,6 +298,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     
     private void ApplySoundEnabledSetting() =>
         GameBoy.SetSoundEnabled(Settings.IsSoundEnabled);
+
+    private void ApplyHardwareLowPassFilterSetting() =>
+        GameBoy.SetHardwareLowPassFilterEnabled(Settings.IsHardwareLowPassFilterEnabled);
     
     private void ApplySoundChannelSettings()
     {
@@ -304,6 +314,8 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         if (e.PropertyName == nameof(Settings.IsSoundEnabled))
             ApplySoundEnabledSetting();
+        else if (e.PropertyName == nameof(Settings.IsHardwareLowPassFilterEnabled))
+            ApplyHardwareLowPassFilterSetting();
         else if (e.PropertyName == nameof(Settings.IsCpuHistoryTracked))
             IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
         else if (e.PropertyName == nameof(Settings.RequestedHardwareMode))
