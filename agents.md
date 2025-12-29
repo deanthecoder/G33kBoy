@@ -10,36 +10,38 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 - Match the English style as reported below.
 - Prefer existing frameworks, tests, and naming conventions shown here.
 - Check Supported UI Languages when adding UI strings so required translations stay in sync.
-## Repositories (4)
+## Repositories (5)
 > **Agent note:** Sub-modules and sibling repositories often expose reusable libraries (e.g., extension methods, utilities). Cross-reference these before re-implementing.
 
   - https://github.com/deanthecoder/G33kBoy   
-    C# implementation of the GameBoy's SM83 CPU.
+    Game Boy Original emulator written in C#.
   - https://github.com/adtennant/GameboyCPUTests (Submodule)  
     Test data for developers of Gameboy emulators.
   - https://github.com/deanthecoder/DTC.Core (Submodule)  
     Core C# library (used by many deanthecoder repos)
   - https://github.com/retrio/gb-test-roms (Submodule)  
     Collection of Game Boy test roms.
+  - https://github.com/deanthecoder/DTC.Installer (Submodule)  
+    Cross platform script for packaging applications.
 ## Stats
 > **Agent note:** Match the project’s English style for identifiers, comments, and documentation.
 > **Agent note:** Use the dominant language(s) and idioms when proposing code.
 
-* Files      : 860
-* Languages  : C# (100%)
+* Files      : 905
+* Languages  : C# (99%)
 * English    : American English
 ## Largest Source Files (8)
 > **Agent note:** Avoid ingesting very large files wholesale; focus on public types, key methods, and file headers to preserve tokens.
 
-* 46.51 KB     : `DTC.SM83/Instructions.cs`
-* 44.18 KB     : `DTC.SM83/PrefixedInstructions.cs`
-* 24.42 KB     : `DTC.SM83/PPU.cs`
+* 47.90 KB     : `DTC.SM83/Instructions/Instructions.cs`
+* 44.20 KB     : `DTC.SM83/Instructions/PrefixedInstructions.cs`
+* 41.91 KB     : `DTC.SM83/Devices/ApuDevice.cs`
+* 38.86 KB     : `DTC.SM83/PPU.cs`
+* 28.43 KB     : `Installer/pack.py`
+* 19.37 KB     : `DTC.SM83/Devices/BootRom.cs`
 * 17.37 KB     : `DTC.Core/DTC.Core/UI/ShaderControl.cs`
-* 15.61 KB     : `DTC.Core/DTC.Core/Extensions/FastLinq.cs`
-* 14.67 KB     : `DTC.Core/DTC.Core/Markdown/ConsoleRenderer.cs`
-* 10.97 KB     : `DTC.SM83/Cartridge.cs`
-* 10.79 KB     : `DTC.Core/DTC.Core/Extensions/DirectoryInfoExtensions.cs`
-## NuGet (15)
+* 16.05 KB     : `DTC.SM83/GameBoy.cs`
+## NuGet (16)
 > **Agent note:** Prefer solutions using the listed packages and frameworks; avoid introducing new technologies without justification.
 
 * `Avalonia               ` : Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.
@@ -55,6 +57,7 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 * `NUnit                  ` : NUnit is a unit-testing framework for all .NET languages.
 * `NUnit3TestAdapter      ` : The NUnit3 TestAdapter for Visual Studio, all versions from 2012 and onwards, and DotNet (incl. .Net core), versions .net framework 4.6.2 or higher, .net core 3.1, .net 5 or higher.
 * `OpenCvSharp4           ` : OpenCV wrapper for .NET. Since this package includes only core managed libraries, another package of native bindings for your OS is required (OpenCvSharp4.runtime.*).
+* `OpenTK.Audio.OpenAL    ` : OpenAL bindings for dotnet from the OpenAL c library.
 * `SharpHook              ` : SharpHook provides a cross-platform global keyboard and mouse hook, event simulation, and text entry simulation for .NET.
 * `SkiaSharp              ` : SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google's Skia Graphics Library.
 ## Preferences
@@ -73,10 +76,11 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 ### Internal
 * `DTC.Core.csproj` (net8.0) [refs:4]
 * `DTC.SM83.csproj` (net9.0) [refs:2]
-## READMEs (5)
+## READMEs (6)
 > **Agent note:** READMEs often contain background, design intent, and setup steps; consult them when modifying code or documentation.
 
 * `DTC.Core/README.md`
+* `Installer/README.md`
 * `README.md`
 * `external/GameboyCPUTests/README.md`
 * `external/GameboyCPUTests/v1/README.md`
