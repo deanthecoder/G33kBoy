@@ -116,6 +116,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public bool IsCgbModeRequested => Settings.RequestedHardwareMode == GameBoyMode.Cgb;
 
+    public bool IsDisplayBlurEnabled => Settings.IsLcdEmulationEnabled && GameBoy.Mode == GameBoyMode.Cgb;
+
+    public bool IsDisplayBlurDisabled => !IsDisplayBlurEnabled;
+
     public void SelectDmgMode()
     {
         Settings.RequestedHardwareMode = GameBoyMode.Dmg;
@@ -332,6 +336,8 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
         GameBoy.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
+        OnPropertyChanged(nameof(IsDisplayBlurEnabled));
+        OnPropertyChanged(nameof(IsDisplayBlurDisabled));
     }
     
     private void ApplySoundEnabledSetting() =>
@@ -361,6 +367,13 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
             OnPropertyChanged(nameof(IsDmgModeRequested));
             OnPropertyChanged(nameof(IsCgbModeRequested));
+            OnPropertyChanged(nameof(IsDisplayBlurEnabled));
+            OnPropertyChanged(nameof(IsDisplayBlurDisabled));
+        }
+        else if (e.PropertyName == nameof(Settings.IsLcdEmulationEnabled))
+        {
+            OnPropertyChanged(nameof(IsDisplayBlurEnabled));
+            OnPropertyChanged(nameof(IsDisplayBlurDisabled));
         }
     }
 

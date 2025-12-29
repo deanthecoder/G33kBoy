@@ -42,7 +42,6 @@ public sealed class GameBoy : IDisposable
     private bool m_isCpuHistoryTracked;
     private double m_relativeSpeedRaw;
     private GameBoyMode m_requestedMode = GameBoyMode.Cgb;
-    private GameBoyMode m_effectiveMode = GameBoyMode.Dmg;
     private string m_loadedRomPath;
     private byte[] m_frameBufferScratch;
 
@@ -50,6 +49,7 @@ public sealed class GameBoy : IDisposable
     public event EventHandler DisplayUpdated;
 
     public WriteableBitmap Display => m_screen.Display;
+    public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
 
     public double RelativeSpeed => Math.Round(m_relativeSpeedRaw / 0.2) * 0.2;
 
@@ -73,7 +73,7 @@ public sealed class GameBoy : IDisposable
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight)
         {
-            Mode = m_effectiveMode
+            Mode = Mode
         };
 
         m_clockSync = new ClockSync(GetEffectiveCpuHz, () => (long)(m_bus?.CpuClockTicks ?? 0), ResetBusClock);
@@ -387,7 +387,7 @@ public sealed class GameBoy : IDisposable
     private void CreateHardware()
     {
         m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_audioSink);
-        m_bus.SetMode(m_effectiveMode);
+        m_bus.SetMode(Mode);
         ApplySoundChannelSettings();
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
         m_cpu = new Cpu(m_bus)
@@ -483,10 +483,10 @@ public sealed class GameBoy : IDisposable
 
     private void ApplyHardwareMode(Cartridge cartridge)
     {
-        m_effectiveMode = DetermineEffectiveMode(cartridge, m_requestedMode);
-        m_bus?.SetMode(m_effectiveMode);
+        Mode = DetermineEffectiveMode(cartridge, m_requestedMode);
+        m_bus?.SetMode(Mode);
         if (m_screen != null)
-            m_screen.Mode = m_effectiveMode;
+            m_screen.Mode = Mode;
     }
 
     private static GameBoyMode DetermineEffectiveMode(Cartridge cartridge, GameBoyMode requestedMode)

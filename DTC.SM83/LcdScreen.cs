@@ -28,7 +28,7 @@ public sealed class LcdScreen : IDisposable
     private readonly float[] m_grainWithShadow;
     private uint m_previousFrameBufferHash;
     private bool m_forceRefresh;
-    private readonly Vector3 m_inv255 = new Vector3(1.0f / 255.0f);
+    private readonly float m_inv255 = 1.0f / 255.0f;
     private readonly Vector3 m_redBoostMult = new Vector3(0.25f, 0.07f, 0.0f);
     private readonly Vector3 m_outlineColor = new Vector3(0x81 / 255.0f, 0x7D / 255.0f, 0x15 / 255.0f);
 
@@ -216,9 +216,9 @@ public sealed class LcdScreen : IDisposable
                 {
                     // Load source RGB and normalize to 0..1.
                     var src = srcPtr + sourceRowOffset + x * 4;
-                    var r = src[0] * m_inv255.X;
-                    var g = src[1] * m_inv255.X;
-                    var b = src[2] * m_inv255.X;
+                    var r = src[0] * m_inv255;
+                    var g = src[1] * m_inv255;
+                    var b = src[2] * m_inv255;
 
                     // Precomputed red boost (top/bottom/left/right tinge).
                     var redBoost = m_redBoostPerPixel[redBoostRowOffset + x];
@@ -287,6 +287,7 @@ public sealed class LcdScreen : IDisposable
     private unsafe void RenderWithLcdEffectsCgb(byte[] frameBuffer, byte* destPtr, int destStride)
     {
         const float rowColumnDim = 0.9f;
+        var inv255 = m_inv255 * 0.9f;
 
         fixed (byte* srcPtr = frameBuffer)
         {
@@ -300,9 +301,9 @@ public sealed class LcdScreen : IDisposable
                 {
                     // Load source RGB and normalize to 0..1.
                     var src = srcPtr + sourceRowOffset + x * 4;
-                    var r = src[0] * m_inv255.X;
-                    var g = src[1] * m_inv255.X;
-                    var b = src[2] * m_inv255.X;
+                    var r = src[0] * inv255 + 0.1f;
+                    var g = src[1] * inv255 + 0.1f;
+                    var b = src[2] * inv255 + 0.1f;
 
                     var destBaseX = x * Scale;
                     var destBaseXBytes = destBaseX * 4;
