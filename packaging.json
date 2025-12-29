@@ -1,25 +1,23 @@
 {
   "ProductName": "G33kBoy",
   "CompanyName": "Dean Edis (DeanTheCoder)",
+  "PublisherUrl": "https://github.com/deanthecoder",
   "BundleIdentifier": "com.deanthecoder.g33kboy",
+  "Executable": "G33kBoy",
   "Project": "G33kBoy/G33kBoy.csproj",
+  "Version": "0.9",
   "Win": {
-    "Executable": "G33kBoy.exe",
     "InnoScript": "Installer/templates/inno.iss",
     "IconIco": "G33kBoy/Assets/app.ico",
-    "GUID": "{14E22BE7-1E39-4C36-95D2-E66292BEC644}",
-    "PublisherUrl": "https://github.com/deanthecoder",
+    "GUID": "{BD7BC3C3-7482-4DB1-8951-6029D414CE70}",
     "RuntimeIdentifier": "win-x64"
   },
   "Mac": {
-    "Executable": "G33kBoy",
     "RuntimeIdentifiers": [
       "osx-arm64",
       "osx-x64"
     ],
     "IconIcns": "G33kBoy/Assets/icon.icns",
-    "InfoPlist": "Installer/templates/Info.plist",
-    "BundleIdentifier": "com.deanthecoder.g33kboy",
-    "VolumeName": "G33kBoy"
+    "InfoPlist": "Installer/templates/Info.plist"
   }
 }
