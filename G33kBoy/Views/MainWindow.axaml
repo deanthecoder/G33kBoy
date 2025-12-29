@@ -156,6 +156,8 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem Header="Dump CPU History" Command="{Binding DumpCpuHistory}" IsEnabled="{Binding IsCpuHistoryTracked}" />
+                        <Separator />
+                        <MenuItem Header="Report CPU Clock Ticks" Command="{Binding ReportCpuClockTicks}" />
                     </MenuItem>
 
                     <MenuItem Header="_Help">

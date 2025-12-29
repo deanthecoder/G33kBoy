@@ -328,6 +328,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void DumpCpuHistory() =>
         GameBoy.DumpCpuHistory();
 
+    public void ReportCpuClockTicks() =>
+        Console.WriteLine($"CPU clock ticks: {GameBoy.CpuClockTicks}");
+
     public void TrackCpuHistory() =>
         IsCpuHistoryTracked = !IsCpuHistoryTracked;
 

@@ -27,6 +27,9 @@ public sealed class GameBoy : IDisposable
     private readonly ClockSync m_clockSync;
     private readonly LcdScreen m_screen;
     private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
+    private readonly SoundDevice m_audioSink;
+    private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
+    private readonly Lock m_cpuStepLock = new();
     private long m_lastFrameClockTicks;
     private long m_lastFrameCpuTicks;
     private Bus m_bus;
@@ -35,8 +38,6 @@ public sealed class GameBoy : IDisposable
     private bool m_shutdownRequested;
     private Cartridge m_loadedCartridge;
     private bool m_lcdEmulationEnabled = true;
-    private readonly SoundDevice m_audioSink;
-    private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
     private bool m_isUserSoundEnabled = true;
     private bool m_isRunningAtNormalSpeed = true;
     private bool m_isCpuHistoryTracked;
@@ -55,11 +56,9 @@ public sealed class GameBoy : IDisposable
 
     public Joypad Joypad { get; }
     public SnapshotHistory SnapshotHistory { get; }
-    public object CpuStepLock { get; } = new();
     public bool IsRunning => m_cpu != null && m_bus != null;
     public bool HasLoadedCartridge => m_loadedCartridge != null;
     public ulong CpuClockTicks => m_bus?.CpuClockTicks ?? 0;
-
 
     /// <summary>
     /// Debugging aid.
@@ -144,7 +143,7 @@ public sealed class GameBoy : IDisposable
                 // Sync the clock speed.
                 m_clockSync.SyncWithRealTime();
             
-                lock (CpuStepLock)
+                lock (m_cpuStepLock)
                     m_cpu.Step();
             }
         }
@@ -430,7 +429,7 @@ public sealed class GameBoy : IDisposable
         if (m_bus?.PPU == null)
             throw new InvalidOperationException("PPU is not available for state capture.");
 
-        lock (CpuStepLock)
+        lock (m_cpuStepLock)
         {
             m_cpu.SaveState(state);
             m_bus.PPU.CopyFrameBuffer(frameBuffer);
@@ -444,7 +443,7 @@ public sealed class GameBoy : IDisposable
         if (m_cpu == null)
             throw new InvalidOperationException("Game Boy hardware is not initialized.");
 
-        lock (CpuStepLock)
+        lock (m_cpuStepLock)
             m_cpu.LoadState(state);
 
         RefreshDisplay();
