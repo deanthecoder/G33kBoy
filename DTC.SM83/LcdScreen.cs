@@ -189,7 +189,20 @@ public sealed class LcdScreen : IDisposable
     /// </summary>
     private unsafe void RenderWithLcdEffects(byte[] frameBuffer, byte* destPtr, int destStride)
     {
-        var useRedBoost = Mode == GameBoyMode.Dmg;
+        if (Mode == GameBoyMode.Cgb)
+        {
+            RenderWithLcdEffectsCgb(frameBuffer, destPtr, destStride);
+            return;
+        }
+
+        RenderWithLcdEffectsDmg(frameBuffer, destPtr, destStride);
+    }
+
+    /// <summary>
+    /// DMG LCD effects: grain, edge tinge, per‑pixel shading, and outlines.
+    /// </summary>
+    private unsafe void RenderWithLcdEffectsDmg(byte[] frameBuffer, byte* destPtr, int destStride)
+    {
         fixed (byte* srcPtr = frameBuffer)
         {
             for (var y = 0; y < m_sourceHeight; y++)
@@ -208,7 +221,7 @@ public sealed class LcdScreen : IDisposable
                     var b = src[2] * m_inv255.X;
 
                     // Precomputed red boost (top/bottom/left/right tinge).
-                    var redBoost = useRedBoost ? m_redBoostPerPixel[redBoostRowOffset + x] : 0.0f;
+                    var redBoost = m_redBoostPerPixel[redBoostRowOffset + x];
                     r *= 1.0f + m_redBoostMult.X * redBoost;
                     g *= 1.0f + m_redBoostMult.Y * redBoost;
 
@@ -261,6 +274,56 @@ public sealed class LcdScreen : IDisposable
                                 destOffset[2] = (byte)(b * grain);
                                 destOffset[3] = 255;
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// CGB LCD effects: grain + subtle row/column dimming (no outline color).
+    /// </summary>
+    private unsafe void RenderWithLcdEffectsCgb(byte[] frameBuffer, byte* destPtr, int destStride)
+    {
+        const float rowColumnDim = 0.9f;
+
+        fixed (byte* srcPtr = frameBuffer)
+        {
+            for (var y = 0; y < m_sourceHeight; y++)
+            {
+                var sourceRowOffset = y * m_sourceWidth * 4;
+                var destBaseY = y * Scale;
+                var grainBaseRowIndex = destBaseY * m_destWidth;
+
+                for (var x = 0; x < m_sourceWidth; x++)
+                {
+                    // Load source RGB and normalize to 0..1.
+                    var src = srcPtr + sourceRowOffset + x * 4;
+                    var r = src[0] * m_inv255.X;
+                    var g = src[1] * m_inv255.X;
+                    var b = src[2] * m_inv255.X;
+
+                    var destBaseX = x * Scale;
+                    var destBaseXBytes = destBaseX * 4;
+                    var grainBaseIndex = grainBaseRowIndex + destBaseX;
+
+                    for (var py = 0; py < Scale; py++)
+                    {
+                        var destRowStart = destPtr + (destBaseY + py) * destStride + destBaseXBytes;
+                        var grainRowStart = grainBaseIndex + py * m_destWidth;
+                        var rowDim = py == 0 ? rowColumnDim : 1.0f;
+
+                        for (var px = 0; px < Scale; px++)
+                        {
+                            var grain = m_grainWithShadow[grainRowStart + px];
+                            var colDim = px == 0 ? rowColumnDim : 1.0f;
+                            var dim = rowDim * colDim;
+                            var destOffset = destRowStart + px * 4;
+                            destOffset[0] = (byte)(r * dim * grain);
+                            destOffset[1] = (byte)(g * dim * grain);
+                            destOffset[2] = (byte)(b * dim * grain);
+                            destOffset[3] = 255;
                         }
                     }
                 }
