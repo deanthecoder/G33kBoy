@@ -136,7 +136,7 @@ public class IoDevice : IMemDevice, ILcd
                     : (byte)0xFF;
             case 0xFF69: // BGPD
                 return Mode == GameBoyMode.Cgb
-                    ? ReadPaletteData(m_bgPaletteData, ref m_bgPaletteIndex, m_bgPaletteAutoIncrement)
+                    ? ReadPaletteData(m_bgPaletteData, m_bgPaletteIndex)
                     : (byte)0xFF;
 
             case 0xFF6A: // OBPI
@@ -145,7 +145,7 @@ public class IoDevice : IMemDevice, ILcd
                     : (byte)0xFF;
             case 0xFF6B: // OBPD
                 return Mode == GameBoyMode.Cgb
-                    ? ReadPaletteData(m_objPaletteData, ref m_objPaletteIndex, m_objPaletteAutoIncrement)
+                    ? ReadPaletteData(m_objPaletteData, m_objPaletteIndex)
                     : (byte)0xFF;
 
             case 0xFF6C: // OPRI
@@ -275,13 +275,8 @@ public class IoDevice : IMemDevice, ILcd
         }
     }
 
-    private static byte ReadPaletteData(byte[] paletteData, ref byte index, bool autoIncrement)
-    {
-        var value = paletteData[index & 0x3F];
-        if (autoIncrement)
-            index = (byte)((index + 1) & 0x3F);
-        return value;
-    }
+    private static byte ReadPaletteData(byte[] paletteData, byte index) =>
+        paletteData[index & 0x3F];
 
     private static void WritePaletteData(byte[] paletteData, ref byte index, bool autoIncrement, byte value)
     {
