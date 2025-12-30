@@ -23,6 +23,7 @@ public class ClockSync
     private SpinWait m_spinWait;
     private Speed m_speed = Speed.Actual;
     private double m_lastEmulatedTicksPerSecond;
+    private volatile bool m_resyncRequested;
 
     /// <summary>
     /// Number of T states when this stopwatch was started.
@@ -80,6 +81,8 @@ public class ClockSync
 
         // Accumulate actual T-states executed since last sync (robust against call frequency changes)
         var currentTicks = m_ticksSinceCpuStart();
+        if (TryApplyPendingResync(currentTicks))
+            return;
         UpdateTicksPerSecondIfNeeded(currentTicks);
 
         var delta = currentTicks - m_tStateCountAtLastSync;
@@ -92,17 +95,24 @@ public class ClockSync
 
         m_ticksSinceLastSync = 0;
 
-        // Compute target time while holding the lock
+        // Compute target time while holding the lock, then spin without holding it.
+        double targetRealElapsedMs;
+        Speed speed;
         lock (m_lock)
         {
             var emulatedUptimeSecs = (currentTicks - m_tStateCountAtStart) / m_lastEmulatedTicksPerSecond;
-            var targetRealElapsedMs = emulatedUptimeSecs * 1000.0;
+            targetRealElapsedMs = emulatedUptimeSecs * 1000.0;
+            speed = m_speed;
+        }
 
-            // Spin for the last bit for tight timing.
-            if (m_speed == Speed.Fast)
-                targetRealElapsedMs /= 1.6;
-            while (m_realTime.ElapsedMilliseconds < targetRealElapsedMs)
-                m_spinWait.SpinOnce();
+        // Spin for the last bit for tight timing.
+        if (speed == Speed.Fast)
+            targetRealElapsedMs /= 1.6;
+        while (m_realTime.ElapsedMilliseconds < targetRealElapsedMs)
+        {
+            if (m_resyncRequested && TryApplyPendingResync(m_ticksSinceCpuStart()))
+                return;
+            m_spinWait.SpinOnce();
         }
     }
 
@@ -121,12 +131,7 @@ public class ClockSync
 
     public void Resync()
     {
-        lock (m_lock)
-        {
-            var currentTicks = m_ticksSinceCpuStart();
-            m_lastEmulatedTicksPerSecond = m_emulatedTicksPerSecond();
-            ResetTimingLocked(currentTicks);
-        }
+        m_resyncRequested = true;
     }
 
     private void UpdateTicksPerSecondIfNeeded(long currentTicks)
@@ -150,5 +155,21 @@ public class ClockSync
         m_tStateCountAtLastSync = currentTicks;
         m_ticksSinceLastSync = 0;
         m_realTime.Restart();
+    }
+
+    private bool TryApplyPendingResync(long currentTicks)
+    {
+        if (!m_resyncRequested)
+            return false;
+
+        lock (m_lock)
+        {
+            if (!m_resyncRequested)
+                return false;
+            m_lastEmulatedTicksPerSecond = m_emulatedTicksPerSecond();
+            ResetTimingLocked(currentTicks);
+            m_resyncRequested = false;
+            return true;
+        }
     }
 }
