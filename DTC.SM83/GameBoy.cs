@@ -30,7 +30,6 @@ public sealed class GameBoy : IDisposable
     private readonly SoundDevice m_audioSink;
     private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
     private readonly Lock m_cpuStepLock = new();
-    private long m_lastFrameClockTicks;
     private long m_lastFrameCpuTicks;
     private Bus m_bus;
     private Cpu m_cpu;
@@ -75,7 +74,7 @@ public sealed class GameBoy : IDisposable
             Mode = Mode
         };
 
-        m_clockSync = new ClockSync(GetEffectiveCpuHz, () => (long)(m_bus?.CpuClockTicks ?? 0), ResetBusClock);
+        m_clockSync = new ClockSync(GetEffectiveCpuHz, () => (long)(m_bus?.CpuClockTicks ?? 0), () => m_bus?.ResetClock());
 
         // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, () => Console.WriteLine("Memory write detected!")));
         // m_cpu.AddDebugger(new MemoryWriteDebugger(0x1234, targetValue: 0x34, () => Console.WriteLine("Memory write detected!")));
@@ -182,11 +181,6 @@ public sealed class GameBoy : IDisposable
     private void OnFrameRendered(object sender, byte[] frameBuffer)
     {
         // Calculate relative speed based on emulated CPU clock ticks.
-        var currentClockTicks = (long)(m_bus?.ClockTicks ?? 0);
-        var clockTicksDelta = currentClockTicks - m_lastFrameClockTicks;
-        m_lastFrameClockTicks = currentClockTicks;
-        LogFrameTiming(clockTicksDelta);
-
         var currentCpuTicks = (long)(m_bus?.CpuClockTicks ?? 0);
         var cpuTicksDelta = currentCpuTicks - m_lastFrameCpuTicks;
         m_lastFrameCpuTicks = currentCpuTicks;
@@ -409,12 +403,6 @@ public sealed class GameBoy : IDisposable
         m_cpu = null;
     }
 
-    private long ResetBusClock()
-    {
-        m_bus?.ResetClock();
-        return 0;
-    }
-
     public int GetStateSize() =>
         m_cpu?.GetStateSize() ?? 0;
 
@@ -448,7 +436,6 @@ public sealed class GameBoy : IDisposable
 
         RefreshDisplay();
         m_relativeSpeedRaw = 1.0;
-        m_lastFrameClockTicks = (long)(m_bus?.ClockTicks ?? 0);
         m_lastFrameCpuTicks = (long)(m_bus?.CpuClockTicks ?? 0);
         m_frameStopwatch.Restart();
         m_clockSync.Resync();
@@ -467,18 +454,6 @@ public sealed class GameBoy : IDisposable
 
     private double GetEffectiveCpuHz() =>
         m_bus?.IsDoubleSpeed == true ? Cpu.Hz * 2.0 : Cpu.Hz;
-
-    [Conditional("DEBUG")]
-    private static void LogFrameTiming(long clockTicksDelta)
-    {
-        if (clockTicksDelta <= 0)
-            return;
-        const int expectedTicksPerFrame = 70224;
-        const int tolerance = 32;
-        if (Math.Abs(clockTicksDelta - expectedTicksPerFrame) > tolerance)
-            Logger.Instance.Info($"Frame timing drift: {clockTicksDelta} ticks (expected {expectedTicksPerFrame}).");
-    }
-
 
     private void ApplyHardwareMode(Cartridge cartridge)
     {

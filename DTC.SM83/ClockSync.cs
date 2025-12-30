@@ -18,7 +18,7 @@ public class ClockSync
     private readonly Stopwatch m_realTime;
     private readonly Func<double> m_emulatedTicksPerSecond;
     private readonly Func<long> m_ticksSinceCpuStart;
-    private readonly Func<long> m_resetCpuTicks;
+    private readonly Action m_resetCpuTicks;
     private readonly Lock m_lock = new();
     private SpinWait m_spinWait;
     private Speed m_speed = Speed.Actual;
@@ -35,12 +35,7 @@ public class ClockSync
 
     public enum Speed { Actual, Fast, Maximum, Pause }
 
-    public ClockSync(double emulatedCpuHz, Func<long> ticksSinceCpuStart, Func<long> resetCpuTicks)
-        : this(() => emulatedCpuHz, ticksSinceCpuStart, resetCpuTicks)
-    {
-    }
-
-    public ClockSync(Func<double> emulatedCpuHz, Func<long> ticksSinceCpuStart, Func<long> resetCpuTicks)
+    public ClockSync(Func<double> emulatedCpuHz, Func<long> ticksSinceCpuStart, Action resetCpuTicks)
     {
         m_realTime = Stopwatch.StartNew();
         m_emulatedTicksPerSecond = emulatedCpuHz ?? throw new ArgumentNullException(nameof(emulatedCpuHz));

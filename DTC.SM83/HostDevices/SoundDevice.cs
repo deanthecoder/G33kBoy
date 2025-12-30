@@ -10,7 +10,6 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Buffers;
-using System.Diagnostics;
 using DTC.Core;
 using OpenTK.Audio.OpenAL;
 
@@ -49,11 +48,6 @@ public class SoundDevice
     private byte m_lastLeftSample = 128;
     private byte m_lastRightSample = 128;
     private bool m_isCancelled;
-    private int m_minBufferedFrames = int.MaxValue;
-    private int m_maxBufferedFrames;
-    private int m_dropResampleCount;
-    private int m_stretchResampleCount;
-    private long m_overflowFrames;
     
     public SoundDevice(int sampleHz)
     {
@@ -103,7 +97,6 @@ public class SoundDevice
 
         // Start playback (gain ramps via samples and device gain).
         ExecuteAl("SourcePlay", () => AL.SourcePlay(m_source));
-        var healthTimer = Stopwatch.StartNew();
         while (!m_isCancelled)
         {
             UpdateDeviceGain();
@@ -131,18 +124,11 @@ public class SoundDevice
                 ClearCpuBuffer();
             }
 
-            if (healthTimer.Elapsed >= TimeSpan.FromSeconds(5))
-            {
-                LogBufferHealth();
-                healthTimer.Restart();
-            }
-
             m_dataAvailable.Wait(CalculateSleepMs(buffersQueued));
             m_dataAvailable.Reset();
         }
 
         AL.SourceStop(m_source);
-        LogBufferHealth();
         
         Logger.Instance.Info("Sound thread stopped.");
     }
@@ -182,31 +168,6 @@ public class SoundDevice
         var waitMs = Math.Min(queuedMs * 0.25, m_bufferDurationMs);
         return (int)Math.Max(1, waitMs);
     }
-
-    private void LogBufferHealth()
-    {
-        // min/max track how close we stayed to the target buffered frames (low min risks underrun, high max means backlog/latency),
-        // stretch increments when we had to upsample to mask underrun, drop increments when we downsample to shed backlog,
-        // overwritten counts frames discarded because the producer outran the buffer (should remain zero in healthy runs).
-        var minFrames = m_minBufferedFrames == int.MaxValue ? 0 : m_minBufferedFrames;
-        var framesToMs = 1000.0 / m_sampleRate;
-        var targetMs = m_targetBufferedFrames * framesToMs;
-
-        var minPct = m_targetBufferedFrames > 0 ? (double)minFrames / m_targetBufferedFrames * 100.0 : 0.0;
-        var maxPct = m_targetBufferedFrames > 0 ? (double)m_maxBufferedFrames / m_targetBufferedFrames * 100.0 : 0.0;
-
-        Logger.Instance.Info(
-            $"Sound buffer health: target {m_targetBufferedFrames} frames ({targetMs:F0} ms), " +
-            $"min {minPct:F0}%, max {maxPct:F0}%, " +
-            $"stretch {m_stretchResampleCount}, drop {m_dropResampleCount}, " +
-            $"overwritten {m_overflowFrames} frames.");
-
-        // Reset window stats so the next call reports just the latest period.
-        m_minBufferedFrames = int.MaxValue;
-        m_maxBufferedFrames = 0;
-        m_stretchResampleCount = 0;
-        m_dropResampleCount = 0;
-    }
     
     private static void ExecuteAl(string operation, Action action)
     {
@@ -237,9 +198,6 @@ public class SoundDevice
             lock (m_bufferLock)
             {
                 var bufferedFrames = m_cpuBuffer.Count / 2;
-                m_minBufferedFrames = Math.Min(m_minBufferedFrames, bufferedFrames);
-                m_maxBufferedFrames = Math.Max(m_maxBufferedFrames, bufferedFrames);
-
                 if (bufferedFrames == 0)
                 {
                     FillWithLastSample(m_transferFrames);
@@ -249,11 +207,6 @@ public class SoundDevice
                 var extraFrames = Math.Max(0, bufferedFrames - m_targetBufferedFrames);
                 var catchUpFrames = Math.Min(extraFrames, m_transferFrames);
                 sourceFrames = Math.Min(bufferedFrames, m_transferFrames + catchUpFrames);
-
-                if (sourceFrames > m_transferFrames)
-                    m_dropResampleCount++;
-                else if (sourceFrames < m_transferFrames)
-                    m_stretchResampleCount++;
 
                 var sourceBytes = sourceFrames * 2;
                 rentedArray = ArrayPool<byte>.Shared.Rent(sourceBytes);
@@ -364,10 +317,6 @@ public class SoundDevice
 
         lock (m_bufferLock)
         {
-            var overflowBytes = Math.Max(0, m_cpuBuffer.Count + 2 - m_cpuBuffer.Capacity);
-            if (overflowBytes > 0)
-                m_overflowFrames += overflowBytes / 2;
-
             m_cpuBuffer.Write(leftByte);
             m_cpuBuffer.Write(rightByte);
         }
