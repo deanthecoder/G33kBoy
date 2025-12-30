@@ -5,7 +5,9 @@
 </p>
 
 # G33kBoy
-A cross-platform Avalonia-based Game Boy emulator. (Work In Progress)
+A cross-platform Avalonia-based Game Boy emulator.
+
+![Game grid](img/GameGrid.png)
 
 ## Classic Game Boy LCD
 ![Application screenshot](img/app.png)
@@ -69,8 +71,7 @@ G33kBoy includes an optional LCD emulation mode that reproduces these characteri
 - Pixel‑grid outlines for authentic DMG cell structure  
 - Per‑pixel grain to simulate panel irregularities  
 - Dynamic edge‑shadowing for a recessed‑screen feel  
-- Tinted top/bottom/side glow that matches the original greenish bleed  
-- High‑quality scaling that preserves “LCD softness” without blur  
+- Tinted top/bottom/side glow that matches the original greenish bleed
 
 LCD emulation can be toggled at runtime and has very little performance overhead thanks to lookup‑table optimisation.
 
@@ -79,9 +80,9 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 - ✔ PPU: Scanline-based renderer
 - ✔ Boot ROM behaviour
 - ✔ Zipped ROM loading
-- ✔ Audio
+- ✔ 4 Channel Audio
 - ✔ Cartridge MBCs
-- ✔ Game Boy Color support (no double-speed yet)
+- ✔ Game Boy Color support
 - ✔ Gameplay rollback
 
 ## Highlights
