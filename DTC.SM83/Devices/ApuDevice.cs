@@ -719,7 +719,7 @@ public sealed class ApuDevice : IMemDevice
 
             // Frequencies above Nyquist alias badly at the host sample rate; approximate them by
             // their DC average so ultrasonic PCM writes don't produce an audible whine.
-            var nyquist = SampleHz * 0.5;
+            const double nyquist = SampleHz * 0.5;
             var duty = DutyCycle[m_dutyIndex];
             if (m_frequencyHz >= nyquist)
                 return duty * (m_volume / 15.0);
@@ -1093,6 +1093,12 @@ public sealed class ApuDevice : IMemDevice
             if (!Enabled || !m_dacEnabled || m_volumeCode == 0 || m_timerPeriod <= 0)
                 return 0.0;
 
+            // Frequencies above Nyquist alias badly at the host sample rate; approximate them by
+            // the waveform's DC average to avoid an audible whine.
+            const double nyquist = SampleHz * 0.5;
+            if (GetFrequencyHz() >= nyquist)
+                return GetWaveDcAverage();
+
             var waveByte = m_sampleBuffer;
             var sample4 = (m_sampleIndex & 1) == 0 ? waveByte >> 4 : waveByte & 0x0F;
 
@@ -1106,6 +1112,37 @@ public sealed class ApuDevice : IMemDevice
 
             return shifted / 15.0;
         }
+
+        private double GetFrequencyHz()
+        {
+            if (m_timerPeriod <= 0)
+                return 0.0;
+
+            var stepRateHz = Cpu.Hz / m_timerPeriod;
+            return stepRateHz / 32.0;
+        }
+
+        private double GetWaveDcAverage()
+        {
+            var sum = 0;
+            for (var i = 0; i < m_waveRam.Length; i++)
+            {
+                var waveByte = m_waveRam[i];
+                sum += ApplyVolumeShift(waveByte >> 4);
+                sum += ApplyVolumeShift(waveByte & 0x0F);
+            }
+
+            return (sum / 32.0) / 15.0;
+        }
+
+        private int ApplyVolumeShift(int sample4) =>
+            m_volumeCode switch
+            {
+                1 => sample4,
+                2 => sample4 >> 1,
+                3 => sample4 >> 2,
+                _ => 0
+            };
 
         private void ClockSample(ulong tick)
         {
