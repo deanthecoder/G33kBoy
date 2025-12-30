@@ -471,7 +471,9 @@ public class PPU
 
         // Capture up to 10 sprites for this LY in OAM order.
         var isCgb = Mode == GameBoyMode.Cgb;
-        var objectPriorityByX = isCgb && m_lcd.OPRI.IsBitSet(0);
+        // DMG-only carts on CGB use DMG priority rules, not CGB OPRI.
+        var dmgCompat = isCgb && m_lcd.IsDmgCompatMode;
+        var objectPriorityByX = (isCgb && m_lcd.OPRI.IsBitSet(0)) || dmgCompat;
         var sprites = m_oam.GetSprites();
         for (byte i = 0; i < 40 && m_spriteCount < 10; i++)
         {
@@ -528,10 +530,15 @@ public class PPU
         var lcdBGP = m_lcd.BGP;
         var lcdWX = m_lcd.WX;
         var isCgb = Mode == GameBoyMode.Cgb;
-        var cgbMasterPriority = isCgb && m_lcd.LCDC.IsBitSet(0);
+        // DMG-only carts on CGB use DMG semantics:
+        // - LCDC.0 gates BG/WIN visibility (not master priority)
+        // - BG attributes in VRAM bank 1 are ignored
+        // - DMG palette mapping (BGP/OBP) chooses CGB palette entries
+        var dmgCompat = isCgb && m_lcd.IsDmgCompatMode;
+        var cgbMasterPriority = isCgb && !dmgCompat && m_lcd.LCDC.IsBitSet(0);
 
         // DMG: LCDC.0 disables BG/WIN. CGB: LCDC.0 is master priority, BG/WIN still render.
-        var bgEnabled = (isCgb || m_lcdc.BgWindowEnablePriority) && BackgroundVisible;
+        var bgEnabled = ((isCgb && !dmgCompat) || m_lcdc.BgWindowEnablePriority) && BackgroundVisible;
         var windowEnabled =
             bgEnabled &&
             m_lcdc.WindowEnable &&
@@ -584,7 +591,7 @@ public class PPU
                 byte tileBank = 0;
                 bool xFlip = false;
                 bool yFlip = false;
-                if (isCgb)
+                if (isCgb && !dmgCompat)
                 {
                     var attributes = m_vram.ReadBanked(tileMapEntryAddr, 1);
                     bgPaletteIndex = (byte)(attributes & 0x07);
@@ -703,7 +710,7 @@ public class PPU
                     tileDataAddr += y * 2;
                     ValidateVramRange(tileDataAddr, 2, "sprite tile row");
                     // Read the 8 pixel tile row.
-                    var spriteBank = isCgb && sprite.UseCgbBank ? (byte)1 : (byte)0;
+                    var spriteBank = isCgb && !dmgCompat && sprite.UseCgbBank ? (byte)1 : (byte)0;
                     var lowBits = isCgb
                         ? m_vram.ReadBanked((ushort)tileDataAddr, spriteBank)
                         : m_vram.Read8((ushort)tileDataAddr);
@@ -729,7 +736,8 @@ public class PPU
                     if (colorIndex == 0x00)
                         continue; // Skip transparent pixels.
 
-                    spritePaletteIndex = sprite.CgbPaletteIndex;
+                    // In DMG-compat, OAM bit4 selects OBJ palette 0/1, not CGB palette index.
+                    spritePaletteIndex = dmgCompat ? (byte)(sprite.UseObp1 ? 1 : 0) : sprite.CgbPaletteIndex;
                     spritePalette = sprite.UseObp1 ? m_lcd.OBP1 : m_lcd.OBP0;
                     spriteColorIndex = colorIndex;
                 }
@@ -745,9 +753,20 @@ public class PPU
 
             if (isCgb)
             {
+                var mappedBgColorIndex = bgColorIndex;
+                var mappedSpriteColorIndex = spriteColorIndex;
+                if (dmgCompat)
+                {
+                    // DMG-compat maps color indices through BGP/OBP to pick CGB palette entries.
+                    mappedBgColorIndex = (byte)((lcdBGP >> (2 * bgColorIndex)) & 0x03);
+                    if (spriteColorIndex != 0x00)
+                        mappedSpriteColorIndex = (byte)((spritePalette >> (2 * spriteColorIndex)) & 0x03);
+                    bgPaletteIndex = 0;
+                }
+
                 var color = spriteColorIndex != 0x00
-                    ? m_lcd.ReadCgbObjPaletteColor(spritePaletteIndex, spriteColorIndex)
-                    : m_lcd.ReadCgbBgPaletteColor(bgPaletteIndex, bgColorIndex);
+                    ? m_lcd.ReadCgbObjPaletteColor(spritePaletteIndex, mappedSpriteColorIndex)
+                    : m_lcd.ReadCgbBgPaletteColor(bgPaletteIndex, mappedBgColorIndex);
                 targetR = Expand5To8(color & 0x1F);
                 targetG = Expand5To8((color >> 5) & 0x1F);
                 targetB = Expand5To8((color >> 10) & 0x1F);

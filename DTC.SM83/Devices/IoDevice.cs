@@ -48,6 +48,7 @@ public class IoDevice : IMemDevice, ILcd
     public ushort ToAddr => 0xFF7F;
 
     public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
+    public bool IsDmgCompatMode { get; private set; }
 
     public byte LCDC => m_data[0x40];
     public byte STAT
@@ -73,6 +74,8 @@ public class IoDevice : IMemDevice, ILcd
     public void SetMode(GameBoyMode mode)
     {
         Mode = mode;
+        if (mode != GameBoyMode.Cgb)
+            IsDmgCompatMode = false;
         m_prepareSpeedSwitch = false;
         m_vramBank = 0;
         m_wramBank = 1;
@@ -272,6 +275,12 @@ public class IoDevice : IMemDevice, ILcd
         {
             m_bus.Detach(m_bootRom, m_bus.CartridgeRom);
             m_bootRom.Unload();
+            if (Mode == GameBoyMode.Cgb)
+            {
+                var cgbFlag = m_bus.Read8(0x0143);
+                var isCgbCapable = (cgbFlag & 0x80) != 0;
+                IsDmgCompatMode = !isCgbCapable;
+            }
         }
     }
 

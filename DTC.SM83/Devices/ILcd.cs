@@ -16,9 +16,9 @@ namespace DTC.SM83.Devices;
 public interface ILcd
 {
     /// <summary>
-    /// True when the hardware is running in CGB mode.
+    /// True when running a DMG-only cartridge in CGB compatibility mode.
     /// </summary>
-    GameBoyMode Mode { get; }
+    bool IsDmgCompatMode { get; }
 
     /// <summary>
     /// LCD Control (LCDC) - 0xFF40
