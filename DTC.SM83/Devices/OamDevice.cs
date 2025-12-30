@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Runtime.InteropServices;
+using DTC.SM83;
 
 namespace DTC.SM83.Devices;
 
@@ -30,6 +31,128 @@ public class OamDevice : RamDeviceBase
     /// </summary>
     public ReadOnlySpan<OamEntry> GetSprites() =>
         MemoryMarshal.Cast<byte, OamEntry>(m_data);
+
+    /// <summary>
+    /// Applies the DMG OAM corruption pattern for the given row and access type.
+    /// </summary>
+    internal void ApplyCorruption(int row, OamCorruptionType type)
+    {
+        if ((uint)row >= 20u)
+            return;
+
+        switch (type)
+        {
+            case OamCorruptionType.Read:
+                ApplyReadCorruption(row);
+                break;
+            case OamCorruptionType.Write:
+                ApplyWriteCorruption(row);
+                break;
+            case OamCorruptionType.ReadDuringIncDec:
+                ApplyReadDuringIncDecCorruption(row);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown OAM corruption type.");
+        }
+    }
+
+    /// <summary>
+    /// DMG "write corruption": modifies the current row using the preceding row.
+    /// </summary>
+    private void ApplyWriteCorruption(int row)
+    {
+        if (row == 0)
+            return;
+
+        var prev = row - 1;
+        var a = ReadWord(row, 0);
+        var b = ReadWord(prev, 0);
+        var c = ReadWord(prev, 2);
+        var result = (ushort)(((a ^ c) & (b ^ c)) ^ c);
+        WriteWord(row, 0, result);
+
+        CopyTrailingWords(prev, row);
+    }
+
+    /// <summary>
+    /// DMG "read corruption": like write corruption, but with the read-specific expression.
+    /// </summary>
+    private void ApplyReadCorruption(int row)
+    {
+        if (row == 0)
+            return;
+
+        var prev = row - 1;
+        var a = ReadWord(row, 0);
+        var b = ReadWord(prev, 0);
+        var c = ReadWord(prev, 2);
+        var result = (ushort)(b | (a & c));
+        WriteWord(row, 0, result);
+
+        CopyTrailingWords(prev, row);
+    }
+
+    /// <summary>
+    /// DMG read+inc/dec corruption, then the normal read corruption.
+    /// </summary>
+    private void ApplyReadDuringIncDecCorruption(int row)
+    {
+        if (row > 3 && row < 19)
+        {
+            var prev = row - 1;
+            var prevPrev = row - 2;
+            var a = ReadWord(prevPrev, 0);
+            var b = ReadWord(prev, 0);
+            var c = ReadWord(row, 0);
+            var d = ReadWord(prev, 2);
+            var result = (ushort)((b & (a | c | d)) | (a & c & d));
+            WriteWord(prev, 0, result);
+
+            CopyRow(prev, row);
+            CopyRow(prev, prevPrev);
+        }
+
+        ApplyReadCorruption(row);
+    }
+
+    /// <summary>
+    /// Read a 16-bit word within a row (wordIndex 0..3).
+    /// </summary>
+    private ushort ReadWord(int row, int wordIndex)
+    {
+        var baseIndex = row * 8 + wordIndex * 2;
+        return (ushort)(m_data[baseIndex] | (m_data[baseIndex + 1] << 8));
+    }
+
+    /// <summary>
+    /// Write a 16-bit word within a row (wordIndex 0..3).
+    /// </summary>
+    private void WriteWord(int row, int wordIndex, ushort value)
+    {
+        var baseIndex = row * 8 + wordIndex * 2;
+        m_data[baseIndex] = (byte)(value & 0xFF);
+        m_data[baseIndex + 1] = (byte)(value >> 8);
+    }
+
+    /// <summary>
+    /// Copy the last three words (bytes 2..7) from srcRow into dstRow.
+    /// </summary>
+    private void CopyTrailingWords(int srcRow, int dstRow)
+    {
+        var srcIndex = srcRow * 8 + 2;
+        var dstIndex = dstRow * 8 + 2;
+        Buffer.BlockCopy(m_data, srcIndex, m_data, dstIndex, 6);
+    }
+
+    /// <summary>
+    /// Copy an entire row (8 bytes) from srcRow to dstRow.
+    /// </summary>
+    private void CopyRow(int srcRow, int dstRow)
+    {
+        var srcIndex = srcRow * 8;
+        var dstIndex = dstRow * 8;
+        Buffer.BlockCopy(m_data, srcIndex, m_data, dstIndex, 8);
+    }
 
     /// <summary>
     /// Single OAM entry (4 bytes).

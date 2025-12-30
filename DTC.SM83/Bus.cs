@@ -245,8 +245,24 @@ public sealed class Bus : IMemDevice, IDisposable
     public void SetSoundChannelEnabled(int channel, bool isEnabled) =>
         APU?.SetChannelEnabled(channel, isEnabled);
 
-    public byte Read8(ushort addr) =>
-        GetMemoryAccess(addr) == MemoryAccess.Allow ? UncheckedRead(addr) : (byte)0xFF;
+    public byte Read8(ushort addr)
+    {
+        if (IsOamBugAddress(addr))
+            PPU?.ApplyOamCorruption(OamCorruptionType.Read);
+
+        return GetMemoryAccess(addr) == MemoryAccess.Allow ? UncheckedRead(addr) : (byte)0xFF;
+    }
+
+    /// <summary>
+    /// Read memory while forcing a specific DMG OAM corruption type, if applicable.
+    /// </summary>
+    internal byte Read8WithOamCorruption(ushort addr, OamCorruptionType type)
+    {
+        if (IsOamBugAddress(addr))
+            PPU?.ApplyOamCorruption(type);
+
+        return GetMemoryAccess(addr) == MemoryAccess.Allow ? UncheckedRead(addr) : (byte)0xFF;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte UncheckedRead(ushort addr) =>
@@ -260,18 +276,8 @@ public sealed class Bus : IMemDevice, IDisposable
             return;
         }
 
-        // DMG OAM bug approximation: writes during modes 2/3 corrupt a pair of bytes.
-        if (PPU is { CanAccessOam: false } && m_oam?.Contains(addr) == true && Dma?.IsTransferActive != true)
-        {
-            var baseAddr = (ushort)(addr & 0xFFFE);
-            if (!m_oam.Contains(baseAddr))
-                return;
-            m_oam.Write8(baseAddr, value);
-
-            var neighbor = (ushort)(baseAddr + 1);
-            if (m_oam.Contains(neighbor))
-                m_oam.Write8(neighbor, value);
-        }
+        if (IsOamBugAddress(addr))
+            PPU?.ApplyOamCorruption(OamCorruptionType.Write);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -306,6 +312,19 @@ public sealed class Bus : IMemDevice, IDisposable
         var isOam = m_oam?.Contains(addr) == true;
         return isOam && PPU is {CanAccessOam: false} ? MemoryAccess.Block : MemoryAccess.Allow;
     }
+
+    /// <summary>
+    /// Trigger DMG OAM corruption for an address, without performing a bus read/write.
+    /// </summary>
+    internal void TriggerOamCorruption(ushort addr, OamCorruptionType type)
+    {
+        if (!IsOamBugAddress(addr))
+            return;
+        PPU?.ApplyOamCorruption(type);
+    }
+
+    private static bool IsOamBugAddress(ushort addr) =>
+        addr is >= 0xFE00 and <= 0xFEFF;
 
     /// <summary>
     /// Advance the clock by one CPU M-cycle.

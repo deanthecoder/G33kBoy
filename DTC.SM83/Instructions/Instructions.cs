@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Runtime.CompilerServices;
+using DTC.SM83;
 
 namespace DTC.SM83.Instructions;
 
@@ -39,7 +40,9 @@ public static class Instructions
             "INC BC", // 0x03
             static cpu =>
             {
+                var before = cpu.Reg.BC;
                 cpu.Reg.BC++;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -90,7 +93,9 @@ public static class Instructions
             "DEC BC", // 0x0B
             static cpu =>
             {
+                var before = cpu.Reg.BC;
                 cpu.Reg.BC--;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -141,7 +146,9 @@ public static class Instructions
             "INC DE", // 0x13
             static cpu =>
             {
+                var before = cpu.Reg.DE;
                 cpu.Reg.DE++;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -198,7 +205,9 @@ public static class Instructions
             "DEC DE", // 0x1B
             static cpu =>
             {
+                var before = cpu.Reg.DE;
                 cpu.Reg.DE--;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -257,7 +266,9 @@ public static class Instructions
             "INC HL", // 0x23
             static cpu =>
             {
+                var before = cpu.Reg.HL;
                 cpu.Reg.HL++;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -328,7 +339,7 @@ public static class Instructions
             "LD A,(HL+)", // 0x2A
             static cpu =>
             {
-                cpu.Reg.A = cpu.Read8(cpu.Reg.HL);
+                cpu.Reg.A = cpu.Read8WithOamCorruption(cpu.Reg.HL, OamCorruptionType.ReadDuringIncDec);
                 cpu.Reg.HL++;
             }
         ),
@@ -336,7 +347,9 @@ public static class Instructions
             "DEC HL", // 0x2B
             static cpu =>
             {
+                var before = cpu.Reg.HL;
                 cpu.Reg.HL--;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -388,7 +401,9 @@ public static class Instructions
             "INC SP", // 0x33
             static cpu =>
             {
+                var before = cpu.Reg.SP;
                 cpu.Reg.SP++;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -450,7 +465,7 @@ public static class Instructions
             "LD A,(HL-)", // 0x3A
             static cpu =>
             {
-                cpu.Reg.A = cpu.Read8(cpu.Reg.HL);
+                cpu.Reg.A = cpu.Read8WithOamCorruption(cpu.Reg.HL, OamCorruptionType.ReadDuringIncDec);
                 cpu.Reg.HL--;
             }
         ),
@@ -458,7 +473,9 @@ public static class Instructions
             "DEC SP", // 0x3B
             static cpu =>
             {
+                var before = cpu.Reg.SP;
                 cpu.Reg.SP--;
+                cpu.TriggerOamCorruption(before, OamCorruptionType.Write);
                 cpu.InternalWaitM();
             }
         ),
@@ -1091,8 +1108,13 @@ public static class Instructions
             "POP BC", // 0xC1
             static cpu =>
             {
-                cpu.Reg.C = cpu.Read8(cpu.Reg.SP++);
-                cpu.Reg.B = cpu.Read8(cpu.Reg.SP++);
+                var sp = cpu.Reg.SP;
+                cpu.Reg.C = cpu.Read8WithOamCorruption(sp, OamCorruptionType.ReadDuringIncDec);
+                cpu.Reg.SP = (ushort)(sp + 1);
+
+                sp = cpu.Reg.SP;
+                cpu.Reg.B = cpu.Read8(sp);
+                cpu.Reg.SP = (ushort)(sp + 1);
             }
         ),
         new Instruction(
@@ -1132,6 +1154,7 @@ public static class Instructions
             {
                 cpu.InternalWaitM();
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.B);
+                cpu.TriggerOamCorruption(cpu.Reg.SP, OamCorruptionType.Write);
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.C);
             }
         ),
@@ -1223,8 +1246,13 @@ public static class Instructions
             "POP DE", // 0xD1
             static cpu =>
             {
-                cpu.Reg.E = cpu.Read8(cpu.Reg.SP++);
-                cpu.Reg.D = cpu.Read8(cpu.Reg.SP++);
+                var sp = cpu.Reg.SP;
+                cpu.Reg.E = cpu.Read8WithOamCorruption(sp, OamCorruptionType.ReadDuringIncDec);
+                cpu.Reg.SP = (ushort)(sp + 1);
+
+                sp = cpu.Reg.SP;
+                cpu.Reg.D = cpu.Read8(sp);
+                cpu.Reg.SP = (ushort)(sp + 1);
             }
         ),
         new Instruction(
@@ -1259,6 +1287,7 @@ public static class Instructions
             {
                 cpu.InternalWaitM();
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.D);
+                cpu.TriggerOamCorruption(cpu.Reg.SP, OamCorruptionType.Write);
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.E);
             }
         ),
@@ -1343,8 +1372,13 @@ public static class Instructions
             "POP HL", // 0xE1
             static cpu =>
             {
-                cpu.Reg.L = cpu.Read8(cpu.Reg.SP++);
-                cpu.Reg.H = cpu.Read8(cpu.Reg.SP++);
+                var sp = cpu.Reg.SP;
+                cpu.Reg.L = cpu.Read8WithOamCorruption(sp, OamCorruptionType.ReadDuringIncDec);
+                cpu.Reg.SP = (ushort)(sp + 1);
+
+                sp = cpu.Reg.SP;
+                cpu.Reg.H = cpu.Read8(sp);
+                cpu.Reg.SP = (ushort)(sp + 1);
             }
         ),
         new Instruction(
@@ -1363,6 +1397,7 @@ public static class Instructions
             {
                 cpu.InternalWaitM();
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.H);
+                cpu.TriggerOamCorruption(cpu.Reg.SP, OamCorruptionType.Write);
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.L);
             }
         ),
@@ -1433,8 +1468,13 @@ public static class Instructions
             "POP AF", // 0xF1
             static cpu =>
             {
-                var restoredF = cpu.Read8(cpu.Reg.SP++);
-                cpu.Reg.A = cpu.Read8(cpu.Reg.SP++);
+                var sp = cpu.Reg.SP;
+                var restoredF = cpu.Read8WithOamCorruption(sp, OamCorruptionType.ReadDuringIncDec);
+                cpu.Reg.SP = (ushort)(sp + 1);
+
+                sp = cpu.Reg.SP;
+                cpu.Reg.A = cpu.Read8(sp);
+                cpu.Reg.SP = (ushort)(sp + 1);
                 cpu.Reg.Zf = (restoredF & 0x80) != 0;
                 cpu.Reg.Nf = (restoredF & 0x40) != 0;
                 cpu.Reg.Hf = (restoredF & 0x20) != 0;
@@ -1462,6 +1502,7 @@ public static class Instructions
             {
                 cpu.InternalWaitM();
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.A);
+                cpu.TriggerOamCorruption(cpu.Reg.SP, OamCorruptionType.Write);
                 cpu.Write8(--cpu.Reg.SP, cpu.Reg.F);
             }
         ),

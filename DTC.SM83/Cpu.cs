@@ -374,6 +374,17 @@ public class Cpu
         NotifyMemoryRead(addr, value);
         return value;
     }
+
+    /// <summary>
+    /// Read memory while forcing a specific DMG OAM corruption type, if applicable.
+    /// </summary>
+    internal byte Read8WithOamCorruption(ushort addr, OamCorruptionType type)
+    {
+        var value = Bus.Read8WithOamCorruption(addr, type);
+        Bus.AdvanceM();
+        NotifyMemoryRead(addr, value);
+        return value;
+    }
     
     /// <summary>
     /// Write memory at address and advance the clock 4 ticks.
@@ -384,6 +395,12 @@ public class Cpu
         Bus.AdvanceM();
         NotifyMemoryWrite(addr, value);
     }
+
+    /// <summary>
+    /// Trigger DMG OAM corruption for an address without an explicit bus access.
+    /// </summary>
+    internal void TriggerOamCorruption(ushort addr, OamCorruptionType type) =>
+        Bus.TriggerOamCorruption(addr, type);
     
     /// <summary>
     /// Write 16-bit word at address and advance the clock 4 + 4 ticks.

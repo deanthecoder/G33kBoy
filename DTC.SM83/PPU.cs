@@ -227,6 +227,27 @@ public class PPU
         CurrentState == FrameState.FrameWait ||
         CurrentState == FrameState.OAMScan;
 
+    /// <summary>
+    /// Apply DMG OAM corruption based on the current OAM scan row and access type.
+    /// </summary>
+    internal void ApplyOamCorruption(OamCorruptionType type)
+    {
+        if (Mode != GameBoyMode.Dmg)
+            return;
+
+        if (!m_lcdc.LcdEnable)
+            return;
+
+        if (CurrentState != FrameState.OAMScan)
+            return;
+
+        var row = (int)(m_tCycles / 4);
+        if ((uint)row >= 20u)
+            return;
+
+        m_oam.ApplyCorruption(row, type);
+    }
+
     private FrameState CurrentState
     {
         get => (FrameState)m_stat.GetMode();
