@@ -112,24 +112,15 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         }
     }
 
-    public bool IsDmgModeRequested => Settings.RequestedHardwareMode == GameBoyMode.Dmg;
-
-    public bool IsCgbModeRequested => Settings.RequestedHardwareMode == GameBoyMode.Cgb;
-
     public bool IsDisplayBlurEnabled => Settings.IsLcdEmulationEnabled && GameBoy.Mode == GameBoyMode.Cgb;
 
     public bool IsDisplayBlurDisabled => !IsDisplayBlurEnabled;
 
-    public void SelectDmgMode()
+    public void ToggleCgbMode()
     {
-        Settings.RequestedHardwareMode = GameBoyMode.Dmg;
-        GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
-    }
-
-    public void SelectCgbMode()
-    {
-        Settings.RequestedHardwareMode = GameBoyMode.Cgb;
-        GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
+        Settings.IsCgbModePreferred = !Settings.IsCgbModePreferred;
+        GameBoy.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
+        ResetDevice();
     }
 
     public void ToggleSoundChannel1()
@@ -170,7 +161,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy = new GameBoy();
         GameBoy.SnapshotHistory.Activated += (_, _) => EmulationSpeed = ClockSync.Speed.Actual;
         Settings.PropertyChanged += OnSettingsPropertyChanged;
-        GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
+        GameBoy.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
         GameBoy.RomLoaded += (_, title) =>
             Dispatcher.UIThread.Post(() =>
             {
@@ -365,11 +356,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             ApplyHardwareLowPassFilterSetting();
         else if (e.PropertyName == nameof(Settings.IsCpuHistoryTracked))
             IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
-        else if (e.PropertyName == nameof(Settings.RequestedHardwareMode))
+        else if (e.PropertyName == nameof(Settings.IsCgbModePreferred))
         {
-            GameBoy.SetRequestedMode(Settings.RequestedHardwareMode);
-            OnPropertyChanged(nameof(IsDmgModeRequested));
-            OnPropertyChanged(nameof(IsCgbModeRequested));
+            GameBoy.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
             OnPropertyChanged(nameof(IsDisplayBlurEnabled));
             OnPropertyChanged(nameof(IsDisplayBlurDisabled));
         }

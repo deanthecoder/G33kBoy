@@ -74,14 +74,9 @@
                     </MenuItem>
 
                     <MenuItem Header="_Emulation">
-                        <MenuItem Header="Prefer _DMG" Command="{Binding SelectDmgMode}">
+                        <MenuItem Header="Colorize _DMG Games" Command="{Binding ToggleCgbMode}" ToolTip.Tip="Runs original Game Boy titles using Game Boy Color hardware.">
                             <MenuItem.Icon>
-                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsDmgModeRequested}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Header="Prefer _CGB" Command="{Binding SelectCgbMode}">
-                            <MenuItem.Icon>
-                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsCgbModeRequested}" />
+                                <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding Settings.IsCgbModePreferred}" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />

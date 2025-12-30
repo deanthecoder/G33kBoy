@@ -10,7 +10,6 @@
 
 using System.IO;
 using DTC.Core.Settings;
-using DTC.SM83;
 
 namespace G33kBoy.ViewModels;
 
@@ -63,9 +62,9 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
 
-    public GameBoyMode RequestedHardwareMode
+    public bool IsCgbModePreferred
     {
-        get => Get<GameBoyMode>();
+        get => Get<bool>();
         set => Set(value);
     }
 
@@ -90,7 +89,7 @@ public class Settings : UserSettingsBase
         IsLcdEmulationEnabled = true;
         AreSpritesVisible = true;
         IsCpuHistoryTracked = false;
-        RequestedHardwareMode = GameBoyMode.Cgb;
+        IsCgbModePreferred = true;
         MruFiles = string.Empty;
         LastRomFile = null;
     }

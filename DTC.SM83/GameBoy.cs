@@ -490,10 +490,8 @@ public sealed class GameBoy : IDisposable
 
     private static GameBoyMode DetermineEffectiveMode(Cartridge cartridge, GameBoyMode requestedMode)
     {
-        if (cartridge.IsCgbOnly)
+        if (requestedMode == GameBoyMode.Cgb || cartridge.IsCgbOnly)
             return GameBoyMode.Cgb;
-        if (!cartridge.IsCgbCapable)
-            return GameBoyMode.Dmg;
-        return requestedMode;
+        return GameBoyMode.Dmg;
     }
 }
