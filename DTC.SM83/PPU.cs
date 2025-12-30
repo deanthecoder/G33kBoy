@@ -217,6 +217,16 @@ public class PPU
         CurrentState == FrameState.HBlank ||
         CurrentState == FrameState.FrameWait;
 
+    /// <summary>
+    /// True when the CPU is allowed to read/write VRAM (LCD disabled, HBlank, VBlank, or OAM scan).
+    /// VRAM is inaccessible during the drawing period (mode 3).
+    /// </summary>
+    public bool CanAccessVram =>
+        !m_lcdc.LcdEnable ||
+        CurrentState == FrameState.HBlank ||
+        CurrentState == FrameState.FrameWait ||
+        CurrentState == FrameState.OAMScan;
+
     private FrameState CurrentState
     {
         get => (FrameState)m_stat.GetMode();

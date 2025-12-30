@@ -32,6 +32,7 @@ public sealed class Bus : IMemDevice, IDisposable
     private readonly OamDevice m_oam;
     private readonly JoypadDevice m_joypadDevice;
     private CartridgeRamDevice m_cartridgeRam;
+    private int m_hdmaStallMCycles;
 
     public ushort FromAddr => 0x0000;
     public ushort ToAddr => 0xFFFF;
@@ -175,16 +176,8 @@ public sealed class Bus : IMemDevice, IDisposable
         IsDoubleSpeed = false;
         BootRom?.SetMode(mode);
         m_ioDevice?.SetMode(mode);
-        VramDevice tempQualifier = Vram;
-        if (tempQualifier != null)
-        {
-            tempQualifier.SetCurrentBank(0);
-        }
-        WorkRamDevice tempQualifier1 = WorkRam;
-        if (tempQualifier1 != null)
-        {
-            tempQualifier1.SetCurrentBank(1);
-        }
+        Vram?.SetCurrentBank(0);
+        WorkRam?.SetCurrentBank(1);
         PPU?.SetMode(mode);
     }
 
@@ -305,6 +298,10 @@ public sealed class Bus : IMemDevice, IDisposable
                 return MemoryAccess.Block;
         }
 
+        var isVram = addr is >= 0x8000 and <= 0x9FFF;
+        if (isVram && PPU is { CanAccessVram: false })
+            return MemoryAccess.Block;
+
         // Sprite memory is blocked during certain cycles.
         var isOam = m_oam?.Contains(addr) == true;
         return isOam && PPU is {CanAccessOam: false} ? MemoryAccess.Block : MemoryAccess.Allow;
@@ -314,6 +311,26 @@ public sealed class Bus : IMemDevice, IDisposable
     /// Advance the clock by one CPU M-cycle.
     /// </summary>
     public void AdvanceM()
+    {
+        AdvanceOneM();
+
+        while (m_hdmaStallMCycles > 0)
+        {
+            m_hdmaStallMCycles--;
+            AdvanceOneM();
+        }
+    }
+
+    /// <summary>
+    /// Request extra CPU M-cycle stalls to model CGB HDMA/GDMA bus blocking.
+    /// </summary>
+    internal void RequestHdmaCpuStall(int mCycles)
+    {
+        if (mCycles > 0)
+            m_hdmaStallMCycles += mCycles;
+    }
+
+    private void AdvanceOneM()
     {
         const ulong cpuTicksPerM = 4;
         var masterTicksPerM = IsDoubleSpeed ? 2UL : 4UL;

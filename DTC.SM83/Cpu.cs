@@ -34,6 +34,7 @@ public class Cpu
     private readonly List<ICpuDebugger> m_debuggers = new();
     private bool m_isStopped;
     private Joypad.JoypadButtons m_stopJoypadState;
+    private bool m_dmaStall;
 
 #if DEBUG
     private int m_nopStreak;
@@ -132,6 +133,31 @@ public class Cpu
             }
         }
 
+        if (m_dmaStall)
+        {
+            if (Bus.Dma?.IsTransferActive == true)
+            {
+                // OAM DMA blocks the CPU; advance time only.
+                Bus.AdvanceM();
+                NotifyAfterStep();
+                return;
+            }
+
+            // DMA finished; prefetch next opcode before resuming.
+            m_dmaStall = false;
+            Fetch8();
+            NotifyAfterStep();
+            return;
+        }
+
+        if (Bus.Dma?.IsTransferActive == true)
+        {
+            m_dmaStall = true;
+            Bus.AdvanceM();
+            NotifyAfterStep();
+            return;
+        }
+
         CurrentInstructionAddress = (ushort)(Reg.PC - 1);
         var isDebugMode = InstructionLogger.IsEnabled;
 #if DEBUG
@@ -203,6 +229,14 @@ public class Cpu
         if (IsHalted)
         {
             Bus.AdvanceM(); // Re-queue the HALT instruction.
+            NotifyAfterStep();
+            return;
+        }
+
+        if (Bus.Dma?.IsTransferActive == true)
+        {
+            // DMA started during this instruction; don't fetch from blocked memory.
+            m_dmaStall = true;
             NotifyAfterStep();
             return;
         }
