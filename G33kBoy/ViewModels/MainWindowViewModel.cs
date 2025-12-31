@@ -75,6 +75,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Settings.IsLcdEmulationEnabled = !Settings.IsLcdEmulationEnabled;
         ApplyDisplayVisibilitySettings();
     }
+
+    public void ToggleDmgSepiaMode()
+    {
+        Settings.IsDmgSepiaEnabled = !Settings.IsDmgSepiaEnabled;
+        ApplyDisplayVisibilitySettings();
+    }
     
     public bool IsSoundChannel1Enabled
     {
@@ -329,6 +335,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
+        GameBoy.SetDmgSepiaEnabled(Settings.IsDmgSepiaEnabled);
         GameBoy.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
         OnPropertyChanged(nameof(IsDisplayBlurEnabled));
         OnPropertyChanged(nameof(IsDisplayBlurDisabled));
@@ -363,10 +370,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(IsDisplayBlurDisabled));
         }
         else if (e.PropertyName == nameof(Settings.IsLcdEmulationEnabled))
-        {
-            OnPropertyChanged(nameof(IsDisplayBlurEnabled));
-            OnPropertyChanged(nameof(IsDisplayBlurDisabled));
-        }
+            ApplyDisplayVisibilitySettings();
+        else if (e.PropertyName == nameof(Settings.IsDmgSepiaEnabled))
+            ApplyDisplayVisibilitySettings();
     }
 
     internal void LoadRomFile(FileInfo romFile, bool addToMru = true)

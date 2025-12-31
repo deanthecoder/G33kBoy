@@ -28,12 +28,13 @@ public sealed class LcdScreen : IDisposable
     private readonly float[] m_grainWithShadow;
     private uint m_previousFrameBufferHash;
     private bool m_forceRefresh;
-    private readonly float m_inv255 = 1.0f / 255.0f;
+    private const float Inv255 = 1.0f / 255.0f;
     private readonly Vector3 m_redBoostMult = new Vector3(0.25f, 0.07f, 0.0f);
     private readonly Vector3 m_outlineColor = new Vector3(0x81 / 255.0f, 0x7D / 255.0f, 0x15 / 255.0f);
 
     public WriteableBitmap Display { get; }
     private bool m_lcdEmulationEnabled = true;
+    private bool m_dmgSepiaEnabled;
     private GameBoyMode m_mode = GameBoyMode.Dmg;
 
     public bool LcdEmulationEnabled
@@ -56,6 +57,18 @@ public sealed class LcdScreen : IDisposable
             if (m_mode == value)
                 return;
             m_mode = value;
+            m_forceRefresh = true;
+        }
+    }
+    
+    public bool DmgSepiaEnabled
+    {
+        get => m_dmgSepiaEnabled;
+        set
+        {
+            if (m_dmgSepiaEnabled == value)
+                return;
+            m_dmgSepiaEnabled = value;
             m_forceRefresh = true;
         }
     }
@@ -216,20 +229,26 @@ public sealed class LcdScreen : IDisposable
                 {
                     // Load source RGB and normalize to 0..1.
                     var src = srcPtr + sourceRowOffset + x * 4;
-                    var r = src[0] * m_inv255;
-                    var g = src[1] * m_inv255;
-                    var b = src[2] * m_inv255;
+                    var r = src[0] * Inv255;
+                    var g = src[1] * Inv255;
+                    var b = src[2] * Inv255;
 
                     // Precomputed red boost (top/bottom/left/right tinge).
                     var redBoost = m_redBoostPerPixel[redBoostRowOffset + x];
                     r *= 1.0f + m_redBoostMult.X * redBoost;
                     g *= 1.0f + m_redBoostMult.Y * redBoost;
+                    r = Math.Clamp(r, 0.0f, 1.0f);
+                    g = Math.Clamp(g, 0.0f, 1.0f);
+                    b = Math.Clamp(b, 0.0f, 1.0f);
 
                     // Precompute outline colour once per source pixel.
                     var bright = 0.6f + r * (1.5f - 0.6f);
                     var outlineR = (r + m_outlineColor.X * bright) * 0.5f;
                     var outlineG = (g + m_outlineColor.Y * bright) * 0.5f;
                     var outlineB = (b + m_outlineColor.Z * bright) * 0.5f;
+                    outlineR = Math.Clamp(outlineR, 0.0f, 1.0f);
+                    outlineG = Math.Clamp(outlineG, 0.0f, 1.0f);
+                    outlineB = Math.Clamp(outlineB, 0.0f, 1.0f);
 
                     var destBaseX = x * Scale;
                     var destBaseXBytes = destBaseX * 4;
@@ -287,7 +306,7 @@ public sealed class LcdScreen : IDisposable
     private unsafe void RenderWithLcdEffectsCgb(byte[] frameBuffer, byte* destPtr, int destStride)
     {
         const float rowColumnDim = 0.9f;
-        var inv255 = m_inv255 * 0.9f;
+        var inv255 = Inv255 * 0.9f;
 
         fixed (byte* srcPtr = frameBuffer)
         {

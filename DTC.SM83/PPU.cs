@@ -39,6 +39,13 @@ public class PPU
         0x45, 0x5D, 0x4E,
         0x28, 0x32, 0x23
     ];
+    private readonly byte[] m_sepiaMap =
+    [
+        0xE9, 0xCC, 0x9C,
+        0xD0, 0x85, 0x39,
+        0x96, 0x57, 0x1D,
+        0x2E, 0x15, 0x12
+    ];
     private readonly double[] m_colorAccumulator = new double[FrameWidth * FrameHeight * 3];
     private readonly byte[] m_spriteIndices = new byte[10];
     private readonly bool[] m_spritePixelCoverage = new bool[FrameWidth];
@@ -69,6 +76,7 @@ public class PPU
     private bool m_motionBlurEnabled;
     private bool m_motionBlurPrimed;
     private bool m_lcdEmulationEnabled = true;
+    private bool m_dmgSepiaEnabled;
     private const double MotionBlurOldWeight = 0.6;
     private const double MotionBlurOldWeightDark = 0.3;
 
@@ -117,6 +125,17 @@ public class PPU
         {
             m_lcdEmulationEnabled = value;
             SetMotionBlurEnabled(value);
+        }
+    }
+    
+    public bool DmgSepiaEnabled
+    {
+        get => m_dmgSepiaEnabled;
+        set
+        {
+            if (m_dmgSepiaEnabled == value)
+                return;
+            m_dmgSepiaEnabled = value;
         }
     }
 
@@ -788,7 +807,14 @@ public class PPU
                     colorValue = bgPaletteValue;
                 }
 
-                if (m_lcdEmulationEnabled)
+                if (m_dmgSepiaEnabled)
+                {
+                    var sepiaIndex = colorValue * 3;
+                    targetR = m_sepiaMap[sepiaIndex];
+                    targetG = m_sepiaMap[sepiaIndex + 1];
+                    targetB = m_sepiaMap[sepiaIndex + 2];
+                }
+                else if (m_lcdEmulationEnabled)
                 {
                     var greenIndex = colorValue * 3;
                     targetR = m_greenMap[greenIndex];
@@ -893,6 +919,12 @@ public class PPU
             baseR = 0xFF;
             baseG = 0xFF;
             baseB = 0xFF;
+        }
+        else if (m_dmgSepiaEnabled)
+        {
+            baseR = m_sepiaMap[0];
+            baseG = m_sepiaMap[1];
+            baseB = m_sepiaMap[2];
         }
         else if (m_lcdEmulationEnabled)
         {

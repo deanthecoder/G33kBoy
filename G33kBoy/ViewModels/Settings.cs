@@ -56,6 +56,12 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
 
+    public bool IsDmgSepiaEnabled
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     public bool IsCpuHistoryTracked
     {
         get => Get<bool>();
@@ -87,6 +93,7 @@ public class Settings : UserSettingsBase
         IsHardwareLowPassFilterEnabled = true;
         IsBackgroundVisible = true;
         IsLcdEmulationEnabled = true;
+        IsDmgSepiaEnabled = false;
         AreSpritesVisible = true;
         IsCpuHistoryTracked = false;
         IsCgbModePreferred = true;

@@ -91,6 +91,12 @@
                                                        IsVisible="{Binding Settings.IsLcdEmulationEnabled}" />
                             </MenuItem.Icon>
                         </MenuItem>
+                        <MenuItem Header="_Sepia DMG" Command="{Binding ToggleDmgSepiaMode}" ToolTip.Tip="Applies a sepia palette to original Game Boy titles (no LCD effects).">
+                            <MenuItem.Icon>
+                                <avalonia:MaterialIcon Kind="Tick"
+                                                       IsVisible="{Binding Settings.IsDmgSepiaEnabled}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                         <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
                             <MenuItem.Effect>
                                 <BlurEffect Radius="2"/>
