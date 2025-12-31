@@ -35,8 +35,6 @@ public sealed class SnapshotHistory : ViewModelBase
     private int m_stateSize;
     private int m_pauseCount;
 
-    public event EventHandler Activated;
-
     public SnapshotHistory(GameBoy gameBoy)
     {
         m_gameBoy = gameBoy ?? throw new ArgumentNullException(nameof(gameBoy));
@@ -52,7 +50,7 @@ public sealed class SnapshotHistory : ViewModelBase
 
     public bool HasSnapshots => m_count > 0;
 
-    public bool IsSnapshottingPaused => Volatile.Read(ref m_pauseCount) > 0;
+    private bool IsSnapshottingPaused => Volatile.Read(ref m_pauseCount) > 0;
 
     public int IndexToRestore
     {
@@ -136,8 +134,6 @@ public sealed class SnapshotHistory : ViewModelBase
         IndexToRestore = LastSampleIndex;
         m_ticksToNextSample = TicksPerSample;
         m_lastCpuTicks = m_gameBoy.CpuClockTicks;
-
-        Activated?.Invoke(this, EventArgs.Empty);
     }
 
     public MachineState CaptureSnapshotNow()

@@ -194,35 +194,6 @@
                             </avalonia:MaterialIcon.Styles>
                         </avalonia:MaterialIcon>
                     </ToggleButton>
-                    
-                    <Button Command="{Binding RotateEmulationSpeed}"
-                            Theme="{DynamicResource MaterialFlatButton}"
-                            Foreground="White"
-                            Tag="{Binding EmulationSpeed}">
-                        <ToolTip.Tip>
-                            <StackPanel>
-                                <TextBlock Text="Emulation Speed" HorizontalAlignment="Center"/>
-                                <TextBlock Text="{Binding GameBoy.RelativeSpeed, StringFormat={}(Current: x{0:N2})}" HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </ToolTip.Tip>
-                        <avalonia:MaterialIcon Width="24" Height="24"
-                                               Tag="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}">
-                            <avalonia:MaterialIcon.Styles>
-                                <Style Selector="avalonia|MaterialIcon[Tag=Actual]">
-                                    <Setter Property="Kind" Value="Walk" />
-                                </Style>
-                                <Style Selector="avalonia|MaterialIcon[Tag=Fast]">
-                                    <Setter Property="Kind" Value="Run" />
-                                </Style>
-                                <Style Selector="avalonia|MaterialIcon[Tag=Maximum]">
-                                    <Setter Property="Kind" Value="RunFast" />
-                                </Style>
-                                <Style Selector="avalonia|MaterialIcon[Tag=Pause]">
-                                    <Setter Property="Kind" Value="Pause" />
-                                </Style>
-                            </avalonia:MaterialIcon.Styles>
-                        </avalonia:MaterialIcon>
-                    </Button>
 
                     <Button Command="{Binding OpenDialogCommand, ElementName=Host}"
                             Theme="{DynamicResource MaterialFlatButton}"

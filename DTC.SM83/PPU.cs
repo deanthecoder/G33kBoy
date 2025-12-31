@@ -76,7 +76,6 @@ public class PPU
     private bool m_motionBlurEnabled;
     private bool m_motionBlurPrimed;
     private bool m_lcdEmulationEnabled = true;
-    private bool m_dmgSepiaEnabled;
     private const double MotionBlurOldWeight = 0.6;
     private const double MotionBlurOldWeightDark = 0.3;
 
@@ -128,16 +127,7 @@ public class PPU
         }
     }
     
-    public bool DmgSepiaEnabled
-    {
-        get => m_dmgSepiaEnabled;
-        set
-        {
-            if (m_dmgSepiaEnabled == value)
-                return;
-            m_dmgSepiaEnabled = value;
-        }
-    }
+    public bool DmgSepiaEnabled { get; set; }
 
     internal int GetFrameBufferStateSize() =>
         m_frameBuffer.Length;
@@ -807,7 +797,7 @@ public class PPU
                     colorValue = bgPaletteValue;
                 }
 
-                if (m_dmgSepiaEnabled)
+                if (DmgSepiaEnabled)
                 {
                     var sepiaIndex = colorValue * 3;
                     targetR = m_sepiaMap[sepiaIndex];
@@ -920,7 +910,7 @@ public class PPU
             baseG = 0xFF;
             baseB = 0xFF;
         }
-        else if (m_dmgSepiaEnabled)
+        else if (DmgSepiaEnabled)
         {
             baseR = m_sepiaMap[0];
             baseG = m_sepiaMap[1];

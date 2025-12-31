@@ -9,7 +9,6 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using System.Diagnostics;
 using System.IO.Compression;
 using Avalonia.Media.Imaging;
 using DTC.Core;
@@ -26,11 +25,9 @@ public sealed class GameBoy : IDisposable
 {
     private readonly ClockSync m_clockSync;
     private readonly LcdScreen m_screen;
-    private readonly Stopwatch m_frameStopwatch = Stopwatch.StartNew();
     private readonly SoundDevice m_audioSink;
     private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
     private readonly Lock m_cpuStepLock = new();
-    private long m_lastFrameCpuTicks;
     private Bus m_bus;
     private Cpu m_cpu;
     private Thread m_cpuThread;
@@ -39,9 +36,7 @@ public sealed class GameBoy : IDisposable
     private bool m_lcdEmulationEnabled = true;
     private bool m_dmgSepiaEnabled;
     private bool m_isUserSoundEnabled = true;
-    private bool m_isRunningAtNormalSpeed = true;
     private bool m_isCpuHistoryTracked;
-    private double m_relativeSpeedRaw;
     private GameBoyMode m_requestedMode = GameBoyMode.Cgb;
     private string m_loadedRomPath;
     private byte[] m_frameBufferScratch;
@@ -51,8 +46,6 @@ public sealed class GameBoy : IDisposable
 
     public WriteableBitmap Display => m_screen.Display;
     public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
-
-    public double RelativeSpeed => Math.Round(m_relativeSpeedRaw / 0.2) * 0.2;
 
     public Joypad Joypad { get; }
     public SnapshotHistory SnapshotHistory { get; }
@@ -181,27 +174,6 @@ public sealed class GameBoy : IDisposable
 
     private void OnFrameRendered(object sender, byte[] frameBuffer)
     {
-        // Calculate relative speed based on emulated CPU clock ticks.
-        var currentCpuTicks = (long)(m_bus?.CpuClockTicks ?? 0);
-        var cpuTicksDelta = currentCpuTicks - m_lastFrameCpuTicks;
-        m_lastFrameCpuTicks = currentCpuTicks;
-
-        if (cpuTicksDelta > 0)
-        {
-            var elapsedSecs = m_frameStopwatch.Elapsed.TotalSeconds;
-            m_frameStopwatch.Restart();
-            
-            if (elapsedSecs > 0)
-            {
-                // Calculate actual emulated Hz based on ticks executed vs real time elapsed
-                var emulatedHz = cpuTicksDelta / elapsedSecs;
-                var speedPercentage = emulatedHz / GetEffectiveCpuHz();
-
-                // Apply exponential moving average filter to smooth out the value
-                m_relativeSpeedRaw = m_relativeSpeedRaw * 0.98 + speedPercentage * 0.02;
-            }
-        }
-
         var didUpdate = m_screen.Update(frameBuffer);
         if (didUpdate)
             DisplayUpdated?.Invoke(this, EventArgs.Empty);
@@ -216,18 +188,6 @@ public sealed class GameBoy : IDisposable
         DisposeHardware();
         Joypad.Dispose();
         m_screen.Dispose();
-    }
-
-    public void SetSpeed(ClockSync.Speed speed)
-    {
-        var isNormalSpeed = speed == ClockSync.Speed.Actual;
-        if (m_isRunningAtNormalSpeed != isNormalSpeed)
-        {
-            m_isRunningAtNormalSpeed = isNormalSpeed;
-            UpdateSoundEnabled();
-        }
-
-        m_clockSync.SetSpeed(speed);
     }
 
     public void SetRequestedMode(GameBoyMode mode)
@@ -320,9 +280,7 @@ public sealed class GameBoy : IDisposable
 
     private void UpdateSoundEnabled()
     {
-        // Auto-mute whenever the emulation is not running at 100% speed to avoid mangled audio.
-        var shouldEnableSound = m_isUserSoundEnabled && m_isRunningAtNormalSpeed;
-        m_audioSink?.SetEnabled(shouldEnableSound);
+        m_audioSink?.SetEnabled(m_isUserSoundEnabled);
     }
 
     private void ApplySoundChannelSettings()
@@ -449,9 +407,6 @@ public sealed class GameBoy : IDisposable
             m_cpu.LoadState(state);
 
         RefreshDisplay();
-        m_relativeSpeedRaw = 1.0;
-        m_lastFrameCpuTicks = (long)(m_bus?.CpuClockTicks ?? 0);
-        m_frameStopwatch.Restart();
         m_clockSync.Resync();
     }
 

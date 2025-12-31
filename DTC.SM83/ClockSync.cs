@@ -21,7 +21,6 @@ public class ClockSync
     private readonly Action m_resetCpuTicks;
     private readonly Lock m_lock = new();
     private SpinWait m_spinWait;
-    private Speed m_speed = Speed.Actual;
     private double m_lastEmulatedTicksPerSecond;
     private volatile bool m_resyncRequested;
 
@@ -33,8 +32,6 @@ public class ClockSync
     private long m_tStateCountAtLastSync;
     private long m_ticksSinceLastSync;
 
-    public enum Speed { Actual, Fast, Maximum, Pause }
-
     public ClockSync(Func<double> emulatedCpuHz, Func<long> ticksSinceCpuStart, Action resetCpuTicks)
     {
         m_realTime = Stopwatch.StartNew();
@@ -44,36 +41,8 @@ public class ClockSync
         m_lastEmulatedTicksPerSecond = m_emulatedTicksPerSecond();
     }
 
-    /// <summary>
-    /// Call to set whether the emulator is running at 100% emulated speed,
-    /// or 'full throttle'.
-    /// </summary>
-    public void SetSpeed(Speed speed)
-    {
-        lock (m_lock)
-        {
-            if (m_speed == speed)
-                return;
-            m_speed = speed;
-
-            // Reset the timing variables when re-enabling 100% emulated speed.
-            var currentTicks = m_ticksSinceCpuStart();
-            ResetTimingLocked(currentTicks);
-        }
-    }
-
     public void SyncWithRealTime()
     {
-        if (m_speed == Speed.Maximum)
-            return; // Don't delay.
-
-        // For pause mode, always sleep every tick
-        if (m_speed == Speed.Pause)
-        {
-            Thread.Sleep(50);
-            return;
-        }
-
         // Accumulate actual T-states executed since last sync (robust against call frequency changes)
         var currentTicks = m_ticksSinceCpuStart();
         if (TryApplyPendingResync(currentTicks))
@@ -84,7 +53,7 @@ public class ClockSync
         m_tStateCountAtLastSync = currentTicks;
         m_ticksSinceLastSync += delta;
 
-        // For non-pause modes, only sync every 2048 ticks for efficiency
+        // Only sync every 2048 ticks for efficiency.
         if (m_ticksSinceLastSync < 2048)
             return;
 
@@ -92,17 +61,13 @@ public class ClockSync
 
         // Compute target time while holding the lock, then spin without holding it.
         double targetRealElapsedMs;
-        Speed speed;
         lock (m_lock)
         {
             var emulatedUptimeSecs = (currentTicks - m_tStateCountAtStart) / m_lastEmulatedTicksPerSecond;
             targetRealElapsedMs = emulatedUptimeSecs * 1000.0;
-            speed = m_speed;
         }
 
         // Spin for the last bit for tight timing.
-        if (speed == Speed.Fast)
-            targetRealElapsedMs /= 1.6;
         while (m_realTime.ElapsedMilliseconds < targetRealElapsedMs)
         {
             if (m_resyncRequested && TryApplyPendingResync(m_ticksSinceCpuStart()))

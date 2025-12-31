@@ -49,7 +49,6 @@ Global key hooks translate the following keys into the Game Boy joypad:
 
 ## Emulator features
 - **ROM loading from ZIPs** – Load standard `.gb` and `.gbc` ROMs directly, or from a `.zip` archive containing a Game Boy ROM. Simply drag-and-drop ROM files onto the window.
-- **Multiple speed modes** – Cycle between normal, fast, maximum, and pause to match how you want to play or test.
 - **On-demand auto-fire** – Enable hardware auto-fire of A and B buttons.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
 - **Original green display** – Toggle a classic four-shade green palette to mimic the original DMG screen.

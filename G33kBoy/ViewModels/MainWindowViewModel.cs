@@ -24,7 +24,6 @@ namespace G33kBoy.ViewModels;
 
 public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 {
-    private ClockSync.Speed m_emulationSpeed;
     private string m_windowTitle;
     private bool m_isSoundChannel1Enabled = true;
     private bool m_isSoundChannel2Enabled = true;
@@ -44,17 +43,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     }
     private string m_currentRomTitle = "G33kBoy";
 
-    public ClockSync.Speed EmulationSpeed
-    {
-        get => m_emulationSpeed;
-        set
-        {
-            if (!SetField(ref m_emulationSpeed, value))
-                return;
-            GameBoy.SetSpeed(value);
-        }
-    }
-    
     public void ToggleAmbientBlur() =>
         Settings.IsAmbientBlurred = !Settings.IsAmbientBlurred;
     
@@ -165,7 +153,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Mru.OpenRequested += (_, file) => LoadRomFile(file, addToMru: false);
 
         GameBoy = new GameBoy();
-        GameBoy.SnapshotHistory.Activated += (_, _) => EmulationSpeed = ClockSync.Speed.Actual;
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         GameBoy.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
         GameBoy.RomLoaded += (_, title) =>
@@ -202,25 +189,6 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         };
         command.Cancelled += (_, _) => keyBlocker.Dispose();
         command.Execute(null);
-    }
-    
-    public void RotateEmulationSpeed()
-    {
-        switch (EmulationSpeed)
-        {
-            case ClockSync.Speed.Actual:
-                EmulationSpeed = ClockSync.Speed.Fast;
-                break;
-            case ClockSync.Speed.Fast:
-                EmulationSpeed = ClockSync.Speed.Maximum;
-                break;
-            case ClockSync.Speed.Maximum:
-                EmulationSpeed = ClockSync.Speed.Pause;
-                break;
-            case ClockSync.Speed.Pause:
-                EmulationSpeed = ClockSync.Speed.Actual;
-                break;
-        }
     }
     
     public void CloseCommand() =>
