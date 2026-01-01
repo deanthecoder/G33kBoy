@@ -10,7 +10,8 @@
     "InnoScript": "Installer/templates/inno.iss",
     "IconIco": "G33kBoy/Assets/app.ico",
     "GUID": "{BD7BC3C3-7482-4DB1-8951-6029D414CE70}",
-    "RuntimeIdentifier": "win-x64"
+    "RuntimeIdentifier": "win-x64",
+    "InstallOpenAL": true
   },
   "Mac": {
     "RuntimeIdentifiers": [
