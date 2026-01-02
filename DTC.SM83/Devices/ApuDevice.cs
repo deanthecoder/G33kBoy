@@ -23,6 +23,7 @@ public sealed class ApuDevice : IMemDevice
     public ushort ToAddr => 0xFF3F;
 
     private const double SampleHz = 44100.0;
+    private const double SampleSeconds = 1.0 / SampleHz;
     private const double TicksPerSample = Cpu.Hz / SampleHz;
     private const ulong FrameSequencerStepTStates = (ulong)(Cpu.Hz / 512.0); // 512 Hz.
     private double m_ticksUntilSample = TicksPerSample;
@@ -99,7 +100,7 @@ public sealed class ApuDevice : IMemDevice
         while (m_ticksUntilSample <= 0.0)
         {
             // Generate one audio sample using a fixed tick delta per sample.
-            GenerateAudioSample((ulong)TicksPerSample);
+            GenerateAudioSample(SampleSeconds);
             m_ticksUntilSample += TicksPerSample;
         }
     }
@@ -190,12 +191,12 @@ public sealed class ApuDevice : IMemDevice
     private static bool IsLengthClockStep(int frameStep) =>
         (frameStep & 1) == 0;
 
-    private void GenerateAudioSample(ulong sampleTicks)
+    private void GenerateAudioSample(double sampleSeconds)
     {
-        var ch1 = m_channel1.Sample(sampleTicks);
-        var ch2 = m_channel2.Sample(sampleTicks);
+        var ch1 = m_channel1.Sample(sampleSeconds);
+        var ch2 = m_channel2.Sample(sampleSeconds);
         var ch3 = m_channel3.Sample();
-        var ch4 = m_channel4.Sample(sampleTicks);
+        var ch4 = m_channel4.Sample(sampleSeconds);
 
         // Route channels according to NR51.
         var ch1L = (m_nr51 & (1 << 4)) != 0;
@@ -712,7 +713,7 @@ public sealed class ApuDevice : IMemDevice
             return false;
         }
 
-        public double Sample(ulong tStates)
+        public double Sample(double elapsedSeconds)
         {
             if (!Enabled || !m_dacEnabled || m_volume == 0 || m_frequencyHz <= 0.0)
                 return 0.0;
@@ -724,7 +725,6 @@ public sealed class ApuDevice : IMemDevice
             if (m_frequencyHz >= nyquist)
                 return duty * (m_volume / 15.0);
 
-            var elapsedSeconds = tStates / Cpu.Hz;
             m_phase += m_frequencyHz * elapsedSeconds;
             m_phase -= Math.Floor(m_phase);
 
@@ -1297,12 +1297,11 @@ public sealed class ApuDevice : IMemDevice
             return false;
         }
 
-        public double Sample(ulong tStates)
+        public double Sample(double elapsedSeconds)
         {
             if (!Enabled || !m_dacEnabled || m_volume == 0 || m_lfsrFrequencyHz <= 0.0)
                 return 0.0;
 
-            var elapsedSeconds = tStates / Cpu.Hz;
             m_lfsrTimerSeconds += elapsedSeconds;
 
             var period = 1.0 / m_lfsrFrequencyHz;
