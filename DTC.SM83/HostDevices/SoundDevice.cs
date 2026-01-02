@@ -23,6 +23,9 @@ public class SoundDevice
     private const int BufferCount = 3;
     private const double VolumeRampMs = 100.0;
     private const double LowPassCutoffHz = 7000.0;
+    // The real Game Boy output is AC-coupled (a series capacitor) which blocks DC offsets.
+    // Without this, DC bias in the generated signal can cause pops/bumps when the bias changes.
+    private const double HighPassCutoffHz = 20.0;
 
     private readonly int m_source;
     private readonly int[] m_buffers;
@@ -36,6 +39,7 @@ public class SoundDevice
     private readonly byte[] m_transferBuffer;
     private readonly double m_gainStep;
     private readonly double m_lowPassAlpha;
+    private readonly double m_highPassAlpha;
     private Task m_loopTask;
     private bool m_isSoundEnabled = true;
     private double m_targetGain = 1.0;
@@ -45,6 +49,11 @@ public class SoundDevice
     private double m_lowPassLeft;
     private double m_lowPassRight;
     private bool m_lowPassInitialized;
+    private double m_highPassPrevInLeft;
+    private double m_highPassPrevInRight;
+    private double m_highPassPrevOutLeft;
+    private double m_highPassPrevOutRight;
+    private bool m_highPassInitialized;
     private byte m_lastLeftSample = 128;
     private byte m_lastRightSample = 128;
     private bool m_isCancelled;
@@ -72,6 +81,7 @@ public class SoundDevice
         m_bufferDurationMs = 1000.0 * m_transferFrames / m_sampleRate;
         m_gainStep = 1.0 / (m_sampleRate * (VolumeRampMs / 1000.0));
         m_lowPassAlpha = ComputeLowPassAlpha(LowPassCutoffHz, m_sampleRate);
+        m_highPassAlpha = ComputeHighPassAlpha(HighPassCutoffHz, m_sampleRate);
     }
 
     public void Start()
@@ -309,6 +319,30 @@ public class SoundDevice
             rightSample = m_lowPassRight;
         }
 
+        // High-pass (AC-coupling) to remove DC bias. This mimics the Game Boy's output coupling capacitor
+        // and reduces audible pops/bumps when the DC level changes (e.g., when channels are enabled/disabled).
+        if (!m_highPassInitialized)
+        {
+            m_highPassPrevInLeft = leftSample;
+            m_highPassPrevInRight = rightSample;
+            m_highPassPrevOutLeft = 0.0;
+            m_highPassPrevOutRight = 0.0;
+            m_highPassInitialized = true;
+        }
+        else
+        {
+            var outLeft = m_highPassAlpha * (m_highPassPrevOutLeft + leftSample - m_highPassPrevInLeft);
+            var outRight = m_highPassAlpha * (m_highPassPrevOutRight + rightSample - m_highPassPrevInRight);
+
+            m_highPassPrevInLeft = leftSample;
+            m_highPassPrevInRight = rightSample;
+            m_highPassPrevOutLeft = outLeft;
+            m_highPassPrevOutRight = outRight;
+
+            leftSample = outLeft;
+            rightSample = outRight;
+        }
+
         var leftByte = ToUnsigned8(leftSample);
         var rightByte = ToUnsigned8(rightSample);
 
@@ -357,6 +391,11 @@ public class SoundDevice
         m_lowPassInitialized = false;
         m_lowPassLeft = 0.0;
         m_lowPassRight = 0.0;
+        m_highPassInitialized = false;
+        m_highPassPrevInLeft = 0.0;
+        m_highPassPrevInRight = 0.0;
+        m_highPassPrevOutLeft = 0.0;
+        m_highPassPrevOutRight = 0.0;
     }
 
     private static double ComputeLowPassAlpha(double cutoffHz, int sampleRate)
@@ -364,6 +403,13 @@ public class SoundDevice
         var rc = 1.0 / (2.0 * Math.PI * cutoffHz);
         var dt = 1.0 / sampleRate;
         return dt / (rc + dt);
+    }
+
+    private static double ComputeHighPassAlpha(double cutoffHz, int sampleRate)
+    {
+        var rc = 1.0 / (2.0 * Math.PI * cutoffHz);
+        var dt = 1.0 / sampleRate;
+        return rc / (rc + dt);
     }
     
     public void Dispose()
