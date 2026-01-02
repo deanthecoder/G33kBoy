@@ -26,6 +26,8 @@ public class SoundDevice
     // The real Game Boy output is AC-coupled (a series capacitor) which blocks DC offsets.
     // Without this, DC bias in the generated signal can cause pops/bumps when the bias changes.
     private const double HighPassCutoffHz = 20.0;
+    // Default output gain. 1.0 can be uncomfortably loud on some systems; 0.5 gives headroom.
+    private const double DefaultGain = 0.5;
 
     private readonly int m_source;
     private readonly int[] m_buffers;
@@ -42,7 +44,7 @@ public class SoundDevice
     private readonly double m_highPassAlpha;
     private Task m_loopTask;
     private bool m_isSoundEnabled = true;
-    private double m_targetGain = 1.0;
+    private double m_targetGain = DefaultGain;
     private double m_outputGain;
     private double m_lastDeviceGain = -1.0;
     private bool m_isLowPassFilterEnabled = true;
@@ -90,7 +92,7 @@ public class SoundDevice
             return; // Already started.
 
         m_outputGain = 0.0;
-        m_targetGain = m_isSoundEnabled ? 1.0 : 0.0;
+        m_targetGain = m_isSoundEnabled ? DefaultGain : 0.0;
         m_lastDeviceGain = -1.0;
         m_loopTask = Task.Run(SoundLoop);
     }
@@ -128,7 +130,7 @@ public class SoundDevice
             if ((ALSourceState)state != ALSourceState.Playing && buffersQueued > 0)
             {
                 m_outputGain = 0.0;
-                m_targetGain = m_isSoundEnabled ? 1.0 : 0.0;
+                m_targetGain = m_isSoundEnabled ? DefaultGain : 0.0;
                 m_lastDeviceGain = -1.0;
                 ExecuteAl("SourcePlay", () => AL.SourcePlay(m_source));
                 ClearCpuBuffer();
@@ -367,7 +369,7 @@ public class SoundDevice
         if (m_isSoundEnabled == isSoundEnabled)
             return;
         m_isSoundEnabled = isSoundEnabled;
-        m_targetGain = isSoundEnabled ? 1.0 : 0.0;
+        m_targetGain = isSoundEnabled ? DefaultGain : 0.0;
         if (isSoundEnabled && m_outputGain <= 0.001)
             ClearCpuBuffer();
     }
