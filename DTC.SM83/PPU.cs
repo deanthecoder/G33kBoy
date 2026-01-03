@@ -46,6 +46,34 @@ public class PPU
         0x96, 0x57, 0x1D,
         0x2E, 0x15, 0x12
     ];
+    private readonly byte[] m_blueMap =
+    [
+        0xE6, 0xF0, 0xFF,
+        0xB6, 0xC8, 0xE9,
+        0x7D, 0x92, 0xC2,
+        0x2F, 0x3C, 0x63
+    ];
+    private readonly byte[] m_redMap =
+    [
+        0xFF, 0xE8, 0xE8,
+        0xF2, 0xB8, 0xB8,
+        0xC6, 0x7E, 0x7E,
+        0x5A, 0x2B, 0x2B
+    ];
+    private readonly byte[] m_cyanMap =
+    [
+        0xE1, 0xFF, 0xFF,
+        0xB3, 0xE6, 0xE6,
+        0x7A, 0xB8, 0xB8,
+        0x2F, 0x5C, 0x5C
+    ];
+    private readonly byte[] m_magentaMap =
+    [
+        0xFF, 0xE3, 0xF6,
+        0xE8, 0xB2, 0xD6,
+        0xB5, 0x7A, 0xA8,
+        0x5A, 0x2E, 0x54
+    ];
     private readonly double[] m_colorAccumulator = new double[FrameWidth * FrameHeight * 3];
     private readonly byte[] m_spriteIndices = new byte[10];
     private readonly bool[] m_spritePixelCoverage = new bool[FrameWidth];
@@ -127,7 +155,7 @@ public class PPU
         }
     }
     
-    public bool DmgSepiaEnabled { get; set; }
+    public DmgPalette DmgPalette { get; set; } = DmgPalette.Default;
 
     internal int GetFrameBufferStateSize() =>
         m_frameBuffer.Length;
@@ -797,27 +825,7 @@ public class PPU
                     colorValue = bgPaletteValue;
                 }
 
-                if (DmgSepiaEnabled)
-                {
-                    var sepiaIndex = colorValue * 3;
-                    targetR = m_sepiaMap[sepiaIndex];
-                    targetG = m_sepiaMap[sepiaIndex + 1];
-                    targetB = m_sepiaMap[sepiaIndex + 2];
-                }
-                else if (m_lcdEmulationEnabled)
-                {
-                    var greenIndex = colorValue * 3;
-                    targetR = m_greenMap[greenIndex];
-                    targetG = m_greenMap[greenIndex + 1];
-                    targetB = m_greenMap[greenIndex + 2];
-                }
-                else
-                {
-                    var grey = m_greyMap[colorValue];
-                    targetR = grey;
-                    targetG = grey;
-                    targetB = grey;
-                }
+                GetDmgPaletteColor(colorValue, out targetR, out targetG, out targetB);
             }
 
             var oldR = m_colorAccumulator[accumulatorOffset];
@@ -910,24 +918,9 @@ public class PPU
             baseG = 0xFF;
             baseB = 0xFF;
         }
-        else if (DmgSepiaEnabled)
-        {
-            baseR = m_sepiaMap[0];
-            baseG = m_sepiaMap[1];
-            baseB = m_sepiaMap[2];
-        }
-        else if (m_lcdEmulationEnabled)
-        {
-            baseR = m_greenMap[0];
-            baseG = m_greenMap[1];
-            baseB = m_greenMap[2];
-        }
         else
         {
-            var grey = m_greyMap[0];
-            baseR = grey;
-            baseG = grey;
-            baseB = grey;
+            GetDmgPaletteColor(0x00, out baseR, out baseG, out baseB);
         }
 
         var pixelCount = FrameWidth * FrameHeight;
@@ -948,6 +941,56 @@ public class PPU
 
     private static byte Expand5To8(int value) =>
         (byte)((value << 3) | (value >> 2));
+
+    private void GetDmgPaletteColor(byte colorValue, out byte r, out byte g, out byte b)
+    {
+        switch (DmgPalette)
+        {
+            case DmgPalette.Sepia:
+                ReadPaletteColor(m_sepiaMap, colorValue, out r, out g, out b);
+                return;
+            case DmgPalette.BlackAndWhite:
+                var grey = m_greyMap[colorValue];
+                r = grey;
+                g = grey;
+                b = grey;
+                return;
+            case DmgPalette.Blue:
+                ReadPaletteColor(m_blueMap, colorValue, out r, out g, out b);
+                return;
+            case DmgPalette.Red:
+                ReadPaletteColor(m_redMap, colorValue, out r, out g, out b);
+                return;
+            case DmgPalette.Cyan:
+                ReadPaletteColor(m_cyanMap, colorValue, out r, out g, out b);
+                return;
+            case DmgPalette.Magenta:
+                ReadPaletteColor(m_magentaMap, colorValue, out r, out g, out b);
+                return;
+            case DmgPalette.Default:
+            default:
+                if (m_lcdEmulationEnabled)
+                {
+                    ReadPaletteColor(m_greenMap, colorValue, out r, out g, out b);
+                }
+                else
+                {
+                    var defaultGrey = m_greyMap[colorValue];
+                    r = defaultGrey;
+                    g = defaultGrey;
+                    b = defaultGrey;
+                }
+                return;
+        }
+    }
+
+    private static void ReadPaletteColor(byte[] paletteMap, byte colorValue, out byte r, out byte g, out byte b)
+    {
+        var offset = colorValue * 3;
+        r = paletteMap[offset];
+        g = paletteMap[offset + 1];
+        b = paletteMap[offset + 2];
+    }
 
     /// <summary>
     /// Compare LY vs LYC; set STAT.coincidence + IF STAT if enabled.

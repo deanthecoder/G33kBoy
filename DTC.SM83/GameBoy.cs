@@ -34,7 +34,7 @@ public sealed class GameBoy : IDisposable
     private bool m_shutdownRequested;
     private Cartridge m_loadedCartridge;
     private bool m_lcdEmulationEnabled = true;
-    private bool m_dmgSepiaEnabled;
+    private DmgPalette m_dmgPalette = DmgPalette.Default;
     private bool m_isUserSoundEnabled = true;
     private bool m_isCpuHistoryTracked;
     private GameBoyMode m_requestedMode = GameBoyMode.Cgb;
@@ -222,15 +222,15 @@ public sealed class GameBoy : IDisposable
             ppu.LcdEmulationEnabled = isEnabled;
     }
     
-    public void SetDmgSepiaEnabled(bool isEnabled)
+    public void SetDmgPalette(DmgPalette palette)
     {
-        if (m_dmgSepiaEnabled == isEnabled)
+        if (m_dmgPalette == palette)
             return;
-        m_dmgSepiaEnabled = isEnabled;
-        m_screen.DmgSepiaEnabled = isEnabled;
+        m_dmgPalette = palette;
+        m_screen.DmgPalette = palette;
         var ppu = m_bus?.PPU;
         if (ppu != null)
-            ppu.DmgSepiaEnabled = isEnabled;
+            ppu.DmgPalette = palette;
         RefreshDisplay();
     }
 
@@ -354,7 +354,7 @@ public sealed class GameBoy : IDisposable
         m_bus.SetMode(Mode);
         ApplySoundChannelSettings();
         m_bus.PPU.LcdEmulationEnabled = m_lcdEmulationEnabled;
-        m_bus.PPU.DmgSepiaEnabled = m_dmgSepiaEnabled;
+        m_bus.PPU.DmgPalette = m_dmgPalette;
         m_cpu = new Cpu(m_bus)
         {
             InstructionLogger =

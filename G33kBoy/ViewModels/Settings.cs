@@ -10,6 +10,7 @@
 
 using System.IO;
 using DTC.Core.Settings;
+using DTC.SM83;
 
 namespace G33kBoy.ViewModels;
 
@@ -56,9 +57,9 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
 
-    public bool IsDmgSepiaEnabled
+    public DmgPalette DmgPalette
     {
-        get => Get<bool>();
+        get => Get<DmgPalette>();
         set => Set(value);
     }
 
@@ -93,7 +94,7 @@ public class Settings : UserSettingsBase
         IsHardwareLowPassFilterEnabled = true;
         IsBackgroundVisible = true;
         IsLcdEmulationEnabled = true;
-        IsDmgSepiaEnabled = false;
+        DmgPalette = DmgPalette.Default;
         AreSpritesVisible = true;
         IsCpuHistoryTracked = false;
         IsCgbModePreferred = true;

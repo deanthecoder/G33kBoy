@@ -91,11 +91,49 @@
                                                        IsVisible="{Binding Settings.IsLcdEmulationEnabled}" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="_Sepia DMG" Command="{Binding ToggleDmgSepiaMode}" ToolTip.Tip="Applies a sepia palette to original Game Boy titles (no LCD effects).">
-                            <MenuItem.Icon>
-                                <avalonia:MaterialIcon Kind="Tick"
-                                                       IsVisible="{Binding Settings.IsDmgSepiaEnabled}" />
-                            </MenuItem.Icon>
+                        <MenuItem Header="_DMG Palette">
+                            <MenuItem Header="_Default" Command="{Binding SetDmgPaletteDefault}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding IsDmgPaletteDefault}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="_Sepia" Command="{Binding SetDmgPaletteSepia}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding IsDmgPaletteSepia}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="_Black and White" Command="{Binding SetDmgPaletteBlackAndWhite}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding IsDmgPaletteBlackAndWhite}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="_Blue" Command="{Binding SetDmgPaletteBlue}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding IsDmgPaletteBlue}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="_Red" Command="{Binding SetDmgPaletteRed}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding IsDmgPaletteRed}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="_Cyan" Command="{Binding SetDmgPaletteCyan}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding IsDmgPaletteCyan}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="_Magenta" Command="{Binding SetDmgPaletteMagenta}">
+                                <MenuItem.Icon>
+                                    <avalonia:MaterialIcon Kind="Tick"
+                                                           IsVisible="{Binding IsDmgPaletteMagenta}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </MenuItem>
                         <MenuItem Header="Ambient Blur" Command="{Binding ToggleAmbientBlur}">
                             <MenuItem.Effect>

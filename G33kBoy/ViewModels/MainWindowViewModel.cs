@@ -64,11 +64,19 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         ApplyDisplayVisibilitySettings();
     }
 
-    public void ToggleDmgSepiaMode()
-    {
-        Settings.IsDmgSepiaEnabled = !Settings.IsDmgSepiaEnabled;
-        ApplyDisplayVisibilitySettings();
-    }
+    public void SetDmgPaletteDefault() => SetDmgPalette(DmgPalette.Default);
+
+    public void SetDmgPaletteSepia() => SetDmgPalette(DmgPalette.Sepia);
+
+    public void SetDmgPaletteBlackAndWhite() => SetDmgPalette(DmgPalette.BlackAndWhite);
+
+    public void SetDmgPaletteBlue() => SetDmgPalette(DmgPalette.Blue);
+
+    public void SetDmgPaletteRed() => SetDmgPalette(DmgPalette.Red);
+
+    public void SetDmgPaletteCyan() => SetDmgPalette(DmgPalette.Cyan);
+
+    public void SetDmgPaletteMagenta() => SetDmgPalette(DmgPalette.Magenta);
     
     public bool IsSoundChannel1Enabled
     {
@@ -109,6 +117,20 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public bool IsDisplayBlurEnabled => Settings.IsLcdEmulationEnabled && GameBoy.Mode == GameBoyMode.Cgb;
 
     public bool IsDisplayBlurDisabled => !IsDisplayBlurEnabled;
+
+    public bool IsDmgPaletteDefault => Settings.DmgPalette == DmgPalette.Default;
+
+    public bool IsDmgPaletteSepia => Settings.DmgPalette == DmgPalette.Sepia;
+
+    public bool IsDmgPaletteBlackAndWhite => Settings.DmgPalette == DmgPalette.BlackAndWhite;
+
+    public bool IsDmgPaletteBlue => Settings.DmgPalette == DmgPalette.Blue;
+
+    public bool IsDmgPaletteRed => Settings.DmgPalette == DmgPalette.Red;
+
+    public bool IsDmgPaletteCyan => Settings.DmgPalette == DmgPalette.Cyan;
+
+    public bool IsDmgPaletteMagenta => Settings.DmgPalette == DmgPalette.Magenta;
 
     public void ToggleCgbMode()
     {
@@ -303,7 +325,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
         GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
-        GameBoy.SetDmgSepiaEnabled(Settings.IsDmgSepiaEnabled);
+        GameBoy.SetDmgPalette(Settings.DmgPalette);
         GameBoy.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
         OnPropertyChanged(nameof(IsDisplayBlurEnabled));
         OnPropertyChanged(nameof(IsDisplayBlurDisabled));
@@ -339,8 +361,27 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         }
         else if (e.PropertyName == nameof(Settings.IsLcdEmulationEnabled))
             ApplyDisplayVisibilitySettings();
-        else if (e.PropertyName == nameof(Settings.IsDmgSepiaEnabled))
+        else if (e.PropertyName == nameof(Settings.DmgPalette))
+        {
             ApplyDisplayVisibilitySettings();
+            RaiseDmgPaletteChanged();
+        }
+    }
+
+    private void SetDmgPalette(DmgPalette palette)
+    {
+        Settings.DmgPalette = palette;
+    }
+
+    private void RaiseDmgPaletteChanged()
+    {
+        OnPropertyChanged(nameof(IsDmgPaletteDefault));
+        OnPropertyChanged(nameof(IsDmgPaletteSepia));
+        OnPropertyChanged(nameof(IsDmgPaletteBlackAndWhite));
+        OnPropertyChanged(nameof(IsDmgPaletteBlue));
+        OnPropertyChanged(nameof(IsDmgPaletteRed));
+        OnPropertyChanged(nameof(IsDmgPaletteCyan));
+        OnPropertyChanged(nameof(IsDmgPaletteMagenta));
     }
 
     internal void LoadRomFile(FileInfo romFile, bool addToMru = true)

@@ -34,7 +34,7 @@ public sealed class LcdScreen : IDisposable
 
     public WriteableBitmap Display { get; }
     private bool m_lcdEmulationEnabled = true;
-    private bool m_dmgSepiaEnabled;
+    private DmgPalette m_dmgPalette = DmgPalette.Default;
     private GameBoyMode m_mode = GameBoyMode.Dmg;
 
     public bool LcdEmulationEnabled
@@ -61,14 +61,14 @@ public sealed class LcdScreen : IDisposable
         }
     }
     
-    public bool DmgSepiaEnabled
+    public DmgPalette DmgPalette
     {
-        get => m_dmgSepiaEnabled;
+        get => m_dmgPalette;
         set
         {
-            if (m_dmgSepiaEnabled == value)
+            if (m_dmgPalette == value)
                 return;
-            m_dmgSepiaEnabled = value;
+            m_dmgPalette = value;
             m_forceRefresh = true;
         }
     }
