@@ -222,15 +222,21 @@ public sealed class ApuDevice : IMemDevice
             (ch3R && IsChannelEnabled(2) ? ch3 : 0.0) +
             (ch4R && IsChannelEnabled(3) ? ch4 : 0.0);
 
-        // Normalize by max possible channels (4) and convert to -1..1
-        left = (left / 4.0) * 2.0 - 1.0;
-        right = (right / 4.0) * 2.0 - 1.0;
+        // Normalize by max possible channels (4).
+        left /= 4.0;
+        right /= 4.0;
 
         // Apply NR50 master volume (0-7, each adds +1 to the multiplier)
-        var leftVol = (((m_nr50 >> 4) & 0x07) + 1) / 8.0;
-        var rightVol = ((m_nr50 & 0x07) + 1) / 8.0;
-        left *= leftVol;
-        right *= rightVol;
+        var leftVolRaw = (m_nr50 >> 4) & 0x07;
+        var rightVolRaw = m_nr50 & 0x07;
+        if (leftVolRaw == 0)
+            left = 0.0;
+        else
+            left *= (leftVolRaw + 1) / 8.0;
+        if (rightVolRaw == 0)
+            right = 0.0;
+        else
+            right *= (rightVolRaw + 1) / 8.0;
 
         m_audioSink?.AddSample(left, right);
     }
@@ -729,7 +735,8 @@ public sealed class ApuDevice : IMemDevice
             m_phase -= Math.Floor(m_phase);
 
             var high = m_phase < duty;
-            return high ? m_volume / 15.0 : 0.0;
+            var amp = m_volume / 15.0;
+            return high ? amp : -amp;
         }
     }
 
@@ -1110,7 +1117,8 @@ public sealed class ApuDevice : IMemDevice
                 _ => 0
             };
 
-            return shifted / 15.0;
+            var normalized = shifted / 15.0;
+            return normalized * 2.0 - 1.0;
         }
 
         private double GetFrequencyHz()
@@ -1312,7 +1320,8 @@ public sealed class ApuDevice : IMemDevice
             }
 
             var outputBit = (~m_lfsr) & 1;
-            return outputBit != 0 ? m_volume / 15.0 : 0.0;
+            var amp = m_volume / 15.0;
+            return outputBit != 0 ? amp : -amp;
         }
 
         private void StepLfsr()
