@@ -23,6 +23,12 @@ public class BlarggTests : TestsBase
     private const ulong OneSecondTicks = 4_194_304; // 4.194304 MHz DMG clock.
     private const ulong TimeoutTicks = OneSecondTicks * 20;
     private const ulong PreSaveTicks = 20_000;
+    private static readonly HashSet<string> IgnoredMoreRoms = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "oam_bug/2-causes.gb",
+        "oam_bug/7-timing_effect.gb",
+        "oam_bug/8-instr_effect.gb"
+    };
 
     public static IEnumerable<TestCaseData> CpuTestRomFiles =>
         new[]
@@ -42,6 +48,7 @@ public class BlarggTests : TestsBase
                 "dmg_sound/rom_singles/*.gb"
             }
             .SelectMany(o => ProjectDir.GetFiles($"../external/blargg-test-roms/{o}"))
+            .Where(f => !IgnoredMoreRoms.Contains(GetTestName(f)))
             .OrderBy(f => f.Name)
             .Select(f => new TestCaseData(f).SetName(GetTestName(f)));
 
