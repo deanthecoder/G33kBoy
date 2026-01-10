@@ -35,6 +35,7 @@
     <Window.KeyBindings>
         <KeyBinding Command="{Binding LoadGameRom}" Gesture="{OnPlatform 'ctrl+o', macOS='⌘+o'}" />
         <KeyBinding Command="{Binding ResetDevice}" Gesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
+        <KeyBinding Command="{Binding ToggleRecording}" Gesture="{OnPlatform 'ctrl+m', macOS='⌘+m'}" />
         <KeyBinding Command="{Binding SaveSnapshot}" Gesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
         <KeyBinding Command="{Binding OpenDialogCommand, ElementName=Host}" Gesture="Back">
             <KeyBinding.CommandParameter>
@@ -69,6 +70,12 @@
                             <MenuItem Header="Save _Screenshot..." Command="{Binding SaveScreenshot}" />
                             <MenuItem Header="Export _TileMap..." Command="{Binding ExportTileMap}" />
                         </MenuItem>
+                        <MenuItem Header="Start _Recording" Command="{Binding StartRecording}"
+                                  InputGesture="{OnPlatform 'ctrl+m', macOS='⌘+m'}"
+                                  IsVisible="{Binding !IsRecording}" />
+                        <MenuItem Header="Stop _Recording..." Command="{Binding StopRecording}"
+                                  InputGesture="{OnPlatform 'ctrl+m', macOS='⌘+m'}"
+                                  IsVisible="{Binding IsRecording}" />
                         <Separator />
                         <MenuItem Header="_Exit" Command="{Binding CloseCommand}" />
                     </MenuItem>
@@ -251,31 +258,39 @@
                 </StackPanel>
             </Grid>
 
-            <Image Grid.Row="1" Grid.Column="0" 
-                   x:Name="AmbientDisplay"
-                   Source="{Binding GameBoy.Display}"
-                   Margin="-200,0"
-                   Stretch="UniformToFill"
-                   Opacity="0.6"
-                   IsVisible="{Binding Settings.IsAmbientBlurred}">
-                <Image.Effect>
-                    <BlurEffect Radius="200" />
-                </Image.Effect>
-            </Image>
+            <Grid Grid.Row="1" Grid.Column="0">
+                <Image x:Name="AmbientDisplay"
+                       Source="{Binding GameBoy.Display}"
+                       Margin="-200,0"
+                       Stretch="UniformToFill"
+                       Opacity="0.6"
+                       IsVisible="{Binding Settings.IsAmbientBlurred}">
+                    <Image.Effect>
+                        <BlurEffect Radius="200" />
+                    </Image.Effect>
+                </Image>
 
-            <Image x:Name="MainDisplay"
-                   Grid.Row="1" Grid.Column="0"
-                   Source="{Binding GameBoy.Display}"
-                   IsVisible="{Binding IsDisplayBlurEnabled}">
-                <Image.Effect>
-                    <BlurEffect Radius="2"/>
-                </Image.Effect>
-            </Image>
+                <Image x:Name="MainDisplay"
+                       Source="{Binding GameBoy.Display}"
+                       IsVisible="{Binding IsDisplayBlurEnabled}">
+                    <Image.Effect>
+                        <BlurEffect Radius="2"/>
+                    </Image.Effect>
+                </Image>
 
-            <Image x:Name="MainDisplayNoBlur"
-                   Grid.Row="1" Grid.Column="0"
-                   Source="{Binding GameBoy.Display}"
-                   IsVisible="{Binding IsDisplayBlurDisabled}" />
+                <Image x:Name="MainDisplayNoBlur"
+                       Source="{Binding GameBoy.Display}"
+                       IsVisible="{Binding IsDisplayBlurDisabled}" />
+
+                <Border Width="16" Height="16"
+                        CornerRadius="8"
+                        Background="#E53935"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,8,8,0"
+                        IsHitTestVisible="False"
+                        IsVisible="{Binding IsRecordingIndicatorOn}" />
+            </Grid>
         </Grid>
     </dialogHostAvalonia:DialogHost>
 </Window>

@@ -16,9 +16,12 @@ using Avalonia.Threading;
 using DTC.Core;
 using DTC.Core.Commands;
 using DTC.Core.Extensions;
+using DTC.Core.UI;
 using DTC.Core.ViewModels;
 using DTC.SM83;
 using DTC.SM83.Snapshot;
+using G33kBoy.Recording;
+using Material.Icons;
 
 namespace G33kBoy.ViewModels;
 
@@ -30,6 +33,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private bool m_isSoundChannel3Enabled = true;
     private bool m_isSoundChannel4Enabled = true;
     private bool m_isCpuHistoryTracked;
+    private RecordingSession m_recordingSession;
+    private DispatcherTimer m_recordingIndicatorTimer;
+    private bool m_isRecordingIndicatorOn;
 
     public GameBoy GameBoy { get; }
     public MruFiles Mru { get; }
@@ -114,6 +120,14 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         }
     }
 
+    public bool IsRecording => m_recordingSession?.IsRecording == true;
+
+    public bool IsRecordingIndicatorOn
+    {
+        get => m_isRecordingIndicatorOn;
+        private set => SetField(ref m_isRecordingIndicatorOn, value);
+    }
+
     public bool IsDisplayBlurEnabled => Settings.IsLcdEmulationEnabled && GameBoy.Mode == GameBoyMode.Cgb;
 
     public bool IsDisplayBlurDisabled => !IsDisplayBlurEnabled;
@@ -167,6 +181,121 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         Settings.IsHardwareLowPassFilterEnabled = !Settings.IsHardwareLowPassFilterEnabled;
         ApplyHardwareLowPassFilterSetting();
+    }
+
+    public void ToggleRecording()
+    {
+        if (IsRecording)
+            StopRecording();
+        else
+            StartRecording();
+    }
+
+    public void StartRecording()
+    {
+        if (IsRecording)
+            return;
+
+        if (!RecordingSession.IsFfmpegAvailable(out _))
+        {
+            DialogService.Instance.ShowMessage(
+                "Recording unavailable",
+                "FFmpeg was not detected. Install FFmpeg and ensure it's on your PATH, then try again.",
+                MaterialIconKind.Information);
+            return;
+        }
+
+        try
+        {
+            m_recordingSession?.Dispose();
+            m_recordingSession = new RecordingSession(GameBoy);
+            m_recordingSession.Start();
+            StartRecordingIndicator();
+            OnPropertyChanged(nameof(IsRecording));
+        }
+        catch (Exception ex)
+        {
+            m_recordingSession?.Dispose();
+            m_recordingSession = null;
+            StopRecordingIndicator();
+            DialogService.Instance.ShowMessage(
+                "Unable to start recording",
+                ex.Message,
+                MaterialIconKind.Information);
+        }
+    }
+
+    public void StopRecording()
+    {
+        if (!IsRecording)
+            return;
+
+        var session = m_recordingSession;
+        m_recordingSession = null;
+        StopRecordingIndicator();
+        OnPropertyChanged(nameof(IsRecording));
+
+        if (session == null)
+            return;
+
+        var progress = new ProgressToken();
+        var busyDialog = DialogService.Instance.ShowBusy("Finalizing recording...", progress);
+        var stopTask = session.StopAsync(progress);
+        stopTask.ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                Dispatcher.UIThread.Post(() => busyDialog.Dispose());
+                Logger.Instance.Warn($"Recording failed: {task.Exception?.GetBaseException().Message}");
+                session.Dispose();
+                return;
+            }
+
+            var result = task.Result;
+            if (result == null || result.TempFile?.Exists != true)
+            {
+                Dispatcher.UIThread.Post(() => busyDialog.Dispose());
+                Logger.Instance.Warn("Recording failed to produce an output file.");
+                session.Dispose();
+                return;
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                busyDialog.Dispose();
+                var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
+                var prefix = SanitizeFileName(m_currentRomTitle);
+                var defaultName = $"{prefix}.mp4";
+                var command = new FileSaveCommand("Save Recording", "MP4 Files", ["*.mp4"], defaultName);
+                command.FileSelected += (_, info) =>
+                {
+                    try
+                    {
+                        File.Move(result.TempFile.FullName, info.FullName, overwrite: true);
+                        var fileInfo = new FileInfo(info.FullName);
+                        var size = fileInfo.Exists ? fileInfo.Length.ToSize() : "unknown size";
+                        Logger.Instance.Info($"Recording stopped. Saved to '{fileInfo.FullName}' ({result.Duration:hh\\:mm\\:ss}, {size}).");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Instance.Warn($"Failed to save recording: {ex.Message}");
+                    }
+                    finally
+                    {
+                        session.Dispose();
+                        keyBlocker.Dispose();
+                    }
+                };
+                command.Cancelled += (_, _) =>
+                {
+                    var size = result.TempFile.Exists ? result.TempFile.Length.ToSize() : "unknown size";
+                    Logger.Instance.Info($"Recording stopped. Discarded temp output ({result.Duration:hh\\:mm\\:ss}, {size}).");
+                    session.Dispose();
+                    keyBlocker.Dispose();
+                };
+                command.Execute(null);
+            });
+        });
     }
 
     public MainWindowViewModel()
@@ -345,6 +474,39 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
     }
 
+    private void StartRecordingIndicator()
+    {
+        m_recordingIndicatorTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        m_recordingIndicatorTimer.Stop();
+        m_recordingIndicatorTimer.Tick -= OnRecordingIndicatorTick;
+        m_recordingIndicatorTimer.Tick += OnRecordingIndicatorTick;
+        IsRecordingIndicatorOn = true;
+        m_recordingIndicatorTimer.Start();
+    }
+
+    private void StopRecordingIndicator()
+    {
+        if (m_recordingIndicatorTimer != null)
+        {
+            m_recordingIndicatorTimer.Tick -= OnRecordingIndicatorTick;
+            m_recordingIndicatorTimer.Stop();
+        }
+
+        IsRecordingIndicatorOn = false;
+    }
+
+    private void OnRecordingIndicatorTick(object sender, EventArgs e)
+    {
+        if (!IsRecording)
+        {
+            OnPropertyChanged(nameof(IsRecording));
+            StopRecordingIndicator();
+            return;
+        }
+
+        IsRecordingIndicatorOn = !IsRecordingIndicatorOn;
+    }
+
     private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Settings.IsSoundEnabled))
@@ -443,6 +605,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         Settings.MruFiles = Mru.AsString();
         Settings.PropertyChanged -= OnSettingsPropertyChanged;
+        m_recordingSession?.Dispose();
+        m_recordingSession = null;
+        StopRecordingIndicator();
         GameBoy.Dispose();
     }
 

@@ -28,6 +28,7 @@ public class SoundDevice
     private const double HighPassCutoffHz = 20.0;
     // Default output gain. 1.0 can be uncomfortably loud on some systems; 0.5 gives headroom.
     private const double DefaultGain = 0.5;
+    private const int CaptureBufferFrames = 1024;
 
     private readonly int m_source;
     private readonly int[] m_buffers;
@@ -59,6 +60,9 @@ public class SoundDevice
     private byte m_lastLeftSample = 128;
     private byte m_lastRightSample = 128;
     private bool m_isCancelled;
+    private readonly short[] m_captureBuffer = new short[CaptureBufferFrames * 2];
+    private int m_captureBufferIndex;
+    private IAudioSampleSink m_captureSink;
     
     public SoundDevice(int sampleHz)
     {
@@ -84,6 +88,16 @@ public class SoundDevice
         m_gainStep = 1.0 / (m_sampleRate * (VolumeRampMs / 1000.0));
         m_lowPassAlpha = ComputeLowPassAlpha(LowPassCutoffHz, m_sampleRate);
         m_highPassAlpha = ComputeHighPassAlpha(HighPassCutoffHz, m_sampleRate);
+    }
+
+    public IAudioSampleSink CaptureSink
+    {
+        get => m_captureSink;
+        set
+        {
+            m_captureSink = value;
+            m_captureBufferIndex = 0;
+        }
     }
 
     public void Start()
@@ -345,6 +359,22 @@ public class SoundDevice
             rightSample = outRight;
         }
 
+        var captureSink = m_captureSink;
+        if (captureSink != null)
+        {
+            var captureGain = Math.Clamp(m_outputGain, 0.0, 1.0);
+            var leftPcm = ToPcm16(leftSample * captureGain);
+            var rightPcm = ToPcm16(rightSample * captureGain);
+
+            m_captureBuffer[m_captureBufferIndex++] = leftPcm;
+            m_captureBuffer[m_captureBufferIndex++] = rightPcm;
+            if (m_captureBufferIndex >= m_captureBuffer.Length)
+            {
+                captureSink.OnSamples(m_captureBuffer.AsSpan(0, m_captureBufferIndex), m_sampleRate);
+                m_captureBufferIndex = 0;
+            }
+        }
+
         var leftByte = ToUnsigned8(leftSample);
         var rightByte = ToUnsigned8(rightSample);
 
@@ -362,6 +392,9 @@ public class SoundDevice
 
         byte ToUnsigned8(double sample) =>
             (byte)Math.Clamp(128.0 + sample * 127.0, 0.0, 255.0);
+
+        static short ToPcm16(double sample) =>
+            (short)Math.Clamp(sample * 32767.0, short.MinValue, short.MaxValue);
     }
     
     public void SetEnabled(bool isSoundEnabled)
@@ -398,6 +431,16 @@ public class SoundDevice
         m_highPassPrevInRight = 0.0;
         m_highPassPrevOutLeft = 0.0;
         m_highPassPrevOutRight = 0.0;
+    }
+
+    public void FlushCapture()
+    {
+        var captureSink = m_captureSink;
+        if (captureSink == null || m_captureBufferIndex <= 0)
+            return;
+
+        captureSink.OnSamples(m_captureBuffer.AsSpan(0, m_captureBufferIndex), m_sampleRate);
+        m_captureBufferIndex = 0;
     }
 
     private static double ComputeLowPassAlpha(double cutoffHz, int sampleRate)

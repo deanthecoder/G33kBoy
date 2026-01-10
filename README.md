@@ -43,12 +43,14 @@ Global key hooks translate the following keys into the Game Boy joypad:
 
 ### Application shortcuts
 - **Open ROM**: `Ctrl+O` (`Cmd+O` on macOS)
+- **Start/stop recording**: `Ctrl+M` (`Cmd+M` on macOS)
 - **Reset device**: `Ctrl+R` (`Cmd+R` on macOS)
 - **Save snapshot**: `Ctrl+S` (`Cmd+S` on macOS)
 - **Time travel**: `Backspace`
 
 ## Emulator features
 - **ROM loading from ZIPs** – Load standard `.gb` and `.gbc` ROMs directly, or from a `.zip` archive containing a Game Boy ROM. Simply drag-and-drop ROM files onto the window.
+- **Time travel snapshots** – Preview and roll back recent gameplay with Backspace.
 - **On-demand auto-fire** – Enable hardware auto-fire of A and B buttons.
 - **Ambient blur background** – Optional blurred background so the Game Boy screen stands out while the app blends into your desktop.
 - **Original green display** – Toggle a classic four-shade green palette to mimic the original DMG screen.
@@ -56,8 +58,8 @@ Global key hooks translate the following keys into the Game Boy joypad:
 - **LCD emulation** – Optional high‑fidelity LCD simulation including pixel‑grid structure, sub‑pixel glow, grain, edge shadowing, and per‑pixel diffusion to closely mimic the look of the original DMG screen.
 - **Motion blur** – Blend frames together for a persistence-of-vision effect that smooths fast movement.
 - **Screenshot capture** – Save the current frame as a TGA screenshot.
+- **Movie recording** – Capture the LCD-filtered output with synced audio to an MP4 file.
 - **Snapshot save/load** – Save emulator state to `.sav` files and restore it later.
-- **Time travel snapshots** – Preview and roll back recent gameplay with Backspace.
 - **Tile map export** – Export the current tile map as a TGA image for debugging graphics or capturing assets.
 
 ## LCD emulation

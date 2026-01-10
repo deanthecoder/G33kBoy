@@ -43,6 +43,7 @@ public sealed class GameBoy : IDisposable
 
     public event EventHandler<string> RomLoaded;
     public event EventHandler DisplayUpdated;
+    public event EventHandler FrameRendered;
 
     public WriteableBitmap Display => m_screen.Display;
     public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
@@ -178,6 +179,7 @@ public sealed class GameBoy : IDisposable
         if (didUpdate)
             DisplayUpdated?.Invoke(this, EventArgs.Empty);
 
+        FrameRendered?.Invoke(this, EventArgs.Empty);
         SnapshotHistory?.OnFrameRendered(m_bus?.CpuClockTicks ?? 0);
     }
 
@@ -277,6 +279,15 @@ public sealed class GameBoy : IDisposable
 
     public void SetHardwareLowPassFilterEnabled(bool isEnabled) =>
         m_audioSink?.SetLowPassFilterEnabled(isEnabled);
+
+    public void SetAudioCaptureSink(IAudioSampleSink sink)
+    {
+        if (m_audioSink != null)
+            m_audioSink.CaptureSink = sink;
+    }
+
+    public void FlushAudioCapture() =>
+        m_audioSink?.FlushCapture();
 
     private void UpdateSoundEnabled()
     {
