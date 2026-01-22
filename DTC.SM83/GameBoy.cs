@@ -23,6 +23,8 @@ namespace DTC.SM83;
 
 public sealed class GameBoy : IDisposable
 {
+    public const int AudioSampleRateHz = 44100;
+
     private readonly ClockSync m_clockSync;
     private readonly LcdScreen m_screen;
     private readonly SoundDevice m_audioSink;
@@ -62,7 +64,7 @@ public sealed class GameBoy : IDisposable
     public GameBoy()
     {
         Joypad = new Joypad();
-        m_audioSink = new SoundDevice(44100);
+        m_audioSink = new SoundDevice(AudioSampleRateHz);
         CreateHardware();
         m_screen = new LcdScreen(PPU.FrameWidth, PPU.FrameHeight)
         {

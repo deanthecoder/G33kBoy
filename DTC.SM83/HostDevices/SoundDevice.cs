@@ -23,9 +23,11 @@ public class SoundDevice
     private const int BufferCount = 3;
     private const double VolumeRampMs = 100.0;
     private const double LowPassCutoffHz = 7000.0;
+    
     // The real Game Boy output is AC-coupled (a series capacitor) which blocks DC offsets.
     // Without this, DC bias in the generated signal can cause pops/bumps when the bias changes.
     private const double HighPassCutoffHz = 20.0;
+    
     // Default output gain. 1.0 can be uncomfortably loud on some systems; 0.5 gives headroom.
     private const double DefaultGain = 0.5;
     private const int CaptureBufferFrames = 1024;

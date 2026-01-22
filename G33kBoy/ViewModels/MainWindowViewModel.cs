@@ -16,17 +16,19 @@ using Avalonia.Threading;
 using DTC.Core;
 using DTC.Core.Commands;
 using DTC.Core.Extensions;
+using DTC.Core.Recording;
 using DTC.Core.UI;
 using DTC.Core.ViewModels;
 using DTC.SM83;
+using DTC.SM83.HostDevices;
 using DTC.SM83.Snapshot;
-using G33kBoy.Recording;
-using Material.Icons;
 
 namespace G33kBoy.ViewModels;
 
 public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 {
+    private const double RecordingFrameRate = Cpu.Hz / (456.0 * 154.0);
+    private const short RecordingAudioChannels = 2;
     private string m_windowTitle;
     private bool m_isSoundChannel1Enabled = true;
     private bool m_isSoundChannel2Enabled = true;
@@ -34,6 +36,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private bool m_isSoundChannel4Enabled = true;
     private bool m_isCpuHistoryTracked;
     private RecordingSession m_recordingSession;
+    private IAudioSampleSink m_recordingAudioSink;
     private DispatcherTimer m_recordingIndicatorTimer;
     private bool m_isRecordingIndicatorOn;
 
@@ -200,28 +203,34 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         {
             DialogService.Instance.ShowMessage(
                 "Recording unavailable",
-                "FFmpeg was not detected. Install FFmpeg and ensure it's on your PATH, then try again.",
-                MaterialIconKind.Information);
+                "FFmpeg was not detected. Install FFmpeg and ensure it's on your PATH, then try again.");
             return;
         }
 
         try
         {
             m_recordingSession?.Dispose();
-            m_recordingSession = new RecordingSession(GameBoy);
+            var audioSettings = new RecordingAudioSettings(GameBoy.AudioSampleRateHz, RecordingAudioChannels);
+            m_recordingSession = new RecordingSession(GameBoy.Display, RecordingFrameRate, audioSettings);
             m_recordingSession.Start();
+            m_recordingAudioSink = new RecordingAudioSink(m_recordingSession);
+            GameBoy.SetAudioCaptureSink(m_recordingAudioSink);
+            GameBoy.FrameRendered += OnRecordingFrameRendered;
             StartRecordingIndicator();
             OnPropertyChanged(nameof(IsRecording));
         }
         catch (Exception ex)
         {
+            GameBoy.FrameRendered -= OnRecordingFrameRendered;
+            GameBoy.FlushAudioCapture();
+            GameBoy.SetAudioCaptureSink(null);
+            m_recordingAudioSink = null;
             m_recordingSession?.Dispose();
             m_recordingSession = null;
             StopRecordingIndicator();
             DialogService.Instance.ShowMessage(
                 "Unable to start recording",
-                ex.Message,
-                MaterialIconKind.Information);
+                ex.Message);
         }
     }
 
@@ -231,6 +240,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             return;
 
         var session = m_recordingSession;
+        GameBoy.FrameRendered -= OnRecordingFrameRendered;
+        GameBoy.FlushAudioCapture();
+        GameBoy.SetAudioCaptureSink(null);
+        m_recordingAudioSink = null;
         m_recordingSession = null;
         StopRecordingIndicator();
         OnPropertyChanged(nameof(IsRecording));
@@ -605,6 +618,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         Settings.MruFiles = Mru.AsString();
         Settings.PropertyChanged -= OnSettingsPropertyChanged;
+        GameBoy.FrameRendered -= OnRecordingFrameRendered;
+        GameBoy.SetAudioCaptureSink(null);
+        m_recordingAudioSink = null;
         m_recordingSession?.Dispose();
         m_recordingSession = null;
         StopRecordingIndicator();
@@ -613,4 +629,20 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     private static string SanitizeFileName(string input) =>
         string.IsNullOrWhiteSpace(input) ? "G33kBoy" : input.ToSafeFileName();
+
+    private void OnRecordingFrameRendered(object sender, EventArgs e) =>
+        m_recordingSession?.CaptureFrame();
+
+    private sealed class RecordingAudioSink : IAudioSampleSink
+    {
+        private readonly RecordingSession m_session;
+
+        public RecordingAudioSink(RecordingSession session)
+        {
+            m_session = session ?? throw new ArgumentNullException(nameof(session));
+        }
+
+        public void OnSamples(ReadOnlySpan<short> samples, int sampleRate) =>
+            m_session.OnAudioSamples(samples, sampleRate);
+    }
 }
