@@ -10,11 +10,12 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 - Match the English style as reported below.
 - Prefer existing frameworks, tests, and naming conventions shown here.
 - Check Supported UI Languages when adding UI strings so required translations stay in sync.
+- Use the `ripgrep` tool for efficient code searching, if available.
 ## Repositories (5)
 > **Agent note:** Sub-modules and sibling repositories often expose reusable libraries (e.g., extension methods, utilities). Cross-reference these before re-implementing.
 
   - https://github.com/deanthecoder/G33kBoy   
-    Game Boy Original emulator written in C#.
+    Game Boy emulator written in C#.
   - https://github.com/adtennant/GameboyCPUTests (Submodule)  
     Test data for developers of Gameboy emulators.
   - https://github.com/deanthecoder/DTC.Core (Submodule)  
@@ -27,21 +28,21 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 > **Agent note:** Match the project’s English style for identifiers, comments, and documentation.
 > **Agent note:** Use the dominant language(s) and idioms when proposing code.
 
-* Files      : 905
+* Files      : 919
 * Languages  : C# (99%)
 * English    : American English
 ## Largest Source Files (8)
 > **Agent note:** Avoid ingesting very large files wholesale; focus on public types, key methods, and file headers to preserve tokens.
 
-* 47.90 KB     : `DTC.SM83/Instructions/Instructions.cs`
+* 49.99 KB     : `DTC.SM83/Instructions/Instructions.cs`
 * 44.20 KB     : `DTC.SM83/Instructions/PrefixedInstructions.cs`
-* 41.91 KB     : `DTC.SM83/Devices/ApuDevice.cs`
-* 38.86 KB     : `DTC.SM83/PPU.cs`
-* 28.43 KB     : `Installer/pack.py`
+* 43.19 KB     : `DTC.SM83/Devices/ApuDevice.cs`
+* 42.88 KB     : `DTC.SM83/PPU.cs`
+* 30.00 KB     : `Installer/pack.py`
+* 21.53 KB     : `G33kBoy/ViewModels/MainWindowViewModel.cs`
 * 19.37 KB     : `DTC.SM83/Devices/BootRom.cs`
 * 17.37 KB     : `DTC.Core/DTC.Core/UI/ShaderControl.cs`
-* 16.05 KB     : `DTC.SM83/GameBoy.cs`
-## NuGet (16)
+## NuGet (18)
 > **Agent note:** Prefer solutions using the listed packages and frameworks; avoid introducing new technologies without justification.
 
 * `Avalonia               ` : Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.
@@ -76,7 +77,7 @@ Avoid unnecessary token use; prefer referencing this document instead of re-pars
 ### Internal
 * `DTC.Core.csproj` (net8.0) [refs:4]
 * `DTC.SM83.csproj` (net9.0) [refs:2]
-## READMEs (6)
+## READMEs (1238)
 > **Agent note:** READMEs often contain background, design intent, and setup steps; consult them when modifying code or documentation.
 
 * `DTC.Core/README.md`
