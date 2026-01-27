@@ -17,12 +17,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="OpenTK.Audio.OpenAL" Version="4.8.2" />
       <PackageReference Include="SharpHook" Version="5.2.3" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\DTC.Core\DTC.Core\DTC.Core.csproj" />
+      <ProjectReference Include="..\DTC.Emulation\DTC.Emulation.csproj" />
     </ItemGroup>
 
 </Project>

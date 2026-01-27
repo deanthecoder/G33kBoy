@@ -9,7 +9,8 @@
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using DTC.SM83.HostDevices;
+using DTC.Emulation;
+using DTC.Emulation.Audio;
 
 namespace DTC.SM83.Devices;
 
@@ -17,10 +18,12 @@ namespace DTC.SM83.Devices;
 /// Simplified Game Boy APU. Implements square channels (1 &amp; 2), wave (3) and noise (4)
 /// and feeds mixed stereo output into the audio sink.
 /// </summary>
-public sealed class ApuDevice : IMemDevice
+public sealed class ApuDevice : IMemDevice, IAudioSource
 {
     public ushort FromAddr => 0xFF10;
     public ushort ToAddr => 0xFF3F;
+    public int ChannelCount => 4;
+    public int SampleRateHz => (int)SampleHz;
 
     private const double SampleHz = 44100.0;
     private const double SampleSeconds = 1.0 / SampleHz;

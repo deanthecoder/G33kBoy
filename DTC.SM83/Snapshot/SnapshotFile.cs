@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Text;
+using DTC.Emulation.Snapshot;
 
 namespace DTC.SM83.Snapshot;
 
@@ -36,7 +37,10 @@ public static class SnapshotFile
         writer.Write(romPathBytes.Length);
         writer.Write(state.Size);
         writer.Write(romPathBytes);
-        writer.Write(state.GetBuffer());
+        var buffer = new byte[state.Size];
+        var reader = state.CreateReader();
+        reader.ReadBytes(buffer);
+        writer.Write(buffer);
     }
 
     public static MachineState Load(FileInfo file, out string romPath)
@@ -73,7 +77,8 @@ public static class SnapshotFile
         {
             RomPath = romPath
         };
-        state.LoadBuffer(stateBytes);
+        var stateWriter = state.CreateWriter();
+        stateWriter.WriteBytes(stateBytes);
         return state;
     }
 }

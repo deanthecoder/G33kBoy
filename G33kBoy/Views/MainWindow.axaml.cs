@@ -17,6 +17,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using DTC.Core;
+using DTC.Emulation.Rom;
 using G33kBoy.ViewModels;
 
 namespace G33kBoy.Views;
@@ -57,7 +58,7 @@ public partial class MainWindow : Window
                 AmbientDisplay.InvalidateVisual();
             MainDisplay.InvalidateVisual();
         });
-        ViewModel.GameBoy.DisplayUpdated += (_, _) =>
+        ViewModel.DisplayUpdated += (_, _) =>
         {
             try
             {
@@ -112,13 +113,8 @@ public partial class MainWindow : Window
         return false;
     }
 
-    private static bool IsSupportedRom(string path)
-    {
-        var extension = Path.GetExtension(path);
-        return extension.Equals(".gb", StringComparison.OrdinalIgnoreCase) ||
-               extension.Equals(".gbc", StringComparison.OrdinalIgnoreCase) ||
-               extension.Equals(".zip", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool IsSupportedRom(string path) =>
+        RomLoader.IsSupportedRom(path, [".gb", ".gbc"]);
 
     private static bool IsDirectionalKey(Key key) =>
         key is Key.Left or Key.Right or Key.Up or Key.Down;

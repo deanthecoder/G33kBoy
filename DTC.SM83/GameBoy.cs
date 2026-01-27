@@ -14,10 +14,11 @@ using Avalonia.Media.Imaging;
 using DTC.Core;
 using DTC.Core.Extensions;
 using DTC.Core.UI;
+using DTC.Emulation.Audio;
+using DTC.Emulation.Snapshot;
 using DTC.SM83.Extensions;
-using DTC.SM83.HostDevices;
-using DTC.SM83.Snapshot;
 using Material.Icons;
+using SnapshotHistory = DTC.SM83.Snapshot.SnapshotHistory;
 
 namespace DTC.SM83;
 
@@ -285,7 +286,7 @@ public sealed class GameBoy : IDisposable
     public void SetAudioCaptureSink(IAudioSampleSink sink)
     {
         if (m_audioSink != null)
-            m_audioSink.CaptureSink = sink;
+            m_audioSink.SetCaptureSink(sink);
     }
 
     public void FlushAudioCapture() =>

@@ -4,8 +4,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:G33kBoy.ViewModels"
         xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+        xmlns:emulationUi="clr-namespace:DTC.Emulation.UI;assembly=DTC.Emulation"
         xmlns:views="clr-namespace:G33kBoy.Views"
-        xmlns:converters="clr-namespace:G33kBoy.Converters"
         xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="G33kBoy.Views.MainWindow"
@@ -20,7 +20,7 @@
     </Design.DataContext>
 
     <Window.Resources>
-        <converters:RomFileToNameConverter x:Key="RomFileToNameConverter" />
+        <emulationUi:RomFileToNameConverter x:Key="RomFileToNameConverter" />
     </Window.Resources>
     
     <Window.Styles>
@@ -37,9 +37,9 @@
         <KeyBinding Command="{Binding ResetDevice}" Gesture="{OnPlatform 'ctrl+r', macOS='⌘+r'}" />
         <KeyBinding Command="{Binding ToggleRecording}" Gesture="{OnPlatform 'ctrl+m', macOS='⌘+m'}" />
         <KeyBinding Command="{Binding SaveSnapshot}" Gesture="{OnPlatform 'ctrl+s', macOS='⌘+s'}" />
-        <KeyBinding Command="{Binding OpenDialogCommand, ElementName=Host}" Gesture="Back">
+            <KeyBinding Command="{Binding OpenDialogCommand, ElementName=Host}" Gesture="Back">
             <KeyBinding.CommandParameter>
-                <views:RollbackDialog DataContext="{Binding GameBoy.SnapshotHistory}" />
+                <emulationUi:RollbackDialog DataContext="{Binding SnapshotHistory}" />
             </KeyBinding.CommandParameter>
         </KeyBinding>
     </Window.KeyBindings>
@@ -195,7 +195,7 @@
                         </MenuItem>
                     </MenuItem>
 
-                    <MenuItem Header="_Debug" IsVisible="{Binding GameBoy.IsDebugBuild}">
+                    <MenuItem Header="_Debug" IsVisible="{Binding IsDebugBuild}">
                         <MenuItem Header="Track CPU History" Command="{Binding TrackCpuHistory}">
                             <MenuItem.Icon>
                                 <avalonia:MaterialIcon Kind="Tick" IsVisible="{Binding IsCpuHistoryTracked}" />
@@ -244,7 +244,7 @@
                             Theme="{DynamicResource MaterialFlatButton}"
                             ToolTip.Tip="This is what makes time travel possible.">
                         <Button.CommandParameter>
-                            <views:RollbackDialog DataContext="{Binding GameBoy.SnapshotHistory}" />
+                            <emulationUi:RollbackDialog DataContext="{Binding SnapshotHistory}" />
                         </Button.CommandParameter>
                         
                         <Viewbox Width="24" Height="24">
@@ -260,7 +260,7 @@
 
             <Grid Grid.Row="1" Grid.Column="0">
                 <Image x:Name="AmbientDisplay"
-                       Source="{Binding GameBoy.Display}"
+                       Source="{Binding Display}"
                        Margin="-200,0"
                        Stretch="UniformToFill"
                        Opacity="0.6"
@@ -271,7 +271,7 @@
                 </Image>
 
                 <Image x:Name="MainDisplay"
-                       Source="{Binding GameBoy.Display}"
+                       Source="{Binding Display}"
                        IsVisible="{Binding IsDisplayBlurEnabled}">
                     <Image.Effect>
                         <BlurEffect Radius="2"/>
@@ -279,7 +279,7 @@
                 </Image>
 
                 <Image x:Name="MainDisplayNoBlur"
-                       Source="{Binding GameBoy.Display}"
+                       Source="{Binding Display}"
                        IsVisible="{Binding IsDisplayBlurDisabled}" />
 
                 <Border Width="16" Height="16"

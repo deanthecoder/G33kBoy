@@ -10,3 +10,6 @@
 [submodule "Installer"]
 	path = Installer
 	url = https://github.com/deanthecoder/DTC.Installer.git
+[submodule "DTC.Emulation"]
+	path = DTC.Emulation
+	url = https://github.com/deanthecoder/DTC.Emulation.git

@@ -44,10 +44,6 @@
         <DependentUpon>MainWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Views\RollbackDialog.axaml.cs">
-        <DependentUpon>RollbackDialog.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
       <Compile Update="Views\AboutDialogContent.axaml.cs">
         <DependentUpon>AboutDialog.axaml</DependentUpon>
         <SubType>Code</SubType>
@@ -72,6 +68,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DTC.Core\DTC.Core\DTC.Core.csproj" />
+      <ProjectReference Include="..\DTC.Emulation\DTC.Emulation.csproj" />
       <ProjectReference Include="..\DTC.SM83\DTC.SM83.csproj" />
     </ItemGroup>
 

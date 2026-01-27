@@ -11,7 +11,7 @@
 
 using System.Diagnostics;
 using DTC.Core;
-using DTC.SM83.Snapshot;
+using DTC.Emulation.Snapshot;
 using JetBrains.Annotations;
 
 namespace DTC.SM83.Devices;

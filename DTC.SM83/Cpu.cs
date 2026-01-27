@@ -13,7 +13,7 @@ using System.Runtime.CompilerServices;
 using DTC.Core;
 using DTC.SM83.Debuggers;
 using DTC.SM83.Instructions;
-using DTC.SM83.Snapshot;
+using DTC.Emulation.Snapshot;
 
 namespace DTC.SM83;
 

@@ -12,9 +12,9 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using DTC.SM83.Devices;
-using DTC.SM83.HostDevices;
 using DTC.SM83.MemoryBankControllers;
-using DTC.SM83.Snapshot;
+using DTC.Emulation.Snapshot;
+using DTC.Emulation.Audio;
 
 namespace DTC.SM83;
 

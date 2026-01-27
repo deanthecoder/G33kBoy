@@ -10,8 +10,9 @@
 
 using DTC.Core.Extensions;
 using DTC.Core.Image;
+using DTC.Emulation;
+using DTC.Emulation.Snapshot;
 using DTC.SM83.Devices;
-using DTC.SM83.Snapshot;
 using JetBrains.Annotations;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -21,7 +22,7 @@ namespace DTC.SM83;
 /// <summary>
 /// The Pixel Processing Unit.
 /// </summary>
-public class PPU
+public class PPU : IVideoSource
 {
     public const int FrameWidth = 160;
     public const int FrameHeight = 144;
@@ -166,12 +167,16 @@ public class PPU
     internal void LoadFrameBuffer(ref StateReader reader) =>
         reader.ReadBytes(m_frameBuffer);
 
-    internal void CopyFrameBuffer(Span<byte> destination)
+    public void CopyFrameBuffer(Span<byte> destination)
     {
         if (destination.Length != m_frameBuffer.Length)
             throw new ArgumentException("Frame buffer size mismatch.", nameof(destination));
         m_frameBuffer.AsSpan().CopyTo(destination);
     }
+
+    int IVideoSource.FrameWidth => FrameWidth;
+
+    int IVideoSource.FrameHeight => FrameHeight;
 
     internal int GetStateSize() =>
         sizeof(byte) * 2 + // Mode, CurrentState

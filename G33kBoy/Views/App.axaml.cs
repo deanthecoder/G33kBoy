@@ -43,7 +43,7 @@ public class App : Application
             };
 
             desktop.MainWindow.Deactivated += (_, _) =>
-                m_keyBlocker = viewModel.GameBoy.Joypad.CreatePressBlocker();
+                m_keyBlocker = viewModel.Joypad.CreatePressBlocker();
             desktop.MainWindow.Activated += (_, _) =>
             {
                 m_keyBlocker?.Dispose();

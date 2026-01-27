@@ -10,7 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Diagnostics.CodeAnalysis;
-using DTC.SM83.Snapshot;
+using DTC.Emulation.Snapshot;
 
 namespace DTC.SM83.Devices;
 

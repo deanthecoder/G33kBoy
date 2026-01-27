@@ -13,6 +13,7 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using DTC.Core.ViewModels;
+using DTC.Emulation.Snapshot;
 
 namespace DTC.SM83.Snapshot;
 

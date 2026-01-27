@@ -13,7 +13,7 @@ using DTC.Core.Extensions;
 using DTC.Core.UnitTesting;
 using DTC.SM83;
 using DTC.SM83.Extensions;
-using DTC.SM83.Snapshot;
+using DTC.Emulation.Snapshot;
 
 namespace UnitTests;
 

@@ -12,49 +12,182 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using Avalonia;
-using Avalonia.Threading;
+using Avalonia.Media;
 using DTC.Core;
 using DTC.Core.Commands;
 using DTC.Core.Extensions;
-using DTC.Core.Recording;
 using DTC.Core.UI;
 using DTC.Core.ViewModels;
+using DTC.Emulation;
+using DTC.Emulation.Audio;
+using EmulationScreen = DTC.Emulation.LcdScreen;
+using DTC.Emulation.Rom;
+using DTC.Emulation.Snapshot;
 using DTC.SM83;
-using DTC.SM83.HostDevices;
-using DTC.SM83.Snapshot;
+using DTC.SM83.Devices;
+using SnapshotFile = DTC.SM83.Snapshot.SnapshotFile;
 
 namespace G33kBoy.ViewModels;
 
 public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 {
-    private const double RecordingFrameRate = Cpu.Hz / (456.0 * 154.0);
-    private const short RecordingAudioChannels = 2;
+    private const int AudioSampleRateHz = 44100;
+    private static readonly string[] RomExtensions = [".gb", ".gbc"];
     private string m_windowTitle;
+    private bool m_isCpuHistoryTracked;
     private bool m_isSoundChannel1Enabled = true;
     private bool m_isSoundChannel2Enabled = true;
     private bool m_isSoundChannel3Enabled = true;
     private bool m_isSoundChannel4Enabled = true;
-    private bool m_isCpuHistoryTracked;
-    private RecordingSession m_recordingSession;
-    private IAudioSampleSink m_recordingAudioSink;
-    private DispatcherTimer m_recordingIndicatorTimer;
-    private bool m_isRecordingIndicatorOn;
+    private readonly GameBoyMachine m_machine;
+    private readonly MachineRunner m_machineRunner;
+    private readonly EmulatorViewModel m_emulator;
+    private string m_loadedRomPath;
+    private string m_currentRomTitle = "G33kBoy";
 
-    public GameBoy GameBoy { get; }
     public MruFiles Mru { get; }
 
+    public IImage Display { get; }
+
+    public SnapshotHistory SnapshotHistory { get; }
+
+    public Joypad Joypad => m_machine.Joypad;
+
     public Settings Settings => Settings.Instance;
-    
+
     public string WindowTitle
     {
         get => m_windowTitle ?? "G33kBoy";
         private set => SetField(ref m_windowTitle, value);
     }
-    private string m_currentRomTitle = "G33kBoy";
+
+    public bool IsRecording => m_emulator.IsRecording;
+
+    public bool IsRecordingIndicatorOn => m_emulator.IsRecordingIndicatorOn;
+
+    public event EventHandler DisplayUpdated;
+
+    public bool IsDebugBuild =>
+#if DEBUG
+        true;
+#else
+        false;
+#endif
+
+    public bool IsSoundChannel1Enabled
+    {
+        get => m_isSoundChannel1Enabled;
+        private set
+        {
+            if (!SetField(ref m_isSoundChannel1Enabled, value))
+                return;
+            m_machine.SetSoundChannelEnabled(1, value);
+        }
+    }
+
+    public bool IsSoundChannel2Enabled
+    {
+        get => m_isSoundChannel2Enabled;
+        private set
+        {
+            if (!SetField(ref m_isSoundChannel2Enabled, value))
+                return;
+            m_machine.SetSoundChannelEnabled(2, value);
+        }
+    }
+
+    public bool IsSoundChannel3Enabled
+    {
+        get => m_isSoundChannel3Enabled;
+        private set
+        {
+            if (!SetField(ref m_isSoundChannel3Enabled, value))
+                return;
+            m_machine.SetSoundChannelEnabled(3, value);
+        }
+    }
+
+    public bool IsSoundChannel4Enabled
+    {
+        get => m_isSoundChannel4Enabled;
+        private set
+        {
+            if (!SetField(ref m_isSoundChannel4Enabled, value))
+                return;
+            m_machine.SetSoundChannelEnabled(4, value);
+        }
+    }
+
+    public bool IsCpuHistoryTracked
+    {
+        get => m_isCpuHistoryTracked;
+        private set
+        {
+            if (!SetField(ref m_isCpuHistoryTracked, value))
+                return;
+            Settings.IsCpuHistoryTracked = value;
+            m_machine.SetCpuHistoryTracking(value);
+        }
+    }
+
+    public bool IsDisplayBlurEnabled => Settings.IsLcdEmulationEnabled && m_machine.Mode == GameBoyMode.Cgb;
+
+    public bool IsDisplayBlurDisabled => !IsDisplayBlurEnabled;
+
+    public bool IsDmgPaletteDefault => Settings.DmgPalette == DmgPalette.Default;
+
+    public bool IsDmgPaletteSepia => Settings.DmgPalette == DmgPalette.Sepia;
+
+    public bool IsDmgPaletteBlackAndWhite => Settings.DmgPalette == DmgPalette.BlackAndWhite;
+
+    public bool IsDmgPaletteBlue => Settings.DmgPalette == DmgPalette.Blue;
+
+    public bool IsDmgPaletteRed => Settings.DmgPalette == DmgPalette.Red;
+
+    public bool IsDmgPaletteCyan => Settings.DmgPalette == DmgPalette.Cyan;
+
+    public bool IsDmgPaletteMagenta => Settings.DmgPalette == DmgPalette.Magenta;
+
+    public MainWindowViewModel()
+    {
+        Mru = new MruFiles().InitFromString(Settings.MruFiles);
+        Mru.OpenRequested += (_, file) => LoadRomFromFile(file, addToMru: false);
+
+        var screen = new EmulationScreen(PPU.FrameWidth, PPU.FrameHeight);
+        var audioSink = new SoundDevice(AudioSampleRateHz);
+
+        var descriptor = CreateMachineDescriptor();
+        m_machine = new GameBoyMachine(descriptor, audioSink);
+        m_machine.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
+
+        m_machineRunner = new MachineRunner(m_machine, GetEffectiveCpuHz, e =>
+        {
+            Logger.Instance.Error($"Stopping CPU loop due to exception: {e.Message}");
+        });
+        m_emulator = new EmulatorViewModel(
+            m_machine,
+            m_machineRunner,
+            audioSink,
+            screen,
+            GetVideoFrameRate,
+            () => m_currentRomTitle,
+            GetEffectiveCpuHz);
+        m_emulator.DisplayUpdated += (_, _) => DisplayUpdated?.Invoke(this, EventArgs.Empty);
+        m_emulator.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
+        m_emulator.SetScreenEffectEnabled(false);
+        Display = m_emulator.Display;
+        SnapshotHistory = m_emulator.SnapshotHistory;
+        Settings.PropertyChanged += OnSettingsPropertyChanged;
+        IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
+        ApplyDisplayVisibilitySettings();
+        ApplySoundEnabledSetting();
+        ApplyHardwareLowPassFilterSetting();
+        ApplySoundChannelSettings();
+    }
 
     public void ToggleAmbientBlur() =>
         Settings.IsAmbientBlurred = !Settings.IsAmbientBlurred;
-    
+
     public void ToggleBackgroundVisibility()
     {
         Settings.IsBackgroundVisible = !Settings.IsBackgroundVisible;
@@ -86,99 +219,25 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public void SetDmgPaletteCyan() => SetDmgPalette(DmgPalette.Cyan);
 
     public void SetDmgPaletteMagenta() => SetDmgPalette(DmgPalette.Magenta);
-    
-    public bool IsSoundChannel1Enabled
-    {
-        get => m_isSoundChannel1Enabled;
-        private set => SetField(ref m_isSoundChannel1Enabled, value);
-    }
-
-    public bool IsSoundChannel2Enabled
-    {
-        get => m_isSoundChannel2Enabled;
-        private set => SetField(ref m_isSoundChannel2Enabled, value);
-    }
-
-    public bool IsSoundChannel3Enabled
-    {
-        get => m_isSoundChannel3Enabled;
-        private set => SetField(ref m_isSoundChannel3Enabled, value);
-    }
-
-    public bool IsSoundChannel4Enabled
-    {
-        get => m_isSoundChannel4Enabled;
-        private set => SetField(ref m_isSoundChannel4Enabled, value);
-    }
-
-    public bool IsCpuHistoryTracked
-    {
-        get => m_isCpuHistoryTracked;
-        private set
-        {
-            if (!SetField(ref m_isCpuHistoryTracked, value))
-                return;
-            Settings.IsCpuHistoryTracked = value;
-            GameBoy.SetCpuHistoryTracking(value);
-        }
-    }
-
-    public bool IsRecording => m_recordingSession?.IsRecording == true;
-
-    public bool IsRecordingIndicatorOn
-    {
-        get => m_isRecordingIndicatorOn;
-        private set => SetField(ref m_isRecordingIndicatorOn, value);
-    }
-
-    public bool IsDisplayBlurEnabled => Settings.IsLcdEmulationEnabled && GameBoy.Mode == GameBoyMode.Cgb;
-
-    public bool IsDisplayBlurDisabled => !IsDisplayBlurEnabled;
-
-    public bool IsDmgPaletteDefault => Settings.DmgPalette == DmgPalette.Default;
-
-    public bool IsDmgPaletteSepia => Settings.DmgPalette == DmgPalette.Sepia;
-
-    public bool IsDmgPaletteBlackAndWhite => Settings.DmgPalette == DmgPalette.BlackAndWhite;
-
-    public bool IsDmgPaletteBlue => Settings.DmgPalette == DmgPalette.Blue;
-
-    public bool IsDmgPaletteRed => Settings.DmgPalette == DmgPalette.Red;
-
-    public bool IsDmgPaletteCyan => Settings.DmgPalette == DmgPalette.Cyan;
-
-    public bool IsDmgPaletteMagenta => Settings.DmgPalette == DmgPalette.Magenta;
 
     public void ToggleCgbMode()
     {
         Settings.IsCgbModePreferred = !Settings.IsCgbModePreferred;
-        GameBoy.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
+        m_machine.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
         ResetDevice();
     }
 
-    public void ToggleSoundChannel1()
-    {
+    public void ToggleSoundChannel1() =>
         IsSoundChannel1Enabled = !IsSoundChannel1Enabled;
-        GameBoy.SetSoundChannelEnabled(1, IsSoundChannel1Enabled);
-    }
-    
-    public void ToggleSoundChannel2()
-    {
+
+    public void ToggleSoundChannel2() =>
         IsSoundChannel2Enabled = !IsSoundChannel2Enabled;
-        GameBoy.SetSoundChannelEnabled(2, IsSoundChannel2Enabled);
-    }
-    
-    public void ToggleSoundChannel3()
-    {
+
+    public void ToggleSoundChannel3() =>
         IsSoundChannel3Enabled = !IsSoundChannel3Enabled;
-        GameBoy.SetSoundChannelEnabled(3, IsSoundChannel3Enabled);
-    }
-    
-    public void ToggleSoundChannel4()
-    {
+
+    public void ToggleSoundChannel4() =>
         IsSoundChannel4Enabled = !IsSoundChannel4Enabled;
-        GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
-    }
 
     public void ToggleHardwareLowPassFilter()
     {
@@ -186,156 +245,18 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         ApplyHardwareLowPassFilterSetting();
     }
 
-    public void ToggleRecording()
-    {
-        if (IsRecording)
-            StopRecording();
-        else
-            StartRecording();
-    }
+    public void ToggleRecording() =>
+        m_emulator.ToggleRecording();
 
-    public void StartRecording()
-    {
-        if (IsRecording)
-            return;
+    public void StartRecording() =>
+        m_emulator.StartRecording();
 
-        if (!RecordingSession.IsFfmpegAvailable(out _))
-        {
-            DialogService.Instance.ShowMessage(
-                "Recording unavailable",
-                "FFmpeg was not detected. Install FFmpeg and ensure it's on your PATH, then try again.");
-            return;
-        }
-
-        try
-        {
-            m_recordingSession?.Dispose();
-            var audioSettings = new RecordingAudioSettings(GameBoy.AudioSampleRateHz, RecordingAudioChannels);
-            m_recordingSession = new RecordingSession(GameBoy.Display, RecordingFrameRate, audioSettings);
-            m_recordingSession.Start();
-            m_recordingAudioSink = new RecordingAudioSink(m_recordingSession);
-            GameBoy.SetAudioCaptureSink(m_recordingAudioSink);
-            GameBoy.FrameRendered += OnRecordingFrameRendered;
-            StartRecordingIndicator();
-            OnPropertyChanged(nameof(IsRecording));
-        }
-        catch (Exception ex)
-        {
-            GameBoy.FrameRendered -= OnRecordingFrameRendered;
-            GameBoy.FlushAudioCapture();
-            GameBoy.SetAudioCaptureSink(null);
-            m_recordingAudioSink = null;
-            m_recordingSession?.Dispose();
-            m_recordingSession = null;
-            StopRecordingIndicator();
-            DialogService.Instance.ShowMessage(
-                "Unable to start recording",
-                ex.Message);
-        }
-    }
-
-    public void StopRecording()
-    {
-        if (!IsRecording)
-            return;
-
-        var session = m_recordingSession;
-        GameBoy.FrameRendered -= OnRecordingFrameRendered;
-        GameBoy.FlushAudioCapture();
-        GameBoy.SetAudioCaptureSink(null);
-        m_recordingAudioSink = null;
-        m_recordingSession = null;
-        StopRecordingIndicator();
-        OnPropertyChanged(nameof(IsRecording));
-
-        if (session == null)
-            return;
-
-        var progress = new ProgressToken();
-        var busyDialog = DialogService.Instance.ShowBusy("Finalizing recording...", progress);
-        var stopTask = session.StopAsync(progress);
-        stopTask.ContinueWith(task =>
-        {
-            if (task.IsFaulted)
-            {
-                Dispatcher.UIThread.Post(() => busyDialog.Dispose());
-                Logger.Instance.Warn($"Recording failed: {task.Exception?.GetBaseException().Message}");
-                session.Dispose();
-                return;
-            }
-
-            var result = task.Result;
-            if (result == null || result.TempFile?.Exists != true)
-            {
-                Dispatcher.UIThread.Post(() => busyDialog.Dispose());
-                Logger.Instance.Warn("Recording failed to produce an output file.");
-                session.Dispose();
-                return;
-            }
-
-            Dispatcher.UIThread.Post(() =>
-            {
-                busyDialog.Dispose();
-                var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
-                var prefix = SanitizeFileName(m_currentRomTitle);
-                var defaultName = $"{prefix}.mp4";
-                var command = new FileSaveCommand("Save Recording", "MP4 Files", ["*.mp4"], defaultName);
-                command.FileSelected += (_, info) =>
-                {
-                    try
-                    {
-                        File.Move(result.TempFile.FullName, info.FullName, overwrite: true);
-                        var fileInfo = new FileInfo(info.FullName);
-                        var size = fileInfo.Exists ? fileInfo.Length.ToSize() : "unknown size";
-                        Logger.Instance.Info($"Recording stopped. Saved to '{fileInfo.FullName}' ({result.Duration:hh\\:mm\\:ss}, {size}).");
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Instance.Warn($"Failed to save recording: {ex.Message}");
-                    }
-                    finally
-                    {
-                        session.Dispose();
-                        keyBlocker.Dispose();
-                    }
-                };
-                command.Cancelled += (_, _) =>
-                {
-                    var size = result.TempFile.Exists ? result.TempFile.Length.ToSize() : "unknown size";
-                    Logger.Instance.Info($"Recording stopped. Discarded temp output ({result.Duration:hh\\:mm\\:ss}, {size}).");
-                    session.Dispose();
-                    keyBlocker.Dispose();
-                };
-                command.Execute(null);
-            });
-        });
-    }
-
-    public MainWindowViewModel()
-    {
-        Mru = new MruFiles().InitFromString(Settings.MruFiles);
-        Mru.OpenRequested += (_, file) => LoadRomFile(file, addToMru: false);
-
-        GameBoy = new GameBoy();
-        Settings.PropertyChanged += OnSettingsPropertyChanged;
-        GameBoy.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
-        GameBoy.RomLoaded += (_, title) =>
-            Dispatcher.UIThread.Post(() =>
-            {
-                m_currentRomTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : title;
-                WindowTitle = string.IsNullOrWhiteSpace(title) ? "G33kBoy" : $"G33kBoy - {title}";
-                ApplyDisplayVisibilitySettings();
-        });
-        IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
-        ApplyDisplayVisibilitySettings();
-        ApplySoundEnabledSetting();
-        ApplyHardwareLowPassFilterSetting();
-        ApplySoundChannelSettings();
-    }
+    public void StopRecording() =>
+        m_emulator.StopRecording();
 
     public void LoadGameRom()
     {
-        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
+        var keyBlocker = Joypad.CreatePressBlocker();
         var command = new FileOpenCommand("Load Game Boy ROM or Snapshot", "Game Boy Files", ["*.gb", "*.gbc", "*.zip", "*.sav"]);
         command.FileSelected += (_, info) =>
         {
@@ -344,7 +265,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
                 if (IsSnapshotFile(info))
                     LoadSnapshotFile(info);
                 else
-                    LoadRomFile(info);
+                    LoadRomFromFile(info, addToMru: true);
             }
             finally
             {
@@ -354,21 +275,24 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         command.Cancelled += (_, _) => keyBlocker.Dispose();
         command.Execute(null);
     }
-    
+
+    public void LoadRomFile(FileInfo romFile) =>
+        LoadRomFromFile(romFile, addToMru: true);
+
     public void CloseCommand() =>
         Application.Current.GetMainWindow().Close();
 
     public void SaveScreenshot()
     {
-        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
-        var prefix = SanitizeFileName(m_currentRomTitle);
+        var keyBlocker = Joypad.CreatePressBlocker();
+        var prefix = RomNameHelper.GetSafeFileBaseName(m_currentRomTitle, "G33kBoy");
         var defaultName = $"{prefix}.tga";
         var command = new FileSaveCommand("Save Screenshot", "TGA Files", ["*.tga"], defaultName);
         command.FileSelected += (_, info) =>
         {
             try
             {
-                GameBoy.SaveScreenshot(info);
+                m_emulator.SaveScreenshot(info);
             }
             finally
             {
@@ -381,21 +305,21 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void SaveSnapshot()
     {
-        if (!GameBoy.HasLoadedCartridge)
+        if (!m_machine.HasLoadedCartridge)
         {
             Logger.Instance.Warn("Unable to save snapshot: No ROM loaded.");
             return;
         }
 
-        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
-        var prefix = SanitizeFileName(m_currentRomTitle);
+        var keyBlocker = Joypad.CreatePressBlocker();
+        var prefix = RomNameHelper.GetSafeFileBaseName(m_currentRomTitle, "G33kBoy");
         var defaultName = $"{prefix}.sav";
         var command = new FileSaveCommand("Save Snapshot", "G33kBoy Snapshots", ["*.sav"], defaultName);
         command.FileSelected += (_, info) =>
         {
             try
             {
-                var snapshot = GameBoy.SnapshotHistory.CaptureSnapshotNow();
+                var snapshot = SnapshotHistory.CaptureSnapshotNow();
                 if (snapshot == null)
                 {
                     Logger.Instance.Warn("Unable to save snapshot: No active emulation state.");
@@ -412,7 +336,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         command.Cancelled += (_, _) => keyBlocker.Dispose();
         command.Execute(null);
     }
-    
+
     public void OpenLog() =>
         Logger.Instance.File.OpenWithDefaultViewer();
 
@@ -421,14 +345,14 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void ExportTileMap()
     {
-        var keyBlocker = GameBoy.Joypad.CreatePressBlocker();
-        var prefix = SanitizeFileName(m_currentRomTitle);
+        var keyBlocker = Joypad.CreatePressBlocker();
+        var prefix = RomNameHelper.GetSafeFileBaseName(m_currentRomTitle, "G33kBoy");
         var command = new FileSaveCommand("Export Tile Map", "TGA Files", ["*.tga"], $"{prefix}-TileMap.tga");
         command.FileSelected += (_, info) =>
         {
             try
             {
-                GameBoy.ExportTileMap(info);
+                m_machine.Bus?.PPU?.DumpTileMap(info);
             }
             finally
             {
@@ -441,105 +365,70 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
     public void ResetDevice()
     {
-        var romFile = Settings.LastRomFile;
-        if (romFile == null)
-            return;
-
-        if (!romFile.Exists)
-        {
-            Logger.Instance.Warn($"Unable to reset: ROM '{romFile.FullName}' not found.");
-            return;
-        }
-
-        LoadRomFile(romFile);
+        m_emulator.Reset();
+        if (!string.IsNullOrEmpty(m_loadedRomPath))
+            SnapshotHistory.ResetForRom(m_loadedRomPath);
+        Logger.Instance.Info("CPU reset.");
     }
 
     public void DumpCpuHistory() =>
-        GameBoy.DumpCpuHistory();
+        m_machine.Cpu?.InstructionLogger.DumpToConsole();
 
     public void ReportCpuClockTicks() =>
-        Console.WriteLine($"CPU clock ticks: {GameBoy.CpuClockTicks}");
+        Console.WriteLine($"CPU clock ticks: {m_machine.CpuTicks}");
 
     public void TrackCpuHistory() =>
         IsCpuHistoryTracked = !IsCpuHistoryTracked;
 
     private void ApplyDisplayVisibilitySettings()
     {
-        GameBoy.SetBackgroundVisibility(Settings.IsBackgroundVisible);
-        GameBoy.SetSpriteVisibility(Settings.AreSpritesVisible);
-        GameBoy.SetDmgPalette(Settings.DmgPalette);
-        GameBoy.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
+        m_machine.SetBackgroundVisibility(Settings.IsBackgroundVisible);
+        m_machine.SetSpriteVisibility(Settings.AreSpritesVisible);
+        m_machine.SetDmgPalette(Settings.DmgPalette);
+        m_machine.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
         OnPropertyChanged(nameof(IsDisplayBlurEnabled));
         OnPropertyChanged(nameof(IsDisplayBlurDisabled));
     }
-    
+
     private void ApplySoundEnabledSetting() =>
-        GameBoy.SetSoundEnabled(Settings.IsSoundEnabled);
+        m_emulator.AudioDevice.SetEnabled(Settings.IsSoundEnabled);
 
     private void ApplyHardwareLowPassFilterSetting() =>
-        GameBoy.SetHardwareLowPassFilterEnabled(Settings.IsHardwareLowPassFilterEnabled);
-    
+        m_emulator.AudioDevice.SetLowPassFilterEnabled(Settings.IsHardwareLowPassFilterEnabled);
+
     private void ApplySoundChannelSettings()
     {
-        GameBoy.SetSoundChannelEnabled(1, IsSoundChannel1Enabled);
-        GameBoy.SetSoundChannelEnabled(2, IsSoundChannel2Enabled);
-        GameBoy.SetSoundChannelEnabled(3, IsSoundChannel3Enabled);
-        GameBoy.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
-    }
-
-    private void StartRecordingIndicator()
-    {
-        m_recordingIndicatorTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        m_recordingIndicatorTimer.Stop();
-        m_recordingIndicatorTimer.Tick -= OnRecordingIndicatorTick;
-        m_recordingIndicatorTimer.Tick += OnRecordingIndicatorTick;
-        IsRecordingIndicatorOn = true;
-        m_recordingIndicatorTimer.Start();
-    }
-
-    private void StopRecordingIndicator()
-    {
-        if (m_recordingIndicatorTimer != null)
-        {
-            m_recordingIndicatorTimer.Tick -= OnRecordingIndicatorTick;
-            m_recordingIndicatorTimer.Stop();
-        }
-
-        IsRecordingIndicatorOn = false;
-    }
-
-    private void OnRecordingIndicatorTick(object sender, EventArgs e)
-    {
-        if (!IsRecording)
-        {
-            OnPropertyChanged(nameof(IsRecording));
-            StopRecordingIndicator();
-            return;
-        }
-
-        IsRecordingIndicatorOn = !IsRecordingIndicatorOn;
+        m_machine.SetSoundChannelEnabled(1, IsSoundChannel1Enabled);
+        m_machine.SetSoundChannelEnabled(2, IsSoundChannel2Enabled);
+        m_machine.SetSoundChannelEnabled(3, IsSoundChannel3Enabled);
+        m_machine.SetSoundChannelEnabled(4, IsSoundChannel4Enabled);
     }
 
     private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Settings.IsSoundEnabled))
-            ApplySoundEnabledSetting();
-        else if (e.PropertyName == nameof(Settings.IsHardwareLowPassFilterEnabled))
-            ApplyHardwareLowPassFilterSetting();
-        else if (e.PropertyName == nameof(Settings.IsCpuHistoryTracked))
-            IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
-        else if (e.PropertyName == nameof(Settings.IsCgbModePreferred))
+        switch (e.PropertyName)
         {
-            GameBoy.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
-            OnPropertyChanged(nameof(IsDisplayBlurEnabled));
-            OnPropertyChanged(nameof(IsDisplayBlurDisabled));
-        }
-        else if (e.PropertyName == nameof(Settings.IsLcdEmulationEnabled))
-            ApplyDisplayVisibilitySettings();
-        else if (e.PropertyName == nameof(Settings.DmgPalette))
-        {
-            ApplyDisplayVisibilitySettings();
-            RaiseDmgPaletteChanged();
+            case nameof(Settings.IsSoundEnabled):
+                ApplySoundEnabledSetting();
+                return;
+            case nameof(Settings.IsHardwareLowPassFilterEnabled):
+                ApplyHardwareLowPassFilterSetting();
+                return;
+            case nameof(Settings.IsCpuHistoryTracked):
+                IsCpuHistoryTracked = Settings.IsCpuHistoryTracked;
+                return;
+            case nameof(Settings.IsCgbModePreferred):
+                m_machine.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
+                OnPropertyChanged(nameof(IsDisplayBlurEnabled));
+                OnPropertyChanged(nameof(IsDisplayBlurDisabled));
+                return;
+            case nameof(Settings.IsLcdEmulationEnabled):
+                ApplyDisplayVisibilitySettings();
+                return;
+            case nameof(Settings.DmgPalette):
+                ApplyDisplayVisibilitySettings();
+                RaiseDmgPaletteChanged();
+                return;
         }
     }
 
@@ -559,21 +448,48 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsDmgPaletteMagenta));
     }
 
-    internal void LoadRomFile(FileInfo romFile, bool addToMru = true)
+    internal bool LoadRomFromFile(FileInfo romFile, bool addToMru)
     {
         if (romFile == null)
-            return;
+            return false;
         if (!romFile.Exists)
         {
             Logger.Instance.Warn($"Unable to load ROM '{romFile.FullName}': File not found.");
-            return;
+            return false;
         }
+
+        var (romName, romData) = RomLoader.ReadRomData(romFile, RomExtensions);
+        if (romData == null || romData.Length == 0)
+        {
+            Logger.Instance.Warn($"Unable to load ROM '{romFile.FullName}': No valid ROM data found.");
+            return false;
+        }
+
+        var cartridge = new Cartridge(romData);
+        var supportCheck = cartridge.IsSupported();
+        if (!supportCheck.IsSupported)
+        {
+            DialogService.Instance.ShowMessage($"Unable to load ROM '{romFile.Name}'", supportCheck.Message);
+            return false;
+        }
+
+        m_emulator.Stop();
+
+        m_machine.LoadRom(romData, romName);
 
         if (addToMru)
             Mru.Add(romFile);
-
-        GameBoy.PowerOnAsync(romFile);
         Settings.LastRomFile = romFile;
+        m_loadedRomPath = romFile.FullName;
+
+        m_currentRomTitle = RomNameHelper.GetDisplayName(romName) ?? "G33kBoy";
+        WindowTitle = RomNameHelper.BuildWindowTitle("G33kBoy", m_currentRomTitle);
+        SnapshotHistory?.ResetForRom(m_loadedRomPath);
+        m_emulator.Start();
+        Logger.Instance.Info($"ROM loaded: {romName} ({romData.Length / 1024.0:0.#} KB)");
+        OnPropertyChanged(nameof(IsDisplayBlurEnabled));
+        OnPropertyChanged(nameof(IsDisplayBlurDisabled));
+        return true;
     }
 
     private void LoadSnapshotFile(FileInfo snapshotFile)
@@ -602,8 +518,9 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            LoadRomFile(romFile);
-            GameBoy.LoadState(state);
+            if (!LoadRomFromFile(romFile, addToMru: true))
+                return;
+            m_machineRunner.LoadState(state);
         }
         catch (Exception ex)
         {
@@ -618,31 +535,26 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         Settings.MruFiles = Mru.AsString();
         Settings.PropertyChanged -= OnSettingsPropertyChanged;
-        GameBoy.FrameRendered -= OnRecordingFrameRendered;
-        GameBoy.SetAudioCaptureSink(null);
-        m_recordingAudioSink = null;
-        m_recordingSession?.Dispose();
-        m_recordingSession = null;
-        StopRecordingIndicator();
-        GameBoy.Dispose();
+        m_emulator.Dispose();
+        m_emulator.Stop();
+        m_machineRunner.Dispose();
+        m_machine.Dispose();
+        m_emulator.AudioDevice.Dispose();
     }
 
-    private static string SanitizeFileName(string input) =>
-        string.IsNullOrWhiteSpace(input) ? "G33kBoy" : input.ToSafeFileName();
+    private double GetEffectiveCpuHz() =>
+        m_machine?.GetEffectiveCpuHz() ?? Cpu.Hz;
 
-    private void OnRecordingFrameRendered(object sender, EventArgs e) =>
-        m_recordingSession?.CaptureFrame();
+    private double GetVideoFrameRate() =>
+        GetEffectiveCpuHz() / (456.0 * 154.0);
 
-    private sealed class RecordingAudioSink : IAudioSampleSink
+    private MachineDescriptor CreateMachineDescriptor() => new()
     {
-        private readonly RecordingSession m_session;
-
-        public RecordingAudioSink(RecordingSession session)
-        {
-            m_session = session ?? throw new ArgumentNullException(nameof(session));
-        }
-
-        public void OnSamples(ReadOnlySpan<short> samples, int sampleRate) =>
-            m_session.OnAudioSamples(samples, sampleRate);
-    }
+        Name = "G33kBoy",
+        CpuHz = GetEffectiveCpuHz(),
+        VideoHz = 0,
+        AudioSampleRateHz = AudioSampleRateHz,
+        FrameWidth = PPU.FrameWidth,
+        FrameHeight = PPU.FrameHeight
+    };
 }
