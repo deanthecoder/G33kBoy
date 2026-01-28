@@ -39,7 +39,6 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
     {
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
         m_audioSink = audioSink ?? throw new ArgumentNullException(nameof(audioSink));
-        Joypad = new Joypad();
         CreateHardware();
     }
 
@@ -61,7 +60,7 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
 
     public Cpu Cpu => m_cpu;
 
-    public Joypad Joypad { get; }
+    public Joypad Joypad { get; private set; }
 
     public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
 
@@ -183,18 +182,14 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
 
     private void CreateHardware()
     {
-        m_bus = new Bus(0x10000, Bus.BusType.GameBoy, Joypad, m_audioSink);
-        m_bus.SetMode(Mode);
-        m_videoSource.SetSource(m_bus.PPU);
+        var factory = new MachineFactory(m_audioSink, Mode, m_isCpuHistoryTracked, Joypad);
+        factory.Build();
+        Joypad = factory.Input;
+        m_bus = factory.Bus;
+        m_cpu = factory.Cpu;
+        m_videoSource.SetSource(factory.Video);
         ApplySoundChannelSettings();
         ApplyDisplaySettings();
-        m_cpu = new Cpu(m_bus)
-        {
-            InstructionLogger =
-            {
-                IsEnabled = m_isCpuHistoryTracked
-            }
-        };
     }
 
     private void RecreateHardware()
