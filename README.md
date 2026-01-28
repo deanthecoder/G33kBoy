@@ -89,6 +89,7 @@ LCD emulation can be toggled at runtime and has very little performance overhead
 ## Highlights
 - **SM83 accuracy** – `DTC.SM83` implements the Game Boy CPU, including interrupt handling, prefixed instructions, memory bus, PPU timing, and a mnemonic disassembler to inspect opcode streams.
 - **Shared core utilities** – `DTC.Core` provides reusable commands, extensions, converters, and Avalonia helpers so the emulator and any future UI/drivers share common infrastructure.
+- **Shared emulator host** – `DTC.Emulation` is the shared host repo used to write each emulator in this family.
 - **Avalonia UI shell** – `G33kBoy` hosts the emulator in a cross-platform desktop window.
 - **Validation suite** – `UnitTests` target the CPU core via NUnit, ensuring regressions are caught early.
 
