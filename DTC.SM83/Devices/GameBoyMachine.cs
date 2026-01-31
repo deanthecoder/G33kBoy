@@ -254,12 +254,8 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
 
         public event EventHandler<byte[]> FrameRendered;
 
-        public void CopyFrameBuffer(Span<byte> frameBuffer)
-        {
-            if (m_source == null)
-                return;
-            m_source.CopyFrameBuffer(frameBuffer);
-        }
+        public void CopyToFrameBuffer(Span<byte> frameBuffer) =>
+            m_source?.CopyToFrameBuffer(frameBuffer);
 
         public void SetSource(PPU source)
         {
@@ -285,7 +281,7 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
             throw new InvalidOperationException("Game Boy hardware is not initialized.");
 
         m_cpu.SaveState(state);
-        m_bus.PPU.CopyFrameBuffer(frameBuffer);
+        m_bus.PPU.CopyToFrameBuffer(frameBuffer);
     }
 
     void IMachineSnapshotter.Load(MachineState state)

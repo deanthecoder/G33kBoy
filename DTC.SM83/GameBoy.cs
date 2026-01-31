@@ -406,7 +406,7 @@ public sealed class GameBoy : IDisposable
         lock (m_cpuStepLock)
         {
             m_cpu.SaveState(state);
-            m_bus.PPU.CopyFrameBuffer(frameBuffer);
+            m_bus.PPU.CopyToFrameBuffer(frameBuffer);
         }
     }
 
@@ -430,7 +430,7 @@ public sealed class GameBoy : IDisposable
             return;
 
         m_frameBufferScratch ??= new byte[PPU.FrameWidth * PPU.FrameHeight * 4];
-        m_bus.PPU.CopyFrameBuffer(m_frameBufferScratch);
+        m_bus.PPU.CopyToFrameBuffer(m_frameBufferScratch);
         if (m_screen.Update(m_frameBufferScratch))
             DisplayUpdated?.Invoke(this, EventArgs.Empty);
     }

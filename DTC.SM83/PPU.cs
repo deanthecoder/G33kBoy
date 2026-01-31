@@ -167,7 +167,7 @@ public class PPU : IVideoSource
     internal void LoadFrameBuffer(ref StateReader reader) =>
         reader.ReadBytes(m_frameBuffer);
 
-    public void CopyFrameBuffer(Span<byte> destination)
+    public void CopyToFrameBuffer(Span<byte> destination)
     {
         if (destination.Length != m_frameBuffer.Length)
             throw new ArgumentException("Frame buffer size mismatch.", nameof(destination));
