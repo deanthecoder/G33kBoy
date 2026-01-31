@@ -20,7 +20,6 @@ using DTC.Core.UI;
 using DTC.Core.ViewModels;
 using DTC.Emulation;
 using DTC.Emulation.Audio;
-using EmulationScreen = DTC.Emulation.LcdScreen;
 using DTC.Emulation.Rom;
 using DTC.Emulation.Snapshot;
 using DTC.SM83;
@@ -42,6 +41,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly GameBoyMachine m_machine;
     private readonly MachineRunner m_machineRunner;
     private readonly EmulatorViewModel m_emulator;
+    private readonly DTC.SM83.LcdScreen m_screen;
     private string m_loadedRomPath;
     private string m_currentRomTitle = "G33kBoy";
 
@@ -153,12 +153,16 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         Mru = new MruFiles().InitFromString(Settings.MruFiles);
         Mru.OpenRequested += (_, file) => LoadRomFromFile(file, addToMru: false);
 
-        var screen = new EmulationScreen(PPU.FrameWidth, PPU.FrameHeight);
+        m_screen = new DTC.SM83.LcdScreen(PPU.FrameWidth, PPU.FrameHeight);
         var audioSink = new SoundDevice(AudioSampleRateHz);
 
         var descriptor = CreateMachineDescriptor();
         m_machine = new GameBoyMachine(descriptor, audioSink);
         m_machine.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
+
+        m_screen.Mode = m_machine.Mode;
+        m_screen.LcdEmulationEnabled = Settings.IsLcdEmulationEnabled;
+        m_screen.DmgPalette = Settings.DmgPalette;
 
         m_machineRunner = new MachineRunner(m_machine, GetEffectiveCpuHz, e =>
         {
@@ -168,13 +172,12 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             m_machine,
             m_machineRunner,
             audioSink,
-            screen,
+            m_screen,
             GetVideoFrameRate,
             () => m_currentRomTitle,
             GetEffectiveCpuHz);
         m_emulator.DisplayUpdated += (_, _) => DisplayUpdated?.Invoke(this, EventArgs.Empty);
         m_emulator.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
-        m_emulator.SetScreenEffectEnabled(false);
         Display = m_emulator.Display;
         SnapshotHistory = m_emulator.SnapshotHistory;
         Settings.PropertyChanged += OnSettingsPropertyChanged;
@@ -224,6 +227,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     {
         Settings.IsCgbModePreferred = !Settings.IsCgbModePreferred;
         m_machine.SetRequestedMode(Settings.IsCgbModePreferred ? GameBoyMode.Cgb : GameBoyMode.Dmg);
+        m_screen.Mode = m_machine.Mode;
         ResetDevice();
     }
 
@@ -386,6 +390,8 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         m_machine.SetSpriteVisibility(Settings.AreSpritesVisible);
         m_machine.SetDmgPalette(Settings.DmgPalette);
         m_machine.SetLcdEmulation(Settings.IsLcdEmulationEnabled);
+        m_screen.LcdEmulationEnabled = Settings.IsLcdEmulationEnabled;
+        m_screen.DmgPalette = Settings.DmgPalette;
         OnPropertyChanged(nameof(IsDisplayBlurEnabled));
         OnPropertyChanged(nameof(IsDisplayBlurDisabled));
     }
@@ -485,6 +491,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         m_currentRomTitle = RomNameHelper.GetDisplayName(romName) ?? "G33kBoy";
         WindowTitle = RomNameHelper.BuildWindowTitle("G33kBoy", m_currentRomTitle);
         SnapshotHistory?.ResetForRom(m_loadedRomPath);
+        m_screen.Mode = m_machine.Mode;
         m_emulator.Start();
         Logger.Instance.Info($"ROM loaded: {romName} ({romData.Length / 1024.0:0.#} KB)");
         OnPropertyChanged(nameof(IsDisplayBlurEnabled));

@@ -152,7 +152,7 @@ public static class CpuExtensions
     /// <summary>
     /// Mimic the state the CPU and IO registers are left in once the boot ROM hands off to the cartridge.
     /// </summary>
-    public static Cpu SkipBootRom(this Cpu cpu, bool disableDevices = false)
+    public static void SkipBootRom(this Cpu cpu, bool disableDevices = false)
     {
         if (cpu == null)
             throw new ArgumentNullException(nameof(cpu));
@@ -183,7 +183,6 @@ public static class CpuExtensions
         cpu.Bus.ResetClock();
         cpu.Fetch8(); // Prime the pipeline with the opcode at 0x0100.
 
-        return cpu;
     }
 
     /// <summary>

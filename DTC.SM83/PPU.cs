@@ -306,10 +306,11 @@ public class PPU : IVideoSource
         m_lcdc = new LcdcRegister(lcd);
         m_stat = new StatRegister(lcd, interruptDevice);
     }
-    
+
     /// <summary>
     /// Advances the timer by the specified T-cycles.
     /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <remarks>
     /// Call with every elapsed T-cycle chunk to keep timing correct.
     /// </remarks>
@@ -598,7 +599,7 @@ public class PPU : IVideoSource
             // First we draw the background.
             byte bgColorIndex = 0x00;
             byte bgPaletteIndex = 0x00;
-            bool bgPriority = false;
+            var bgPriority = false;
             if (bgEnabled)
             {
                 var isWindow = windowEnabled && x >= lcdWX - 7;
@@ -631,8 +632,8 @@ public class PPU : IVideoSource
                 var tileMapEntryAddr = (ushort)(bgTileMapAddr + tileOffset);
                 var tileIndex = isCgb ? m_vram.ReadBanked(tileMapEntryAddr, 0) : m_vram.Read8(tileMapEntryAddr);
                 byte tileBank = 0;
-                bool xFlip = false;
-                bool yFlip = false;
+                var xFlip = false;
+                var yFlip = false;
                 if (isCgb && !dmgCompat)
                 {
                     var attributes = m_vram.ReadBanked(tileMapEntryAddr, 1);
@@ -928,7 +929,7 @@ public class PPU : IVideoSource
             GetDmgPaletteColor(0x00, out baseR, out baseG, out baseB);
         }
 
-        var pixelCount = FrameWidth * FrameHeight;
+        const int pixelCount = FrameWidth * FrameHeight;
         for (var i = 0; i < pixelCount; i++)
         {
             var fbOffset = i * 4;
@@ -1037,8 +1038,8 @@ public class PPU : IVideoSource
         const int tileBytes = 16;
         const int tileDataStart = 0x8000;
         const int totalTiles = tilesPerRow * tileRows;
-        var width = tilesPerRow * tileWidth;
-        var height = tileRows * tileHeight;
+        const int width = tilesPerRow * tileWidth;
+        const int height = tileRows * tileHeight;
         var buffer = new byte[width * height];
 
         for (var tile = 0; tile < totalTiles; tile++)

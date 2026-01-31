@@ -88,7 +88,7 @@ public class Dma
         }
     }
 
-    public int GetStateSize() =>
+    public static int GetStateSize() =>
         sizeof(byte) * 2 + // IsTransferActive, IsEnabled
         sizeof(ushort) * 2 + // m_sourceAddr, m_destAddr
         sizeof(int) + // m_bytesRemaining

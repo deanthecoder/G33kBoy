@@ -223,7 +223,7 @@ public class TimerDevice : IMemDevice
         }
     }
 
-    public int GetStateSize() =>
+    public static int GetStateSize() =>
         sizeof(byte) * 4 + // DIV, TIMA, TMA, m_tac
         sizeof(ulong) * 2 + // m_divCycleCount, m_timaCycleCount
         sizeof(byte) + // m_pendingReload

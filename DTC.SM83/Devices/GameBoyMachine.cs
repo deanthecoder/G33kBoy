@@ -23,8 +23,6 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
     private readonly SoundDevice m_audioSink;
     private readonly VideoSourceProxy m_videoSource = new();
     private readonly bool[] m_soundChannelsEnabled = [true, true, true, true];
-    private Bus m_bus;
-    private Cpu m_cpu;
     private Cartridge m_loadedCartridge;
     private byte[] m_loadedRomData;
     private string m_loadedRomName;
@@ -46,28 +44,23 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
 
     public string Name => Descriptor?.Name ?? "G33kBoy";
 
-    public long CpuTicks => (long)(m_bus?.CpuClockTicks ?? 0);
+    public long CpuTicks => (long)(Bus?.CpuClockTicks ?? 0);
 
     public bool HasLoadedCartridge => m_loadedCartridge != null;
 
     public IVideoSource Video => m_videoSource;
 
-    public IAudioSource Audio => m_bus?.APU;
+    public IAudioSource Audio => Bus?.APU;
 
     public IMachineSnapshotter Snapshotter => this;
 
-    public Bus Bus => m_bus;
+    public Bus Bus { get; private set; }
 
-    public Cpu Cpu => m_cpu;
+    public Cpu Cpu { get; private set; }
 
     public Joypad Joypad { get; private set; }
 
     public GameBoyMode Mode { get; private set; } = GameBoyMode.Dmg;
-
-    public void UpdateDescriptor(IMachineDescriptor descriptor)
-    {
-        Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
-    }
 
     public void Reset()
     {
@@ -93,12 +86,12 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
 
         RecreateHardware();
         ApplyHardwareMode(cartridge);
-        m_cpu.LoadRom(cartridge);
+        Cpu.LoadRom(cartridge);
         ApplySoundChannelSettings();
         ApplyDisplaySettings();
     }
 
-    public void StepCpu() => m_cpu?.Step();
+    public void StepCpu() => Cpu?.Step();
 
     public void AdvanceDevices(long deltaTicks)
     {
@@ -116,22 +109,22 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
     public void SetBackgroundVisibility(bool isVisible)
     {
         m_backgroundVisible = isVisible;
-        if (m_bus?.PPU != null)
-            m_bus.PPU.BackgroundVisible = isVisible;
+        if (Bus?.PPU != null)
+            Bus.PPU.BackgroundVisible = isVisible;
     }
 
     public void SetSpriteVisibility(bool isVisible)
     {
         m_spritesVisible = isVisible;
-        if (m_bus?.PPU != null)
-            m_bus.PPU.SpritesVisible = isVisible;
+        if (Bus?.PPU != null)
+            Bus.PPU.SpritesVisible = isVisible;
     }
 
     public void SetLcdEmulation(bool isEnabled)
     {
         m_lcdEmulationEnabled = isEnabled;
-        if (m_bus?.PPU != null)
-            m_bus.PPU.LcdEmulationEnabled = isEnabled;
+        if (Bus?.PPU != null)
+            Bus.PPU.LcdEmulationEnabled = isEnabled;
     }
 
     public void SetDmgPalette(DmgPalette palette)
@@ -140,8 +133,8 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
             return;
 
         m_dmgPalette = palette;
-        if (m_bus?.PPU != null)
-            m_bus.PPU.DmgPalette = palette;
+        if (Bus?.PPU != null)
+            Bus.PPU.DmgPalette = palette;
     }
 
     public void SetSoundChannelEnabled(int channel, bool isEnabled)
@@ -150,14 +143,14 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
             return;
 
         m_soundChannelsEnabled[channel - 1] = isEnabled;
-        m_bus?.SetSoundChannelEnabled(channel, isEnabled);
+        Bus?.SetSoundChannelEnabled(channel, isEnabled);
     }
 
     public void SetCpuHistoryTracking(bool isEnabled)
     {
         m_isCpuHistoryTracked = isEnabled;
-        if (m_cpu != null)
-            m_cpu.InstructionLogger.IsEnabled = isEnabled;
+        if (Cpu != null)
+            Cpu.InstructionLogger.IsEnabled = isEnabled;
     }
 
     public void SetRequestedMode(GameBoyMode mode)
@@ -171,7 +164,7 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
     }
 
     public double GetEffectiveCpuHz() =>
-        m_bus?.IsDoubleSpeed == true ? Cpu.Hz * 2.0 : Cpu.Hz;
+        Bus?.IsDoubleSpeed == true ? Cpu.Hz * 2.0 : Cpu.Hz;
 
     public void Dispose()
     {
@@ -185,8 +178,8 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
         var factory = new MachineFactory(m_audioSink, Mode, m_isCpuHistoryTracked, Joypad);
         factory.Build();
         Joypad = factory.Input;
-        m_bus = factory.Bus;
-        m_cpu = factory.Cpu;
+        Bus = factory.Bus;
+        Cpu = factory.Cpu;
         m_videoSource.SetSource(factory.Video);
         ApplySoundChannelSettings();
         ApplyDisplaySettings();
@@ -194,40 +187,40 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
 
     private void RecreateHardware()
     {
-        var debuggers = m_cpu?.Debuggers;
+        var debuggers = Cpu?.Debuggers;
         DisposeHardware();
         CreateHardware();
         if (debuggers == null)
             return;
         foreach (var debugger in debuggers)
-            m_cpu.AddDebugger(debugger);
+            Cpu.AddDebugger(debugger);
     }
 
     private void DisposeHardware()
     {
-        m_bus?.Dispose();
-        m_bus = null;
-        m_cpu = null;
+        Bus?.Dispose();
+        Bus = null;
+        Cpu = null;
     }
 
     private void ApplyHardwareMode(Cartridge cartridge)
     {
         Mode = DetermineEffectiveMode(cartridge, m_requestedMode);
-        m_bus?.SetMode(Mode);
+        Bus?.SetMode(Mode);
     }
 
     private void ApplySoundChannelSettings()
     {
-        if (m_bus == null)
+        if (Bus == null)
             return;
 
         for (var channel = 1; channel <= m_soundChannelsEnabled.Length; channel++)
-            m_bus.SetSoundChannelEnabled(channel, m_soundChannelsEnabled[channel - 1]);
+            Bus.SetSoundChannelEnabled(channel, m_soundChannelsEnabled[channel - 1]);
     }
 
     private void ApplyDisplaySettings()
     {
-        var ppu = m_bus?.PPU;
+        var ppu = Bus?.PPU;
         if (ppu == null)
             return;
 
@@ -271,26 +264,26 @@ public sealed class GameBoyMachine : IMachine, IMachineSnapshotter, IDisposable
     }
 
     int IMachineSnapshotter.GetStateSize() =>
-        m_cpu?.GetStateSize() ?? 0;
+        Cpu?.GetStateSize() ?? 0;
 
     void IMachineSnapshotter.Save(MachineState state, Span<byte> frameBuffer)
     {
         if (state == null)
             throw new ArgumentNullException(nameof(state));
-        if (m_cpu == null || m_bus?.PPU == null)
+        if (Cpu == null || Bus?.PPU == null)
             throw new InvalidOperationException("Game Boy hardware is not initialized.");
 
-        m_cpu.SaveState(state);
-        m_bus.PPU.CopyToFrameBuffer(frameBuffer);
+        Cpu.SaveState(state);
+        Bus.PPU.CopyToFrameBuffer(frameBuffer);
     }
 
     void IMachineSnapshotter.Load(MachineState state)
     {
         if (state == null)
             throw new ArgumentNullException(nameof(state));
-        if (m_cpu == null)
+        if (Cpu == null)
             throw new InvalidOperationException("Game Boy hardware is not initialized.");
 
-        m_cpu.LoadState(state);
+        Cpu.LoadState(state);
     }
 }

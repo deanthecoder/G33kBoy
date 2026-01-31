@@ -40,7 +40,7 @@ public class InterruptDevice : IMemDevice
     public void Raise(InterruptType requested) =>
         m_if |= (byte)requested;
 
-    public int GetStateSize() => sizeof(byte);
+    public static int GetStateSize() => sizeof(byte);
 
     public void SaveState(ref StateWriter writer) =>
         writer.WriteByte(m_if);

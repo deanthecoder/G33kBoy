@@ -73,74 +73,6 @@ public static class Disassembler
         return ResolveImmediateOperands(unprefixedMnemonic, bytes[..Math.Min(unprefixedLength, bytes.Length)], unprefixedLength, isCbPrefixed: false, address);
     }
 
-    public static IReadOnlyList<string> DisassembleRom(byte[] romData)
-    {
-        if (romData == null)
-            throw new ArgumentNullException(nameof(romData));
-
-        var lines = new List<string>(romData.Length / 2);
-        var offset = 0;
-
-        while (offset < romData.Length)
-        {
-            var (mnemonic, length, isCbPrefixed) = DecodeInstruction(romData, offset);
-            var actualLength = Math.Max(1, Math.Min(length, romData.Length - offset));
-            var prefix = FormatAddress(offset);
-            var resolvedMnemonic = ResolveImmediateOperands(mnemonic, romData, offset, actualLength, isCbPrefixed);
-            lines.Add($"{prefix}:  {resolvedMnemonic}");
-            offset += actualLength;
-        }
-
-        return lines;
-    }
-
-    private static (string mnemonic, int length, bool isCbPrefixed) DecodeInstruction(byte[] romData, int offset)
-    {
-        var opcode = romData[offset];
-        if (opcode == 0xCB)
-        {
-            var cbOpcode = offset + 1 < romData.Length ? romData[offset + 1] : (byte)0x00;
-            var length = InstructionLengths.GetLength(cbOpcode, isCbPrefixed: true);
-            return (PrefixedInstructions.Table[cbOpcode]?.Mnemonic ?? $"CB ${cbOpcode:X2}", Math.Max(length, 2), true);
-        }
-
-        var unprefixedLength = InstructionLengths.GetLength(opcode, isCbPrefixed: false);
-        return (Instructions.Instructions.Table[opcode]?.Mnemonic ?? $"DB ${opcode:X2}", Math.Max(unprefixedLength, 1), false);
-    }
-
-    private static string ResolveImmediateOperands(string mnemonic, byte[] romData, int offset, int actualLength, bool isCbPrefixed)
-    {
-        var opcodeBytes = isCbPrefixed ? 2 : 1;
-        var immediateLength = Math.Max(0, actualLength - opcodeBytes);
-        if (immediateLength == 0)
-            return mnemonic;
-
-        var immediateStart = offset + opcodeBytes;
-        var available = Math.Max(0, Math.Min(immediateLength, romData.Length - immediateStart));
-        if (available == 0)
-            return mnemonic;
-
-        var value = available switch
-        {
-            1 => romData[immediateStart],
-            _ => romData[immediateStart] + (romData[Math.Min(immediateStart + 1, romData.Length - 1)] << 8)
-        };
-
-        var hex = available == 1 ? $"${value:X2}" : $"${value:X4}";
-        var resolved = ReplaceImmediatePlaceholders(mnemonic, hex);
-
-        if (!mnemonic.StartsWith("JR", StringComparison.Ordinal))
-            return resolved;
-        
-        var displacement = unchecked((sbyte)romData[immediateStart]);
-        var currentPc = GetProgramCounter(offset);
-        var targetPc = (ushort)(currentPc + actualLength + displacement);
-        var bank = offset / 0x4000;
-        var targetOffset = targetPc < 0x4000 ? targetPc : bank * 0x4000 + (targetPc - 0x4000);
-        var targetDisplay = FormatAddress(targetOffset);
-        return $"{resolved} -> {(targetDisplay.Contains(':') ? targetDisplay : $"${targetDisplay}")}";
-    }
-
     private static string ResolveImmediateOperands(string mnemonic, ReadOnlySpan<byte> instructionData, int declaredLength, bool isCbPrefixed, ushort instructionAddress)
     {
         var opcodeBytes = isCbPrefixed ? 2 : 1;
@@ -168,16 +100,6 @@ public static class Disassembler
         var targetPc = (ushort)(instructionAddress + declaredLength + displacement);
         return $"{resolved} -> ${targetPc:X4}";
     }
-
-    private static string FormatAddress(int offset)
-    {
-        var bank = offset / 0x4000;
-        var pc = offset < 0x4000 ? offset : 0x4000 + offset % 0x4000;
-        return bank == 0 ? $"{pc:X4}" : $"{bank:X2}:{pc:X4}";
-    }
-
-    private static int GetProgramCounter(int offset) =>
-        offset < 0x4000 ? offset & 0xFFFF : (0x4000 + offset % 0x4000) & 0xFFFF;
 
     private static string ReplaceImmediatePlaceholders(string mnemonic, string hex) =>
         mnemonic

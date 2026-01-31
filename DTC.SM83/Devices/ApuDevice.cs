@@ -1143,7 +1143,7 @@ public sealed class ApuDevice : IMemDevice, IAudioSource
                 sum += ApplyVolumeShift(waveByte & 0x0F);
             }
 
-            return (sum / 32.0) / 15.0;
+            return sum / 32.0 / 15.0;
         }
 
         private int ApplyVolumeShift(int sample4) =>
@@ -1236,7 +1236,7 @@ public sealed class ApuDevice : IMemDevice, IAudioSource
             };
 
             var shiftClock = (nr43 >> 4) & 0x0F;
-            var baseClock = 524288.0; // 2^19 Hz.
+            const double baseClock = 524288.0; // 2^19 Hz.
             m_lfsrFrequencyHz = baseClock / divisor / Math.Pow(2.0, shiftClock + 1);
 
             var widthMode7Bit = (nr43 & 0x08) != 0;
@@ -1322,7 +1322,7 @@ public sealed class ApuDevice : IMemDevice, IAudioSource
                 StepLfsr();
             }
 
-            var outputBit = (~m_lfsr) & 1;
+            var outputBit = ~m_lfsr & 1;
             var amp = m_volume / 15.0;
             return outputBit != 0 ? amp : -amp;
         }

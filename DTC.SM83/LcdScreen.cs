@@ -15,9 +15,11 @@ using Avalonia.Platform;
 using DTC.Core.Extensions;
 using Vector = Avalonia.Vector;
 
+using DTC.Emulation;
+
 namespace DTC.SM83;
 
-public sealed class LcdScreen : IDisposable
+public sealed class LcdScreen : ILcdScreen, IDisposable
 {
     private const int Scale = 4;
     private readonly int m_sourceWidth;
@@ -36,6 +38,8 @@ public sealed class LcdScreen : IDisposable
     private bool m_lcdEmulationEnabled = true;
     private DmgPalette m_dmgPalette = DmgPalette.Default;
     private GameBoyMode m_mode = GameBoyMode.Dmg;
+
+    public bool IsPaused { get; set; }
 
     public bool LcdEmulationEnabled
     {
@@ -136,14 +140,16 @@ public sealed class LcdScreen : IDisposable
         }
     }
 
-    public unsafe bool Update(byte[] frameBuffer)
+    void ILcdScreen.Update(byte[] frameBuffer) => UpdateInternal(frameBuffer);
+
+    private unsafe void UpdateInternal(byte[] frameBuffer)
     {
         if (frameBuffer == null)
             throw new ArgumentNullException(nameof(frameBuffer));
 
         var frameBufferHash = ComputeFrameBufferHash(frameBuffer);
         if (!m_forceRefresh && frameBufferHash == m_previousFrameBufferHash)
-            return false; // Nothing to do - No change in frame data.
+            return;
 
         using var locked = Display.Lock();
         var destStride = locked.RowBytes;
@@ -156,7 +162,6 @@ public sealed class LcdScreen : IDisposable
 
         m_previousFrameBufferHash = frameBufferHash;
         m_forceRefresh = false;
-        return true; // Frame data changed.
     }
 
     /// <summary>
@@ -306,7 +311,7 @@ public sealed class LcdScreen : IDisposable
     private unsafe void RenderWithLcdEffectsCgb(byte[] frameBuffer, byte* destPtr, int destStride)
     {
         const float rowColumnDim = 0.9f;
-        var inv255 = Inv255 * 0.9f;
+        const float inv255 = Inv255 * 0.9f;
 
         fixed (byte* srcPtr = frameBuffer)
         {

@@ -43,8 +43,13 @@ internal sealed class MachineFactory : MachineFactoryBase<Bus, Cpu, PPU, ApuDevi
 
     protected override Cpu CreateCpu(Bus bus)
     {
-        var cpu = new Cpu(bus);
-        cpu.InstructionLogger.IsEnabled = m_isCpuHistoryTracked;
+        var cpu = new Cpu(bus)
+        {
+            InstructionLogger =
+            {
+                IsEnabled = m_isCpuHistoryTracked
+            }
+        };
         return cpu;
     }
 

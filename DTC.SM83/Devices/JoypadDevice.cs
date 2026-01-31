@@ -66,7 +66,7 @@ public sealed class JoypadDevice : IMemDevice
         m_joySelect = (byte)((m_joySelect & 0xCF) | (value & 0x30));
     }
 
-    internal int GetStateSize() => sizeof(byte);
+    internal static int GetStateSize() => sizeof(byte);
 
     internal void SaveState(ref StateWriter writer) =>
         writer.WriteByte(m_joySelect);

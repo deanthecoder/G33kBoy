@@ -385,8 +385,8 @@ public sealed class Bus : IMemDevice, IDisposable
 
         if (Type != BusType.Trivial)
         {
-            size += m_timer.GetStateSize();
-            size += m_interruptDevice.GetStateSize();
+            size += TimerDevice.GetStateSize();
+            size += InterruptDevice.GetStateSize();
             size += sizeof(byte); // IE
         }
 
@@ -405,8 +405,8 @@ public sealed class Bus : IMemDevice, IDisposable
             size += m_oam?.GetStateSize() ?? 0;
             size += m_hramDevice?.GetStateSize() ?? 0;
             size += m_ioDevice?.GetStateSize() ?? 0;
-            size += m_joypadDevice?.GetStateSize() ?? 0;
-            size += Hdma?.GetStateSize() ?? 0;
+            size += JoypadDevice.GetStateSize();
+            size += Hdma.GetStateSize();
             size += PPU?.GetStateSize() ?? 0;
         }
 

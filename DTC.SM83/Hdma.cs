@@ -34,8 +34,6 @@ public sealed class Hdma
         m_bus = bus ?? throw new ArgumentNullException(nameof(bus));
     }
 
-    public bool IsActive => m_remainingBlocks > 0 && m_hblankMode;
-
     public byte ReadHdma1() => m_hdma1;
     public byte ReadHdma2() => m_hdma2;
     public byte ReadHdma3() => m_hdma3;
@@ -115,7 +113,7 @@ public sealed class Hdma
         m_hdma4 = (byte)(dest & 0xF0);
     }
 
-    internal int GetStateSize() =>
+    internal static int GetStateSize() =>
         sizeof(byte) * 4 + // m_hdma1-4
         sizeof(byte) + // m_hblankMode
         sizeof(int) + // m_remainingBlocks

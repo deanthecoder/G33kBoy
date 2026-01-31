@@ -44,8 +44,8 @@ public class PaletteRegressionTests
     private static void WritePalette(Bus bus, ushort indexRegister, ushort dataRegister, byte[] data)
     {
         bus.UncheckedWrite(indexRegister, 0x80);
-        for (var i = 0; i < data.Length; i++)
-            bus.UncheckedWrite(dataRegister, data[i]);
+        foreach (var b in data)
+            bus.UncheckedWrite(dataRegister, b);
     }
 
     private static void AssertPaletteReadStable(Bus bus, ushort indexRegister, ushort dataRegister, byte[] data, byte index)

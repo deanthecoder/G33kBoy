@@ -57,9 +57,6 @@ public class WorkRamDevice : IMemDevice
         m_banked[bankOffset + offset] = value;
     }
 
-    public bool Contains(ushort addr) =>
-        addr >= FromAddr && addr <= ToAddr;
-
     internal int GetStateSize() =>
         sizeof(byte) + m_fixedBank.Length + m_banked.Length;
 

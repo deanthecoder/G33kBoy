@@ -23,8 +23,13 @@ public class DmaTests
     public void CpuDoesNotExecuteDuringOamDma()
     {
         using var bus = new Bus(0x10000, Bus.BusType.Minimal);
-        var cpu = new Cpu(bus);
-        cpu.Reg.PC = 0x0000;
+        var cpu = new Cpu(bus)
+        {
+            Reg =
+            {
+                PC = 0x0000
+            }
+        };
         bus.UncheckedWrite(0x0000, 0x00); // NOP
         bus.UncheckedWrite(0x0001, 0x00); // NOP
         bus.UncheckedWrite(0x0002, 0x00); // NOP
